@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async {
-  //bagian penting jangan otak atik ini supabase punya
+import 'views/auth/daftar_page.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Koneksi Flutter dengan Supabase
   await Supabase.initialize(
     url: 'https://ciarqtbkgdmupfiuuvab.supabase.co',
     publishableKey: 'sb_publishable_xh9OxC4GQLHuhv46L8MjQQ_5TeP1IG_',
@@ -16,14 +18,13 @@ void main() async {
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
-  //Ntr Frontend kalau dah clone, ubah yang ini yee kalo mau cek widgate yang kalian buat
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('TernateSpot')),
-        body: const Center(child: Text('Supabase Terhubung!')),
-      ),
+      debugShowCheckedModeBanner: false,
+
+      // Halaman pertama yang dibuka
+      home: const DaftarPage(),
     );
   }
 }
