@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ternatespot/views/auth/daftar_page.dart';
 import 'package:ternatespot/views/auth/forgot_password_page.dart';
 
+import '../../controllers/auth_controller.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -15,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthController _authController = AuthController();
+  
 
   @override
   void dispose() {
@@ -319,7 +323,27 @@ class _LoginPageState extends State<LoginPage> {
 
               // 7. Tombol "Masuk ke Akun"
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  try {
+                    final response = await _authController.login(
+                      _emailController.text.trim(),
+
+                      _passwordController.text.trim(),
+                    );
+                      print("USER ID : ${response.user!.id}");
+
+  print("EMAIL : ${response.user!.email}");
+
+                    
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Login berhasil")),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(e.toString())));
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0066FF),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -386,7 +410,6 @@ class _LoginPageState extends State<LoginPage> {
                       'Asset/Image/Google.jpeg',
                       height: 18,
                       width: 18,
-                      
                     ),
                     const SizedBox(width: 8),
                     const Text(
