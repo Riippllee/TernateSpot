@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:ternatespot/views/auth/login_page.dart';
 
 class DaftarPage extends StatefulWidget {
   const DaftarPage({super.key});
@@ -235,16 +236,30 @@ class _DaftarPageState extends State<DaftarPage> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Center(
-                            child: Text(
-                              'Masuk',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 13,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginPage(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                child: const Text(
+                                  'Masuk',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
                         Expanded(
                           child: Container(
                             alignment: Alignment.center,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/views/auth/daftar_page.dart';
+import 'package:ternatespot/views/auth/forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -86,11 +88,7 @@ class _LoginPageState extends State<LoginPage> {
               const Text(
                 'Masuk untuk menjelajahi keindahan surga\nrempah Kota Ternate',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  height: 1.4,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
               ),
 
               const SizedBox(height: 24),
@@ -102,6 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                   color: const Color(0xFFEBF2FF),
                   borderRadius: BorderRadius.circular(25),
                 ),
+
                 child: Row(
                   children: [
                     Expanded(
@@ -130,15 +129,26 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: const Text(
-                          'Daftar Akun',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DaftarPage(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: const Text(
+                            'Daftar Akun',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ),
@@ -151,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
 
               // 4. Input Email atau No. Handphone
               const Text(
-                'Email atau No. Handphone',
+                'Email',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -163,9 +173,16 @@ class _LoginPageState extends State<LoginPage> {
                 controller: _emailController,
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'nama@email.com atau 0812...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey, size: 20),
+                  hintText: 'nama@email.com',
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 13,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.email_outlined,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -202,11 +219,20 @@ class _LoginPageState extends State<LoginPage> {
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Minimal 8 karakter',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey, size: 20),
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 13,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: Colors.grey,
                       size: 20,
                     ),
@@ -265,13 +291,24 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  GestureDetector(
-                    child: const Text(
-                      'Lupa Kata Sandi?',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF0066FF),
-                        fontWeight: FontWeight.w500,
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage(),
+                        ),
+                      );
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Lupa Kata Sandi?',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF0066FF),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
@@ -303,7 +340,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
                   ],
                 ),
               ),
@@ -341,15 +382,11 @@ class _LoginPageState extends State<LoginPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.network(
-                      'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+                    Image.asset(
+                      'Asset/Image/Google.jpeg',
                       height: 18,
                       width: 18,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.g_mobiledata,
-                        color: Colors.red,
-                        size: 24,
-                      ),
+                      
                     ),
                     const SizedBox(width: 8),
                     const Text(
@@ -369,17 +406,25 @@ class _LoginPageState extends State<LoginPage> {
               // 10. Link Teks "Daftar Sekarang"
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'Belum punya akun? ',
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
-                  Text(
-                    'Daftar Sekarang',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF0066FF),
-                      fontWeight: FontWeight.bold,
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => DaftarPage()),
+                      );
+                    },
+                    child: const Text(
+                      'Daftar Sekarang',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF0066FF),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -390,7 +435,10 @@ class _LoginPageState extends State<LoginPage> {
               // 11. Tombol Kapsul "Jelajah sebagai Tamu"
               Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(20),
@@ -398,7 +446,11 @@ class _LoginPageState extends State<LoginPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: const [
-                      Icon(Icons.explore_outlined, size: 16, color: Colors.grey),
+                      Icon(
+                        Icons.explore_outlined,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
                       SizedBox(width: 6),
                       Text(
                         'Jelajah sebagai Tamu',

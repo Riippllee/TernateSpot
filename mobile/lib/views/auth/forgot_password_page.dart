@@ -67,7 +67,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Masukkan email atau nomor handphone terdaftar kamu. Kami akan mengirimkan kode/tautan untuk mengatur ulang kata sandi.',
+                'Masukkan email terdaftar kamu. Kami akan mengirimkan kode/tautan untuk mengatur ulang kata sandi.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
               ),
@@ -81,7 +81,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 controller: _inputController,
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'nama@email.com atau 0812...',
+                  hintText: 'nama@email.com',
                   hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
                   prefixIcon: const Icon(
                     Icons.contact_mail_outlined,

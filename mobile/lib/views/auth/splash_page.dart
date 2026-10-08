@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/views/auth/login_page.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
@@ -138,7 +139,7 @@ class SplashPage extends StatelessWidget {
                   // Tombol "Mulai Jelajah"
                   InkWell(
                     onTap: () {
-                      // Aksi navigasi ke halaman berikutnya
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));// Aksi navigasi ke halaman berikutnya
                     },
                     borderRadius: BorderRadius.circular(30),
                     child: Container(
