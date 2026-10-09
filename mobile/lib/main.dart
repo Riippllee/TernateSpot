@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'views/destinasi/destinasi_list_page.dart';
 
 void main() async {
   //bagian penting jangan otak atik ini supabase punya
@@ -20,10 +21,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('TernateSpot')),
-        body: const Center(child: Text('Supabase Terhubung!')),
-      ),
+      home: TestDestinasiPage()
     );
   }
 }
