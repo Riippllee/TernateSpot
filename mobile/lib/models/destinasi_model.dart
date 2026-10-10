@@ -25,24 +25,22 @@ class DestinasiModel {
     required this.tanggalPerubahan,
   });
 
-  // Convert dari JSON (database) ke Object Dart
   factory DestinasiModel.fromJson(Map<String, dynamic> json) {
     return DestinasiModel(
-      idDestinasi: json['id_destinasi'],
-      idKategori: json['id_kategori'],
-      namaDestinasi: json['nama_destinasi'],
+      idDestinasi: json['id_destinasi'] ?? 0,
+      idKategori: json['id_kategori'] ?? 1,
+      namaDestinasi: json['nama_destinasi'] ?? '',
       deskripsi: json['deskripsi'] ?? '',
       alamat: json['alamat'] ?? '',
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
+      latitude: (json['latitude'] ?? 0).toDouble(),
+      longitude: (json['longitude'] ?? 0).toDouble(),
       fotoUtama: json['foto_utama'] ?? '',
-      status: json['status'] ?? false,
-      tanggalDaftar: DateTime.parse(json['tanggal_daftar']),
-      tanggalPerubahan: DateTime.parse(json['tanggal_perubahan']),
+      status: json['status'] ?? true,
+      tanggalDaftar: json['tanggal_daftar'] != null ? DateTime.parse(json['tanggal_daftar']) : DateTime.now(),
+      tanggalPerubahan: json['tanggal_perubahan'] != null ? DateTime.parse(json['tanggal_perubahan']) : DateTime.now(),
     );
   }
 
-  // Convert dari Object Dart ke JSON (untuk insert/update)
   Map<String, dynamic> toJson() {
     return {
       'id_kategori': idKategori,

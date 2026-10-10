@@ -9,19 +9,17 @@ class KategoriModel {
     required this.tanggalDaftar,
   });
 
-  // Convert dari JSON (database) ke Object Dart
   factory KategoriModel.fromJson(Map<String, dynamic> json) {
     return KategoriModel(
-      idKategori: json['id_kategori'],
-      namaKategori: json['nama_kategori'],
-      tanggalDaftar: DateTime.parse(json['tanggal_daftar']),
+      idKategori: json['id_kategori'] ?? 0,
+      namaKategori: json['nama_kategori'] ?? '',
+      tanggalDaftar: json['tanggal_daftar'] != null 
+          ? DateTime.parse(json['tanggal_daftar']) 
+          : DateTime.now(),
     );
   }
 
-  // Convert dari Object Dart ke JSON (untuk insert/update ke database)
   Map<String, dynamic> toJson() {
-    return {
-      'nama_kategori': namaKategori,
-    };
+    return {'nama_kategori': namaKategori};
   }
 }

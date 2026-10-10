@@ -13,18 +13,16 @@ class GaleriModel {
     required this.tanggalDibuat,
   });
 
-  // Convert dari JSON (database) ke Object Dart
   factory GaleriModel.fromJson(Map<String, dynamic> json) {
     return GaleriModel(
-      idGaleri: json['id_galeri'],
-      idDestinasi: json['id_destinasi'],
-      urlGambar: json['url_gambar'],
+      idGaleri: json['id_galeri'] ?? 0,
+      idDestinasi: json['id_destinasi'] ?? 0,
+      urlGambar: json['url_gambar'] ?? '',
       keterangan: json['keterangan'] ?? '',
-      tanggalDibuat: DateTime.parse(json['tanggal_dibuat']),
+      tanggalDibuat: json['tanggal_dibuat'] != null ? DateTime.parse(json['tanggal_dibuat']) : DateTime.now(),
     );
   }
 
-  // Convert dari Object Dart ke JSON (untuk insert)
   Map<String, dynamic> toJson() {
     return {
       'id_destinasi': idDestinasi,
