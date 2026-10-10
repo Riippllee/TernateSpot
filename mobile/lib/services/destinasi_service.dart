@@ -1,4 +1,5 @@
-import 'dart:io';
+//ubah sebentar : import 'dart:io';
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/kategori_model.dart';
 import '../models/destinasi_model.dart';
@@ -121,7 +122,8 @@ class DestinasiService {
   // ============================================
 
   // Upload gambar dan return URL-nya
-  Future<String> uploadGambar(File file, String bucketName) async {
+  //ada ubah bagian Uin8List aslinya tu File file
+  Future<String> uploadGambar(Uint8List bytes, String bucketName) async {
     try {
       // Buat nama file unik
       String fileName = 'img_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -129,7 +131,7 @@ class DestinasiService {
       // Upload file ke bucket storage
       await _supabase.storage
           .from(bucketName)
-          .upload(fileName, file);
+          .uploadBinary(fileName, bytes); //yang ini juga bytes, harusnya file  dan upload ada ganti jadi uploadBinary
       
       // Ambil URL publik gambar
       final url = _supabase.storage
