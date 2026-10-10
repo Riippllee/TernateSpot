@@ -69,9 +69,10 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Gagal memuat data: $e';
         _isLoading = false;
       });
+
+      print(e);
     }
   }
 
@@ -129,7 +130,9 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
       return;
     }
 
-    setState(() => _isUploading = true);
+    setState(() {
+      _isUploading = true;
+    });
 
     try {
       // Upload gambar
@@ -166,6 +169,10 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     } finally {
       setState(() => _isUploading = false);
     }
+
+    setState(() {
+      _isUploading = false;
+    });
   }
 
   void _resetForm() {
