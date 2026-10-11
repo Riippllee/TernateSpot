@@ -1,38 +1,19 @@
+// Di dalam file lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'views/auth/daftar_page.dart';
-<<<<<<< HEAD
-import 'views/auth/splash_page.dart';
-=======
-import 'views/auth/login_page.dart';
->>>>>>> c068207932ff65f4c48bfa2fd8cb28f243f0eda0
+import 'views/review/review_page.dart'; // Import file review_page kamu
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Koneksi Flutter dengan Supabase
-  await Supabase.initialize(
-    url: 'https://ciarqtbkgdmupfiuuvab.supabase.co',
-    publishableKey: 'sb_publishable_xh9OxC4GQLHuhv46L8MjQQ_5TeP1IG_',
-  );
-
-  runApp(const MainApp());
+void main() {
+  runApp(const MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-<<<<<<< HEAD
-
-      // Halaman pertama yang dibuka
-      home: SplashPage(),
-=======
-      home: LoginPage(), // Menampilkan LoginPage di emulator
->>>>>>> c068207932ff65f4c48bfa2fd8cb28f243f0eda0
+      home: ReviewPage(), // Ubah bagian ini jadi ReviewPage()
     );
   }
 }
