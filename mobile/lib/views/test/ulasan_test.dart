@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-// Memanggil controller ulasan
-// Controller bertugas menjadi penghubung View dengan Service
 import '../../controller/ulasan_controller.dart';
-
-// Memanggil model ulasan
-// Digunakan untuk menampung data dari Supabase
 import '../../model/ulasan_model.dart';
 
 class UlasanTest extends StatefulWidget {
@@ -17,51 +12,26 @@ class UlasanTest extends StatefulWidget {
 
 class _UlasanTestState extends State<UlasanTest> {
   // Membuat object controller ulasan
-  // agar View dapat meminta data melalui Controller
   final controller = UlasanController();
-
-  // Menyimpan hasil data ulasan
   List<Ulasan> data = [];
 
-  // ===============================
   // TEST READ ULASAN
-  // ===============================
-  //
-  // Fungsi ini digunakan untuk mengecek:
-  //
-  // View
-  //  ↓
-  // Controller
-  //  ↓
-  // Service
-  //  ↓
-  // Supabase
-  //
-  // apakah sudah berhasil mengambil data
-
   Future<void> ambilUlasan() async {
     print("Mulai mengambil data ulasan");
 
     try {
-      // View memanggil Controller
-      // Controller akan memanggil Service
-      final hasil = await controller.lihatUlasan();
-
-      // Menampilkan jumlah data di console
+      final hasil = await controller.lihatUlasan(); // View memanggil Controller
 
       print("Jumlah ulasan : ${hasil.length}");
 
       // Menampilkan isi data satu per satu
       for (var ulasan in hasil) {
         print("Destinasi ID : ${ulasan.idDestinasi}");
-
         print("Rating : ${ulasan.rating}");
-
         print("Komentar : ${ulasan.komentar}");
       }
 
       // Menampilkan data ke halaman test
-
       setState(() {
         data = hasil;
       });
@@ -78,7 +48,6 @@ class _UlasanTestState extends State<UlasanTest> {
 
     // Saat halaman dibuka,
     // langsung menjalankan test
-
     ambilUlasan();
   }
 
