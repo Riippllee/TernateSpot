@@ -25,4 +25,16 @@ class AuthController {
 
     return response;
   }
+
+  Future register(String nama, String email, String password) async {
+    return await _authService.signUp(nama, email, password);
+  }
+
+  Future forgotPassword(String email) async {
+    if (email.isEmpty) {
+      throw Exception("Email tidak boleh kosong");
+    }
+
+    await _authService.forgotPassword(email);
+  }
 }

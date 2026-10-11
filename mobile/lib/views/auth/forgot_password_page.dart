@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/controllers/auth_controller.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -9,6 +10,7 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController _inputController = TextEditingController();
+  final AuthController _authController = AuthController();
 
   @override
   void dispose() {
@@ -24,7 +26,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         backgroundColor: const Color.fromARGB(255, 241, 238, 238),
         elevation: 0,
         leading: IconButton(
-          
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
@@ -82,7 +83,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'nama@email.com',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 13,
+                  ),
                   prefixIcon: const Icon(
                     Icons.contact_mail_outlined,
                     color: Colors.grey,
@@ -103,20 +107,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () {
-                  if (_inputController.text.isEmpty) {
+                onPressed: () async {
+                  try {
+                    await _authController.forgotPassword(
+                      _inputController.text.trim(),
+                    );
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Harap masukkan email atau nomor handphone!'),
+                        content: Text(
+                          'Link reset password telah dikirim ke email kamu.',
+                        ),
                       ),
                     );
-                    return;
+                  } catch (e) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(e.toString())));
                   }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tautan / kode atur ulang kata sandi telah dikirim!'),
-                    ),
-                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0066FF),

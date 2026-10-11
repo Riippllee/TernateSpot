@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:ternatespot/controllers/auth_controller.dart';
 import 'package:ternatespot/views/auth/login_page.dart';
 
 class DaftarPage extends StatefulWidget {
@@ -16,6 +17,7 @@ class _DaftarPageState extends State<DaftarPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final konfirmasiController = TextEditingController();
+  final authController = AuthController();
 
   bool passwordVisible = false;
   bool konfirmasiVisible = false;
@@ -37,9 +39,7 @@ class _DaftarPageState extends State<DaftarPage> {
     if (!setuju) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Silakan setujui Syarat & Ketentuan terlebih dahulu.',
-          ),
+          content: Text('Silakan setujui Syarat & Ketentuan terlebih dahulu.'),
         ),
       );
       return;
@@ -50,14 +50,13 @@ class _DaftarPageState extends State<DaftarPage> {
     });
 
     try {
-      final response = await Supabase.instance.client.auth.signUp(
-        email: emailController.text.trim(),
-        password: passwordController.text,
-        data: {
-          'nama_lengkap': namaController.text.trim(),
-        },
+      final response = await authController.register(
+        namaController.text.trim(),
+        emailController.text.trim(),
+        passwordController.text,
+        
       );
-
+     print("EMAIL YANG DIKIRIM: '${emailController.text}'");
       if (!mounted) return;
 
       if (response.user != null) {
@@ -69,22 +68,21 @@ class _DaftarPageState extends State<DaftarPage> {
           ),
         );
       }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
     } on AuthException catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Terjadi kesalahan: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -101,40 +99,23 @@ class _DaftarPageState extends State<DaftarPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: Color(0xFFB8C0CC),
-        fontSize: 13,
-      ),
-      prefixIcon: Icon(
-        icon,
-        size: 18,
-        color: const Color(0xFFB8C0CC),
-      ),
+      hintStyle: const TextStyle(color: Color(0xFFB8C0CC), fontSize: 13),
+      prefixIcon: Icon(icon, size: 18, color: const Color(0xFFB8C0CC)),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 15,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFFE4E9F2),
-        ),
+        borderSide: const BorderSide(color: Color(0xFFE4E9F2)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFFE4E9F2),
-        ),
+        borderSide: const BorderSide(color: Color(0xFFE4E9F2)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFF1769E0),
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Color(0xFF1769E0), width: 1.5),
       ),
     );
   }
@@ -146,10 +127,7 @@ class _DaftarPageState extends State<DaftarPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 20,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Form(
               key: _formKey,
               child: Column(
@@ -236,30 +214,30 @@ class _DaftarPageState extends State<DaftarPage> {
                     child: Row(
                       children: [
                         Expanded(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(20),
-                              onTap: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const LoginPage(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                child: const Text(
-                                  'Masuk',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 13,
-                                  ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: const Text(
+                                'Masuk',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
                           ),
+                        ),
                         Expanded(
                           child: Container(
                             alignment: Alignment.center,
@@ -332,6 +310,8 @@ class _DaftarPageState extends State<DaftarPage> {
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.none,
+                    autocorrect: false,
                     decoration: inputDecoration(
                       hint: 'nama@email.com',
                       icon: Icons.email_outlined,
@@ -480,9 +460,7 @@ class _DaftarPageState extends State<DaftarPage> {
                               height: 1.3,
                             ),
                             children: [
-                              TextSpan(
-                                text: 'Saya menyetujui ',
-                              ),
+                              TextSpan(text: 'Saya menyetujui '),
                               TextSpan(
                                 text: 'Syarat & Ketentuan',
                                 style: TextStyle(
@@ -490,9 +468,7 @@ class _DaftarPageState extends State<DaftarPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              TextSpan(
-                                text: ' serta ',
-                              ),
+                              TextSpan(text: ' serta '),
                               TextSpan(
                                 text: 'Kebijakan Privasi',
                                 style: TextStyle(
@@ -500,9 +476,7 @@ class _DaftarPageState extends State<DaftarPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              TextSpan(
-                                text: ' TernateSpot.',
-                              ),
+                              TextSpan(text: ' TernateSpot.'),
                             ],
                           ),
                         ),
@@ -547,10 +521,7 @@ class _DaftarPageState extends State<DaftarPage> {
                                   ),
                                 ),
                                 SizedBox(width: 8),
-                                Icon(
-                                  Icons.arrow_forward,
-                                  size: 17,
-                                ),
+                                Icon(Icons.arrow_forward, size: 17),
                               ],
                             ),
                     ),
@@ -561,11 +532,7 @@ class _DaftarPageState extends State<DaftarPage> {
                   // PEMBATAS
                   Row(
                     children: [
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade300,
-                        ),
-                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
@@ -576,11 +543,7 @@ class _DaftarPageState extends State<DaftarPage> {
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade300,
-                        ),
-                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
                     ],
                   ),
 
@@ -602,9 +565,7 @@ class _DaftarPageState extends State<DaftarPage> {
                       },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        side: const BorderSide(
-                          color: Color(0xFFE2E6ED),
-                        ),
+                        side: const BorderSide(color: Color(0xFFE2E6ED)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -638,14 +599,9 @@ class _DaftarPageState extends State<DaftarPage> {
                   // SUDAH PUNYA AKUN
                   const Text.rich(
                     TextSpan(
-                      style: TextStyle(
-                        color: Color(0xFF9299A6),
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: Color(0xFF9299A6), fontSize: 11),
                       children: [
-                        TextSpan(
-                          text: 'Sudah punya akun? ',
-                        ),
+                        TextSpan(text: 'Sudah punya akun? '),
                         TextSpan(
                           text: 'Masuk Sekarang',
                           style: TextStyle(
@@ -669,10 +625,7 @@ class _DaftarPageState extends State<DaftarPage> {
                     ),
                     label: const Text(
                       'Jelajah sebagai Tamu',
-                      style: TextStyle(
-                        color: Color(0xFF87909E),
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: Color(0xFF87909E), fontSize: 11),
                     ),
                     style: TextButton.styleFrom(
                       backgroundColor: const Color(0xFFEAF0F9),
