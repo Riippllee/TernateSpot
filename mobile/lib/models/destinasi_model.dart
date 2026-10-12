@@ -1,4 +1,6 @@
 class DestinasiModel {
+
+  // Menyimpan informasi utama destinasi
   final int idDestinasi;
   final int idKategori;
   final String namaDestinasi;
@@ -11,6 +13,7 @@ class DestinasiModel {
   final DateTime tanggalDaftar;
   final DateTime tanggalPerubahan;
 
+  // Constructor digunakan untuk membuat object DestinasiModel
   DestinasiModel({
     required this.idDestinasi,
     required this.idKategori,
@@ -25,6 +28,7 @@ class DestinasiModel {
     required this.tanggalPerubahan,
   });
 
+  // Factory constructor digunakan untuk mengubah data JSON dari database/API
   factory DestinasiModel.fromJson(Map<String, dynamic> json) {
     return DestinasiModel(
       idDestinasi: json['id_destinasi'] ?? 0,
@@ -32,15 +36,27 @@ class DestinasiModel {
       namaDestinasi: json['nama_destinasi'] ?? '',
       deskripsi: json['deskripsi'] ?? '',
       alamat: json['alamat'] ?? '',
+      
+      // Konversi nilai latitude dan longitude menjadi tipe double
       latitude: (json['latitude'] ?? 0).toDouble(),
       longitude: (json['longitude'] ?? 0).toDouble(),
+
       fotoUtama: json['foto_utama'] ?? '',
       status: json['status'] ?? true,
-      tanggalDaftar: json['tanggal_daftar'] != null ? DateTime.parse(json['tanggal_daftar']) : DateTime.now(),
-      tanggalPerubahan: json['tanggal_perubahan'] != null ? DateTime.parse(json['tanggal_perubahan']) : DateTime.now(),
+
+      // Mengubah data tanggal dari format String JSON menjadi DateTime
+      tanggalDaftar: json['tanggal_daftar'] != null 
+          ? DateTime.parse(json['tanggal_daftar']) 
+          : DateTime.now(),
+
+      tanggalPerubahan: json['tanggal_perubahan'] != null 
+          ? DateTime.parse(json['tanggal_perubahan']) 
+          : DateTime.now(),
     );
   }
 
+  // Fungsi toJson digunakan untuk mengubah object DestinasiModel
+  // menjadi format JSON agar dapat dikirim kembali ke database/API
   Map<String, dynamic> toJson() {
     return {
       'id_kategori': idKategori,

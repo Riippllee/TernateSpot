@@ -5,6 +5,7 @@ import '../../controller/destinasi_controller.dart';
 import '../../models/destinasi_model.dart';
 import '../../models/kategori_model.dart';
 
+// Halaman utama untuk menampilkan daftar destinasi
 class DestinasiListPage extends StatefulWidget {
   const DestinasiListPage({Key? key}) : super(key: key);
 
@@ -12,18 +13,24 @@ class DestinasiListPage extends StatefulWidget {
   State<DestinasiListPage> createState() => _DestinasiListPageState();
 }
 
+// State yang mengatur perubahan data pada halaman destinasi
 class _DestinasiListPageState extends State<DestinasiListPage> {
   final DestinasiController _controller = DestinasiController();
   final ImagePicker _picker = ImagePicker();
-  
+
+  // Menyimpan daftar data destinasi dan kategori
   List<DestinasiModel> _listDestinasi = [];
   List<KategoriModel> _listKategori = [];
+
+  // Variabel untuk mengatur status loading dan pesan error
   bool _isLoading = true;
   String? _errorMessage;
-  
-  Uint8List? _selectedImageBytes; 
+
+  //menyimpan data gambar dalam bentuk byte dan menentukan proses uplaod
+  Uint8List? _selectedImageBytes;
   bool _isUploading = false;
 
+  // Controller untuk mengambil nilai input dari form
   final _namaController = TextEditingController();
   final _alamatController = TextEditingController();
   final _deskripsiController = TextEditingController();
@@ -40,6 +47,7 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
 
   @override
   void dispose() {
+    // Membersihkan controller agar tidak terjadi kebocoran resourc
     _namaController.dispose();
     _alamatController.dispose();
     _deskripsiController.dispose();
@@ -50,6 +58,7 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     super.dispose();
   }
 
+  // Fungsi untuk mengambil data destinasi dan kategori dari database
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
@@ -64,7 +73,8 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
         _listKategori = kategori;
         _isLoading = false;
         if (_listKategori.isNotEmpty) {
-          _kategoriIdController.text = _listKategori.first.idKategori.toString();
+          _kategoriIdController.text = _listKategori.first.idKategori
+              .toString();
         }
       });
     } catch (e) {
@@ -76,6 +86,7 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     }
   }
 
+  // Fungsi untuk menampilkan dialog tambah kategori,
   void _showTambahKategoriDialog() {
     _kategoriNamaController.clear();
     showDialog(
@@ -84,23 +95,36 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
         title: const Text('Tambah Kategori Baru'),
         content: TextField(
           controller: _kategoriNamaController,
-          decoration: const InputDecoration(labelText: 'Nama Kategori (misal: Pantai)', border: OutlineInputBorder()),
+          decoration: const InputDecoration(
+            labelText: 'Nama Kategori (misal: Pantai)',
+            border: OutlineInputBorder(),
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (_kategoriNamaController.text.isNotEmpty) {
                 try {
-                  await _controller.tambahKategori(_kategoriNamaController.text);
+                  await _controller.tambahKategori(
+                    _kategoriNamaController.text,
+                  );
                   if (mounted) Navigator.pop(context);
                   _loadData();
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kategori berhasil ditambahkan!')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Kategori berhasil ditambahkan!'),
+                      ),
+                    );
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text('Gagal: $e')));
                   }
                 }
               }
@@ -112,6 +136,7 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     );
   }
 
+  // Fungsi untuk mengambil gambar dari galeri,
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -122,10 +147,12 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     }
   }
 
+  // Fungsi untuk melakukan proses upload gambar,
   Future<void> _uploadAndSave() async {
     if (_selectedImageBytes == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilih gambar dulu!')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Pilih gambar dulu!')));
       }
       return;
     }
@@ -137,7 +164,7 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     try {
       // Upload gambar
       await _controller.uploadGambar(_selectedImageBytes!, 'foto-destinasi');
-      
+
       final safeKategoriId = int.tryParse(_kategoriIdController.text) ?? 1;
       final safeLat = double.tryParse(_latController.text) ?? 0.0;
       final safeLong = double.tryParse(_longController.text) ?? 0.0;
@@ -151,20 +178,23 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
         longitude: safeLong,
         fotoBytes: _selectedImageBytes!,
       );
-      
+
       if (success) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Berhasil ditambahkan!')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Berhasil ditambahkan!')),
+          );
         }
         _resetForm();
-        if (mounted) Navigator.pop(context); 
-        _loadData(); 
+        if (mounted) Navigator.pop(context);
+        _loadData();
       } else {
         throw Exception('Gagal menyimpan ke database.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       setState(() => _isUploading = false);
@@ -175,6 +205,7 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     });
   }
 
+  // Fungsi untuk mengosongkan seluruh input form
   void _resetForm() {
     _namaController.clear();
     _alamatController.clear();
@@ -184,20 +215,24 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     setState(() => _selectedImageBytes = null);
   }
 
+  // Fungsi untuk menghapus data destinasi berdasarkan ID,
   Future<void> _hapusDestinasi(int id) async {
     try {
       await _controller.hapusDestinasi(id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Berhasil dihapus!')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Berhasil dihapus!')));
       }
       _loadData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal hapus: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Gagal hapus: $e')));
       }
     }
   }
 
+  // Fungsi untuk menampilkan form dialog tambah destinasi baru,
   void _showAddDialog() {
     showDialog(
       context: context,
@@ -209,37 +244,78 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: _namaController, decoration: const InputDecoration(labelText: 'Nama Destinasi *', border: OutlineInputBorder())),
-                  const SizedBox(height: 8),
-                  TextField(controller: _alamatController, decoration: const InputDecoration(labelText: 'Alamat *', border: OutlineInputBorder())),
-                  const SizedBox(height: 8),
-                  TextField(controller: _deskripsiController, decoration: const InputDecoration(labelText: 'Deskripsi', border: OutlineInputBorder()), maxLines: 2),
-                  const SizedBox(height: 8),
-                  TextField(controller: _latController, decoration: const InputDecoration(labelText: 'Latitude (pakai titik)', border: OutlineInputBorder()), keyboardType: TextInputType.number),
-                  const SizedBox(height: 8),
-                  TextField(controller: _longController, decoration: const InputDecoration(labelText: 'Longitude (pakai titik)', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+                  TextField(
+                    controller: _namaController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Destinasi *',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
-                    controller: _kategoriIdController, 
+                    controller: _alamatController,
+                    decoration: const InputDecoration(
+                      labelText: 'Alamat *',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _deskripsiController,
+                    decoration: const InputDecoration(
+                      labelText: 'Deskripsi',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _latController,
+                    decoration: const InputDecoration(
+                      labelText: 'Latitude (pakai titik)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _longController,
+                    decoration: const InputDecoration(
+                      labelText: 'Longitude (pakai titik)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _kategoriIdController,
                     decoration: InputDecoration(
-                      labelText: 'ID Kategori *', 
+                      labelText: 'ID Kategori *',
                       border: const OutlineInputBorder(),
-                      helperText: _listKategori.isNotEmpty 
-                          ? 'Tersedia: ${_listKategori.map((k) => '${k.idKategori}=${k.namaKategori}').join(', ')}' 
+                      helperText: _listKategori.isNotEmpty
+                          ? 'Tersedia: ${_listKategori.map((k) => '${k.idKategori}=${k.namaKategori}').join(', ')}'
                           : '⚠️ Tambah kategori dulu via tombol di atas!',
-                    ), 
+                    ),
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 10),
-                  
+
                   _selectedImageBytes == null
-                      ? const Text('Belum ada gambar dipilih', style: TextStyle(color: Colors.grey))
+                      ? const Text(
+                          'Belum ada gambar dipilih',
+                          style: TextStyle(color: Colors.grey),
+                        )
                       : ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.memory(_selectedImageBytes!, height: 100, width: double.infinity, fit: BoxFit.cover),
+                          child: Image.memory(
+                            _selectedImageBytes!,
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                   const SizedBox(height: 8),
-                  
+
                   ElevatedButton.icon(
                     onPressed: _pickImage,
                     icon: const Icon(Icons.image),
@@ -249,10 +325,16 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Batal'),
+              ),
               _isUploading
                   ? const CircularProgressIndicator()
-                  : ElevatedButton(onPressed: _uploadAndSave, child: const Text('Simpan')),
+                  : ElevatedButton(
+                      onPressed: _uploadAndSave,
+                      child: const Text('Simpan'),
+                    ),
             ],
           );
         },
@@ -260,9 +342,11 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
     );
   }
 
+  // Fungsi build digunakan untuk membuat tampilan utama halaman,
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // AppBar berisi judul halaman dan tombol tambah kategori
       appBar: AppBar(
         title: const Text('Admin Test (Web Ready)'),
         backgroundColor: Colors.teal,
@@ -274,69 +358,87 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
           ),
         ],
       ),
+
+      // Body menampilkan kondisi berbeda berdasarkan status data
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
-                )
-              : _listDestinasi.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Belum ada destinasi.\n1. Tambah Kategori di atas.\n2. Tambah Destinasi di bawah.',
-                        textAlign: TextAlign.center,
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            )
+          : _listDestinasi.isEmpty
+          ? const Center(
+              child: Text(
+                'Belum ada destinasi.\n1. Tambah Kategori di atas.\n2. Tambah Destinasi di bawah.',
+                textAlign: TextAlign.center,
+              ),
+            )
+          // Menampilkan seluruh data destinasi dalam bentuk list card
+          : ListView.builder(
+              itemCount: _listDestinasi.length,
+              itemBuilder: (context, index) {
+                final item = _listDestinasi[index];
+                return Card(
+                  margin: const EdgeInsets.all(8),
+                  child: ListTile(
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        item.fotoUtama,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.broken_image),
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: _listDestinasi.length,
-                      itemBuilder: (context, index) {
-                        final item = _listDestinasi[index];
-                        return Card(
-                          margin: const EdgeInsets.all(8),
-                          child: ListTile(
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                item.fotoUtama, 
-                                width: 60, 
-                                height: 60, 
-                                fit: BoxFit.cover, 
-                                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                    ),
+                    title: Text(
+                      item.namaDestinasi,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '${item.alamat}\nKategori ID: ${item.idKategori}',
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text('Hapus Destinasi?'),
+                            content: Text(
+                              'Yakin ingin menghapus ${item.namaDestinasi}?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Batal'),
                               ),
-                            ),
-                            title: Text(item.namaDestinasi, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text('${item.alamat}\nKategori ID: ${item.idKategori}'),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () async {
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: const Text('Hapus Destinasi?'),
-                                    content: Text('Yakin ingin menghapus ${item.namaDestinasi}?'),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context, true), 
-                                        child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (confirm == true) _hapusDestinasi(item.idDestinasi);
-                              },
-                            ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text(
+                                  'Hapus',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
                           ),
                         );
+                        if (confirm == true) _hapusDestinasi(item.idDestinasi);
                       },
                     ),
+                  ),
+                );
+              },
+            ),
+      // Tombol floating untuk membuka form tambah destinasi
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
         backgroundColor: Colors.teal,
