@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../controller/rekomendasi_controller.dart';
-import '../../model/rekomendasi_model.dart';
+import '../../../../../../controller/rekomendasi_controller.dart';
+import '../../../../../../model/rekomendasi_model.dart';
 
 class RekomendasiTest extends StatefulWidget {
   const RekomendasiTest({super.key});

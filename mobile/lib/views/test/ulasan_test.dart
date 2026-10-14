@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../controller/ulasan_controller.dart';
-import '../../model/ulasan_model.dart';
+import '../../../../../../controller/ulasan_controller.dart';
+import '../../../../../../model/ulasan_model.dart';
 
 class UlasanTest extends StatefulWidget {
   const UlasanTest({super.key});

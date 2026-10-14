@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../controller/log_admin_controller.dart';
-import '../../model/log_admin_model.dart'; //  menyimpan data log admin dalam bentuk object Dart
+import '../../../../../../controller/log_admin_controller.dart';
+import '../../../../../../model/log_admin_model.dart'; //  menyimpan data log admin dalam bentuk object Dart
 
 // LogAdminTest merupakan halaman tampilan (View)
 class LogAdminTest extends StatefulWidget {
