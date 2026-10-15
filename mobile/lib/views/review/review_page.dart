@@ -1,42 +1,69 @@
 import 'package:flutter/material.dart';
 
+/// [ReviewPage] adalah halaman stateless yang menampilkan ringkasan ulasan,
+/// statistik rating, filter ulasan, serta daftar ulasan dari pengguna.
 class ReviewPage extends StatelessWidget {
   const ReviewPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Warna latar belakang utama halaman (abu-abu sangat muda)
       backgroundColor: const Color(0xFFF8F9FA),
+      
+      // ==========================================
+      // APP BAR (Bagian Atas Halaman)
+      // ==========================================
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0, // Menghilangkan bayangan di bawah AppBar
+        
+        // Tombol kembali (Back Button)
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
+        
+        // Judul halaman
         title: const Text(
           'Ulasan & Reviews',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
+        
+        // Aksi/Tombol tambahan di kanan AppBar
         actions: [
+          // Tombol bagikan
           IconButton(
             icon: const Icon(Icons.share_outlined, color: Colors.black87),
             onPressed: () {},
           ),
+          // Tombol menu opsi (titik tiga)
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.black87),
             onPressed: () {},
           ),
         ],
       ),
+
+      // ==========================================
+      // BODY (Konten Utama yang Bisa Di-scroll)
+      // ==========================================
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Card Ringkasan Rating & Progress Bar
+            // ----------------------------------------------------
+            // 1. CARD RINGKASAN RATING & PROGRESS BAR
+            // ----------------------------------------------------
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 0,
               color: Colors.white,
               child: Padding(
@@ -45,15 +72,19 @@ class ReviewPage extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        // Container Angka Rating
+                        // --- Kotak Angka Rating Keseluruhan ---
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF3F4F6),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
                             children: [
+                              // Angka rata-rata rating
                               const Text(
                                 '4.8',
                                 style: TextStyle(
@@ -61,6 +92,7 @@ class ReviewPage extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              // 5 Bintang kecil warna emas
                               Row(
                                 children: List.generate(
                                   5,
@@ -72,16 +104,20 @@ class ReviewPage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
+                              // Keterangan batas rating
                               const Text(
                                 'dari 5.0',
-                                style: TextStyle(fontSize: 10, color: Colors.grey),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(width: 16),
 
-                        // Progress Bar Rating
+                        // --- Progress Bar Breakdown Rating (1-5 Bintang) ---
                         Expanded(
                           child: Column(
                             children: [
@@ -96,13 +132,14 @@ class ReviewPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Divider(height: 1),
+                    const Divider(height: 1), // Garis pembatas horizontal
                     const SizedBox(height: 12),
 
-                    // Detail Jumlah Ulasan & Persentase Senang
+                    // --- Informasi Tambahan (Jumlah Ulasan & Tingkat Kepuasan) ---
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Jumlah pengulas terverifikasi
                         Row(
                           children: [
                             Icon(Icons.people_outline, size: 16, color: Colors.grey),
@@ -113,6 +150,7 @@ class ReviewPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                        // Persentase pelanggan yang senang
                         Row(
                           children: [
                             Icon(Icons.thumb_up_alt_outlined, size: 16, color: Colors.green),
@@ -135,7 +173,9 @@ class ReviewPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Tab Filter Ulasan
+            // ----------------------------------------------------
+            // 2. TAB FILTER ULASAN (Horizontal Scroll)
+            // ----------------------------------------------------
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -150,7 +190,10 @@ class ReviewPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Ulasan 1
+            // ----------------------------------------------------
+            // 3. DAFTAR KARTU ULASAN PENGGUNA
+            // ----------------------------------------------------
+            // Ulasan Pertama (Pengguna Terverifikasi)
             _buildReviewCard(
               name: 'Fikri Ramadhan',
               isVerified: true,
@@ -163,7 +206,7 @@ class ReviewPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Ulasan 2
+            // Ulasan Kedua (Pengguna Biasa)
             _buildReviewCard(
               name: 'Djuleha',
               isVerified: false,
@@ -180,6 +223,14 @@ class ReviewPage extends StatelessWidget {
     );
   }
 
+  // ==========================================
+  // HELPER WIDGETS (Fungsi Pembantu UI)
+  // ==========================================
+
+  /// Membangun satu baris progress bar statistik rating bintang.
+  /// - [starText]: Label angka bintang (misal: "5")
+  /// - [percent]: Nilai persentase dalam bentuk desimal 0.0 - 1.0 (misal: 0.85 untuk 85%)
+  /// - [percentText]: Teks persentase yang ditampilkan di ujung kanan (misal: "85%")
   Widget _buildRatingBar(String starText, double percent, String percentText) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.5),
@@ -189,6 +240,8 @@ class ReviewPage extends StatelessWidget {
           const SizedBox(width: 2),
           const Icon(Icons.star, size: 10, color: Colors.amber),
           const SizedBox(width: 6),
+          
+          // Progress bar horizontal
           Expanded(
             child: LinearProgressIndicator(
               value: percent,
@@ -199,6 +252,8 @@ class ReviewPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
+          
+          // Teks persentase
           SizedBox(
             width: 26,
             child: Text(
@@ -212,6 +267,9 @@ class ReviewPage extends StatelessWidget {
     );
   }
 
+  /// Membangun tombol chip/kategori filter ulasan.
+  /// - [label]: Teks filter (misal: "Semua (240)")
+  /// - [isSelected]: Menentukan apakah chip sedang aktif/dipilih
   Widget _buildFilterChip(String label, {required bool isSelected}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -231,6 +289,14 @@ class ReviewPage extends StatelessWidget {
     );
   }
 
+  /// Membangun kartu ulasan individu dari seorang pengguna.
+  /// - [name]: Nama pengguna
+  /// - [isVerified]: Menampilkan centang biru jika `true`
+  /// - [userCategory]: Kategori pengguna (misal: "Wisatawan Lokal"), dikosongkan jika tidak ada
+  /// - [date]: Waktu pembuatan ulasan
+  /// - [rating]: Nilai rating yang diberikan (misal: "5.0")
+  /// - [comment]: Isi teks ulasan
+  /// - [likesCount]: Jumlah orang yang merasa ulasan ini membantu
   Widget _buildReviewCard({
     required String name,
     required bool isVerified,
@@ -249,18 +315,23 @@ class ReviewPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- Baris Atas: Foto Profil, Nama, Lencana, Tanggal, & Badge Rating ---
             Row(
               children: [
+                // Avatar Pengguna
                 const CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.grey,
                   child: Icon(Icons.person, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 10),
+                
+                // Informasi Nama, Status Terverifikasi, Kategori, & Tanggal
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Nama + Icon Centang Terverifikasi
                       Row(
                         children: [
                           Text(
@@ -272,15 +343,24 @@ class ReviewPage extends StatelessWidget {
                           ),
                           if (isVerified) const SizedBox(width: 4),
                           if (isVerified)
-                            const Icon(Icons.check_circle, color: Colors.blue, size: 14),
+                            const Icon(
+                              Icons.check_circle,
+                              color: Colors.blue,
+                              size: 14,
+                            ),
                         ],
                       ),
                       const SizedBox(height: 2),
+                      
+                      // Kategori Pengguna + Tanggal
                       Row(
                         children: [
                           if (userCategory.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               margin: const EdgeInsets.only(right: 6),
                               decoration: BoxDecoration(
                                 color: Colors.grey.shade200,
@@ -288,20 +368,31 @@ class ReviewPage extends StatelessWidget {
                               ),
                               child: Text(
                                 userCategory,
-                                style: const TextStyle(fontSize: 9, color: Colors.black54),
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.black54,
+                                ),
                               ),
                             ),
                           Text(
                             date,
-                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
+
+                // Badge Nilai Rating Pengguna (Kuning Emas)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF8E1),
                     borderRadius: BorderRadius.circular(12),
@@ -323,23 +414,39 @@ class ReviewPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+
+            // --- Teks Isi Ulasan ---
             Text(
               comment,
-              style: const TextStyle(fontSize: 12, color: Colors.black87, height: 1.4),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 12),
+
+            // --- Baris Bawah: Tombol "Membantu" (Like) & Tombol Bagikan Ulasan ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Badge Tombol Membantu (Sukai Ulasan)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.thumb_up, size: 12, color: Color(0xFF1A73E8)),
+                      const Icon(
+                        Icons.thumb_up,
+                        size: 12,
+                        color: Color(0xFF1A73E8),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Membantu ($likesCount)',
@@ -352,8 +459,14 @@ class ReviewPage extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // Tombol Bagikan Ulasan Ini
                 IconButton(
-                  icon: const Icon(Icons.share_outlined, size: 16, color: Colors.grey),
+                  icon: const Icon(
+                    Icons.share_outlined,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
                   onPressed: () {},
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,

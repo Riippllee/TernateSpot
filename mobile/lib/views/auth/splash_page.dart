@@ -1,215 +1,227 @@
 import 'package:flutter/material.dart';
-import '../review/review_page.dart';
+import 'package:ternatespot/views/home/home_page.dart';
 
-/// Class [SplashPage] berfungsi sebagai halaman pembuka (Splash Screen) aplikasi.
-/// Menampilkan latar belakang gambar, logo kustom, teks promosi, dan tombol navigasi.
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
 
+  void _goToHome(BuildContext context) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const HomePage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      // Scaffold adalah struktur dasar layout visual dalam Material Design.
       body: Stack(
-        // Stack digunakan untuk menumpuk elemen secara z-axis (berlapis dari belakang ke depan).
         children: [
-          // =========================================================================
-          // LAPISAN 1: GAMBAR LATAR BELAKANG FULLSCREEN
-          // =========================================================================
+          // Background Pemandangan Gunung Gamalama & Pantai Ternate
           Positioned.fill(
-            // Positioned.fill memastikan widget mengisi seluruh area layar yang tersedia.
-            child: Image.asset(
-              'Asset/Image/Background.jpg',
-              fit: BoxFit.cover, // Memastikan gambar memenuhi seluruh layar tanpa merusak rasio gambar.
+            child: CustomPaint(
+              painter: _RealisticIslandPainter(),
             ),
           ),
 
-          // =========================================================================
-          // LAPISAN 2: OVERLAY TRANSPARAN (DARK FILTER)
-          // =========================================================================
+          // Overlay Gradient Tipis
           Positioned.fill(
             child: Container(
-              // Memberikan warna hitam transparan (opacity 15%) di atas gambar
-              // agar teks di atasnya tetap terbaca jelas (meningkatkan kontras).
-              color: Colors.black.withOpacity(0.15),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.08),
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.15),
+                    Colors.black.withOpacity(0.35),
+                  ],
+                  stops: const [0.0, 0.35, 0.70, 1.0],
+                ),
+              ),
             ),
           ),
 
-          // =========================================================================
-          // LAPISAN 3: KONTEN UTAMA (UI Teks, Logo, dan Tombol)
-          // =========================================================================
+          // Konten Utama
           SafeArea(
-            // SafeArea menghindari konten tertutup oleh notch, status bar, atau navigasi sistem HP.
-            child: Padding(
-              // Menambahkan margin/jarak di sekeliling konten internal.
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-              child: Column(
-                // Column menyusun widget secara vertikal dari atas ke bawah.
-                // mainAxisAlignment: spaceBetween membagi ruang agar elemen atas, tengah, dan bawah terpisah seimbang.
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Penyeimbang tata letak paling atas
-                  const SizedBox(height: 20),
+            child: Column(
+              children: [
+                const Spacer(flex: 2),
 
-                  // -----------------------------------------------------------------
-                  // BAGIAN TENGAH: LOGO, JUDUL, BADGE, & SLOGAN
-                  // -----------------------------------------------------------------
-                  Column(
-                    mainAxisSize: MainAxisSize.min, // Ukuran kolom mengikuti tinggi konten di dalamnya
+                // Logo Box
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(26),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.18),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: CustomPaint(
+                      size: const Size(60, 60),
+                      painter: _LogoPainter(),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Judul "TernateSpot"
+                RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                      fontFamily: 'Poppins',
+                    ),
                     children: [
-                      // 1. WIDGET LOGO UTAMA
-                      Container(
-                        width: 90,
-                        height: 90,
+                      TextSpan(
+                        text: 'Ternate',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      TextSpan(
+                        text: 'Spot',
+                        style: TextStyle(color: Color(0xFFB3CDE0)),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Tagline Pill
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.20),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Text(
+                    'WISATA KOTA TERNATE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2.2,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Tagline Utama
+                const Text(
+                  'Jelajahi Ternate,\nTemukan Spotmu.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+
+                const Spacer(flex: 3),
+
+                // Gelombang Transparan
+                SizedBox(
+                  width: screenWidth,
+                  height: 40,
+                  child: CustomPaint(
+                    size: Size(screenWidth, 40),
+                    painter: _WavePainter(),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Tombol "Mulai Jelajah"
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _goToHome(context),
+                      borderRadius: BorderRadius.circular(30),
+                      child: Container(
+                        height: 58,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(24), // Sudut melengkung (rounded corner)
+                          borderRadius: BorderRadius.circular(30),
                           boxShadow: [
-                            // Efek bayangan halus di belakang kotak logo
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 15,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
-                        padding: const EdgeInsets.all(16),
-                        // CustomPaint menggambar grafik vektor kustom (Gunung, Matahari, Ombak)
-                        child: CustomPaint(
-                          painter: TernateLogoPainter(),
-                        ),
-                      ),
-                      const SizedBox(height: 20), // Spasi antar elemen
-
-                      // 2. JUDUL APLIKASI ("TernateSpot")
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center, // Menyusun teks tepat di tengah
-                        children: const [
-                          Text(
-                            'Ternate',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                        child: Row(
+                          children: [
+                            const Text(
+                              'Mulai Jelajah',
+                              style: TextStyle(
+                                color: Color(0xFF1D61E7),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Poppins',
+                              ),
                             ),
-                          ),
-                          Text(
-                            'Spot',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF60A5FA), // Warna biru muda sebagai penanda aksen
+                            const Spacer(),
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1D61E7),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // 3. BADGE TEKS ("WISATA KOTA TERNATE")
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25), // Latar transparan seperti kaca (frosted glass)
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'WISATA KOTA TERNATE',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.1, // Jarak antar huruf diperlebar
-                          ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 32),
-
-                      // 4. TEKS SUB-DESKRIPSI / SLOGAN
-                      const Text(
-                        'Jelajahi Ternate,\nTemukan Spotmu.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          height: 1.3, // Jarak vertikal antar baris kalimat
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
+                ),
 
-                  // -----------------------------------------------------------------
-                  // BAGIAN BAWAH: TOMBOL AKSI & INFO VERSI
-                  // -----------------------------------------------------------------
-                  Column(
-                    children: [
-                      // 1. TOMBOL "MULAI JELAJAH"
-                      SizedBox(
-                        width: double.infinity, // Membuat tombol memenuhi lebar layar
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Navigator.pushReplacement berpindah ke ReviewPage sekaligus 
-                            // menghapus SplashPage dari tumpukan navigasi (sehingga tidak bisa di-back).
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ReviewPage(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28), // Bentuk kapsul (pill shape)
-                            ),
-                            padding: const EdgeInsets.only(left: 24, right: 8),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // Label Tombol
-                              const Text(
-                                'Mulai Jelajah',
-                                style: TextStyle(
-                                  color: Color(0xFF1E3A8A), // Biru gelap
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              // Ikon Panah Kanan dalam Lingkaran Biru
-                              Container(
-                                width: 42,
-                                height: 42,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF2563EB), // Biru terang
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-                      // 2. TEKS KETERANGAN VERSI APLIKASI
-                      Text(
-                        'v1.0.0. " Permata Maluku Utara',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+                // Footer
+                Text(
+                  'v1.0.0 • "Penjata Metuku Utara"',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.70),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Poppins',
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 16),
+              ],
             ),
           ),
         ],
@@ -218,74 +230,202 @@ class SplashPage extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// CLASS CUSTOM PAINTER UNTUK LOGO VEKTOR
-// =============================================================================
-/// Class [TernateLogoPainter] digunakan untuk menggambar kustom grafik logo 
-/// berupa gabungan: Matahari Oranye, Segitiga Gunung Biru, dan Gelombang Laut Biru.
-class TernateLogoPainter extends CustomPainter {
+class _RealisticIslandPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // -------------------------------------------------------------------------
-    // ELEMEN 1: MATAHARI JINGGA / ORANYE
-    // -------------------------------------------------------------------------
-    final sunPaint = Paint()
-      ..color = const Color(0xFFF97316) // Warna oranye terang
-      ..style = PaintingStyle.fill;      // Tipe cat: Blok padat (fill)
+    final w = size.width;
+    final h = size.height;
 
-    // Menggambar lingkaran matahari di koordinat (72% lebar, 28% tinggi) dari canvas
-    canvas.drawCircle(
-      Offset(size.width * 0.72, size.height * 0.28),
-      size.width * 0.11, // Radius lingkaran
-      sunPaint,
-    );
+    final skyPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF1E6DB3),
+          Color(0xFF3383CA),
+          Color(0xFF5CA3DE),
+          Color(0xFF8DC0EC),
+        ],
+        stops: [0.0, 0.4, 0.7, 1.0],
+      ).createShader(Rect.fromLTWH(0, 0, w, h * 0.48));
 
-    // -------------------------------------------------------------------------
-    // ELEMEN 2: GARIS SEGITIGA GUNUNG (Simbol Gunung Gamalama)
-    // -------------------------------------------------------------------------
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, h * 0.48), skyPaint);
+
+    final cloudPaint = Paint()
+      ..color = Colors.white.withOpacity(0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+
+    canvas.drawCircle(Offset(w * 0.15, h * 0.28), 65, cloudPaint);
+    canvas.drawCircle(Offset(w * 0.85, h * 0.32), 80, cloudPaint);
+    canvas.drawCircle(Offset(w * 0.50, h * 0.36), 50, cloudPaint);
+
+    final seaPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF1B5985),
+          Color(0xFF124368),
+          Color(0xFF0C304B),
+        ],
+      ).createShader(Rect.fromLTWH(0, h * 0.45, w, h * 0.55));
+
+    canvas.drawRect(Rect.fromLTWH(0, h * 0.45, w, h * 0.55), seaPaint);
+
     final mountainPaint = Paint()
-      ..color = const Color(0xFF2563EB) // Warna biru utama
-      ..style = PaintingStyle.stroke    // Tipe cat: Garis tepi (stroke)
-      ..strokeWidth = 4.5               // Ketebalan garis
-      ..strokeCap = StrokeCap.round     // Ujung garis dibuat membulat
-      ..strokeJoin = StrokeJoin.round;  // Sudut pertemuan garis dibuat membulat
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF3B5B42),
+          Color(0xFF2C4A33),
+          Color(0xFF1E3825),
+        ],
+      ).createShader(Rect.fromLTWH(0, h * 0.26, w, h * 0.32));
 
     final mountainPath = Path();
-    mountainPath.moveTo(size.width * 0.20, size.height * 0.58); // Titik awal (Kiri Bawah Gunung)
-    mountainPath.lineTo(size.width * 0.48, size.height * 0.22); // Garis ke Puncak Gunung
-    mountainPath.lineTo(size.width * 0.78, size.height * 0.58); // Garis ke Kanan Bawah Gunung
+    mountainPath.moveTo(-w * 0.1, h * 0.55);
+    mountainPath.cubicTo(w * 0.15, h * 0.48, w * 0.33, h * 0.34, w * 0.47, h * 0.27);
+    mountainPath.lineTo(w * 0.53, h * 0.27);
+    mountainPath.cubicTo(w * 0.67, h * 0.34, w * 0.85, h * 0.48, w * 1.1, h * 0.55);
+    mountainPath.lineTo(w * 1.1, h * 0.65);
+    mountainPath.lineTo(-w * 0.1, h * 0.65);
+    mountainPath.close();
 
     canvas.drawPath(mountainPath, mountainPaint);
 
-    // -------------------------------------------------------------------------
-    // ELEMEN 3: GARIS GELOMBANG LAUT (Simbol Perairan Ternate)
-    // -------------------------------------------------------------------------
-    final wavePaint = Paint()
-      ..color = const Color(0xFF2563EB)
+    final ridgePaint = Paint()
+      ..color = Colors.black.withOpacity(0.12)
+      ..style = PaintingStyle.fill;
+
+    final ridgePath = Path();
+    ridgePath.moveTo(w * 0.50, h * 0.27);
+    ridgePath.cubicTo(w * 0.44, h * 0.38, w * 0.38, h * 0.46, w * 0.20, h * 0.55);
+    ridgePath.lineTo(w * 0.58, h * 0.55);
+    ridgePath.close();
+
+    canvas.drawPath(ridgePath, ridgePaint);
+
+    final hillPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF2D5032),
+          Color(0xFF19321D),
+        ],
+      ).createShader(Rect.fromLTWH(0, h * 0.48, w, h * 0.25));
+
+    final hillPath = Path();
+    hillPath.moveTo(-w * 0.05, h * 0.55);
+    hillPath.cubicTo(w * 0.20, h * 0.49, w * 0.40, h * 0.51, w * 0.55, h * 0.53);
+    hillPath.cubicTo(w * 0.70, h * 0.48, w * 0.88, h * 0.49, w * 1.05, h * 0.53);
+    hillPath.lineTo(w * 1.05, h * 0.68);
+    hillPath.lineTo(-w * 0.05, h * 0.68);
+    hillPath.close();
+
+    canvas.drawPath(hillPath, hillPaint);
+
+    final shorePaint = Paint()..color = const Color(0xFF22281D);
+    final shorePath = Path();
+    shorePath.moveTo(w * 0.55, h * 0.55);
+    shorePath.quadraticBezierTo(w * 0.72, h * 0.60, w * 0.82, h * 0.68);
+    shorePath.quadraticBezierTo(w * 0.90, h * 0.74, w * 1.0, h * 0.78);
+    shorePath.lineTo(w * 1.0, h * 0.82);
+    shorePath.lineTo(w * 0.50, h * 0.58);
+    shorePath.close();
+
+    canvas.drawPath(shorePath, shorePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _LogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    const primaryBlue = Color(0xFF1D61E7);
+
+    final sunPaint = Paint()
+      ..color = const Color(0xFFFF9800)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(
+      Offset(size.width * 0.65, size.height * 0.32),
+      size.width * 0.12,
+      sunPaint,
+    );
+
+    final mountainPaint = Paint()
+      ..color = primaryBlue
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.5
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+
+    final mountainPath = Path();
+    mountainPath.moveTo(size.width * 0.18, size.height * 0.62);
+    mountainPath.lineTo(size.width * 0.45, size.height * 0.30);
+    mountainPath.lineTo(size.width * 0.72, size.height * 0.62);
+
+    canvas.drawPath(mountainPath, mountainPaint);
+
+    final wavePaint = Paint()
+      ..color = primaryBlue
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
       ..strokeCap = StrokeCap.round;
 
     final wavePath = Path();
-    wavePath.moveTo(size.width * 0.15, size.height * 0.72); // Titik awal garis laut
-
-    // Menggambar kurva lengkung S pertama (lengkung bawah)
+    wavePath.moveTo(size.width * 0.15, size.height * 0.75);
     wavePath.quadraticBezierTo(
-      size.width * 0.32, size.height * 0.62, // Control Point 1 (titik tarik lengkungan)
-      size.width * 0.48, size.height * 0.74, // End Point 1
+      size.width * 0.35,
+      size.height * 0.65,
+      size.width * 0.55,
+      size.height * 0.75,
     );
-
-    // Menggambar kurva lengkung S kedua (lengkung atas)
     wavePath.quadraticBezierTo(
-      size.width * 0.64, size.height * 0.86, // Control Point 2
-      size.width * 0.85, size.height * 0.72, // End Point 2
+      size.width * 0.75,
+      size.height * 0.85,
+      size.width * 0.88,
+      size.height * 0.75,
     );
 
     canvas.drawPath(wavePath, wavePaint);
   }
 
-  // Mengontrol apakah grafik perlu digambar ulang.
-  // Diisi `false` karena logo ini bersifat statis.
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _WavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final wavePaint = Paint()
+      ..color = Colors.white.withOpacity(0.18)
+      ..style = PaintingStyle.fill;
+
+    final wavePath = Path();
+    wavePath.moveTo(0, size.height * 0.4);
+    wavePath.quadraticBezierTo(
+      size.width * 0.3,
+      size.height * 0.1,
+      size.width * 0.6,
+      size.height * 0.5,
+    );
+    wavePath.quadraticBezierTo(
+      size.width * 0.85,
+      size.height * 0.8,
+      size.width,
+      size.height * 0.5,
+    );
+    wavePath.lineTo(size.width, size.height);
+    wavePath.lineTo(0, size.height);
+    wavePath.close();
+
+    canvas.drawPath(wavePath, wavePaint);
+  }
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
