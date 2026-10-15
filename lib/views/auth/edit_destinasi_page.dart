@@ -1,27 +1,43 @@
+// Mengimpor komponen Material Design Flutter, seperti Scaffold, AppBar, TextField, dan Icon.
 import 'package:flutter/material.dart';
 
+// Widget halaman untuk mengedit informasi destinasi. StatefulWidget dipakai karena isi form dapat berubah.
 class EditDestinasiPage extends StatefulWidget {
+  // Menyimpan judul destinasi yang dikirim dari halaman sebelumnya; nilainya tidak dapat diubah.
   final String destinationTitle;
 
+  // Konstruktor halaman; menerima judul destinasi secara opsional.
   const EditDestinasiPage({
+    // Key membantu Flutter mengenali widget saat susunan widget berubah.
     super.key,
+    // Jika judul tidak dikirim, gunakan Pantai Sulamadaha sebagai nilai bawaan.
     this.destinationTitle = 'Pantai Sulamadaha',
   });
 
   @override
+  // Menghubungkan widget ini dengan objek State yang mengelola data dan tampilan dinamis.
   State<EditDestinasiPage> createState() => _EditDestinasiPageState();
 }
 
+// State halaman: menyimpan nilai input dan status pilihan yang bisa berubah.
 class _EditDestinasiPageState extends State<EditDestinasiPage> {
+  // Controller untuk membaca dan mengatur teks pada kolom nama destinasi.
   late TextEditingController _nameController;
+  // Controller untuk membaca dan mengatur teks pada kolom deskripsi.
   late TextEditingController _descController;
+  // Kategori yang sedang dipilih; nilai awalnya adalah Pantai.
   String _selectedCategory = 'Pantai';
+  // true berarti destinasi aktif/publik, false berarti draft/arsip.
   bool _isPublicActive = true;
 
   @override
+  // Dipanggil saat State pertama kali dibuat untuk menyiapkan nilai awal form.
   void initState() {
+    // Menjalankan proses inisialisasi milik kelas induk.
     super.initState();
+    // Mengisi kolom nama menggunakan judul yang diterima oleh widget.
     _nameController = TextEditingController(text: widget.destinationTitle);
+    // Membuat controller deskripsi dan mengisi teks deskripsi awal.
     _descController = TextEditingController(
       text:
           'Pantai Sulamadaha terkenal dengan julukan "Pantai Air Kaca" karena kejernihan air lautnya di Teluk Saomadoro. Pengunjung dapat menikmati sensasi menaiki kano transparan seolah melayang di atas air, snorkeling menikmati terumbu karang alami, serta',
@@ -29,16 +45,25 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
   }
 
   @override
+  // Dipanggil ketika halaman dilepas; resource controller harus dibersihkan.
   void dispose() {
+    // Melepaskan resource controller nama agar tidak terjadi kebocoran memori.
     _nameController.dispose();
+    // Melepaskan resource controller deskripsi.
     _descController.dispose();
+    // Menyelesaikan proses pembersihan dari kelas induk.
     super.dispose();
   }
 
   @override
+  // Menyusun seluruh tampilan halaman berdasarkan state saat ini.
   Widget build(BuildContext context) {
+    // Scaffold menyediakan kerangka dasar halaman: app bar dan area isi.
+    // Kerangka halaman yang berisi AppBar dan konten utama.
     return Scaffold(
+      // Memberi warna latar abu-abu kebiruan yang lembut pada halaman.
       backgroundColor: const Color(0xFFF4F7FA),
+      // Membuat bilah atas halaman.
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -51,6 +76,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
+                // Menutup halaman edit dan kembali ke halaman sebelumnya saat tombol ditekan.
                 onTap: () => Navigator.pop(context),
                 child: const Padding(
                   padding: EdgeInsets.all(8.0),
@@ -65,6 +91,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
           ),
         ),
         title: const Text(
+          // Judul yang ditampilkan pada AppBar.
           'Edit Destinasi',
           style: TextStyle(
             color: Colors.black87,
@@ -73,21 +100,31 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
           ),
         ),
       ),
+      // Membuat isi halaman dapat digulir jika kontennya melebihi tinggi layar.
       body: SingleChildScrollView(
+        // Memberi jarak 16 piksel di sekeliling konten.
         padding: const EdgeInsets.all(16.0),
+        // Menyusun kartu-kartu form secara vertikal dari atas ke bawah.
         child: Column(
           children: [
+            // Kartu pertama menampilkan foto sampul destinasi dan galeri foto pendukung.
             // CARD 1: FOTO UTAMA & GALERI PENDUKUNG
+            // Container membungkus bagian UI agar mudah diberi padding dan dekorasi.
             Container(
               padding: const EdgeInsets.all(16),
+              // Mengatur tampilan kotak, termasuk warna, sudut membulat, dan garis tepi.
               decoration: BoxDecoration(
+                // Memberi latar putih pada kartu.
                 color: Colors.white,
+                // Membulatkan sudut kartu sebesar 16 piksel.
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFEDF2F7)),
               ),
+              // Menata isi kartu secara vertikal.
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Baris judul bagian foto utama dan informasi batas format/ukuran file.
                   // Label Foto Utama
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -98,6 +135,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                               color: Color(0xFF0066FF), size: 18),
                           SizedBox(width: 6),
                           Text(
+                            // Label untuk menandai bagian foto sampul destinasi.
                             'FOTO UTAMA DESTINASI',
                             style: TextStyle(
                               fontSize: 12,
@@ -124,10 +162,12 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                   ),
                   const SizedBox(height: 12),
 
+                  // Menampilkan foto sampul yang saat ini digunakan.
                   // Display Gambar Utama Sampul
                   Container(
                     height: 175,
                     width: double.infinity,
+                    // Mengatur latar gambar dan bentuk kotak foto.
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       image: const DecorationImage(
@@ -137,8 +177,10 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                         fit: BoxFit.cover,
                       ),
                     ),
+                    // Stack memungkinkan label dan tombol ditumpuk di atas gambar.
                     child: Stack(
                       children: [
+                        // Label kecil yang diletakkan di atas foto sebagai penanda foto sampul.
                         // Badge Foto Sampul Utama
                         Positioned(
                           top: 10,
@@ -161,6 +203,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                           ),
                         ),
 
+                        // Ikon hapus dekoratif yang ditempatkan di sudut kanan atas foto.
                         // Tombol Hapus Sampul (Pojok Kanan Atas)
                         Positioned(
                           top: 10,
@@ -180,6 +223,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                           ),
                         ),
 
+                        // Menampilkan label Ganti Foto dan nama file di bagian bawah foto.
                         // Tombol Ganti Foto & Nama File (Bawah)
                         Positioned(
                           bottom: 10,
@@ -237,8 +281,10 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 16),
 
+                  // Bagian galeri berisi beberapa foto pendukung destinasi.
                   // Foto Pendukung (Galeri Tambahan)
                   const Text(
+                    // Judul bagian galeri foto tambahan.
                     'Foto Pendukung (Galeri Tambahan)',
                     style: TextStyle(
                       fontSize: 11,
@@ -259,6 +305,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                       ),
                       const SizedBox(width: 8),
 
+                      // Kotak ajakan untuk menambahkan foto ke galeri; pada kode ini masih berupa tampilan UI.
                       // Tombol Upload (Border Putus-putus)
                       Container(
                         width: 62,
@@ -277,6 +324,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                             Icon(Icons.add, color: Colors.grey, size: 18),
                             SizedBox(height: 2),
                             Text(
+                              // Teks pada kotak untuk menambahkan foto.
                               'Upload',
                               style:
                                   TextStyle(fontSize: 9, color: Colors.grey),
@@ -292,17 +340,24 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
             const SizedBox(height: 16),
 
+            // Kartu kedua berisi kolom nama, kategori, status publikasi, dan deskripsi.
             // CARD 2: INFORMASI UTAMA
+            // Container membungkus bagian UI agar mudah diberi padding dan dekorasi.
             Container(
               padding: const EdgeInsets.all(16),
+              // Mengatur tampilan kotak, termasuk warna, sudut membulat, dan garis tepi.
               decoration: BoxDecoration(
+                // Memberi latar putih pada kartu.
                 color: Colors.white,
+                // Membulatkan sudut kartu sebesar 16 piksel.
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFEDF2F7)),
               ),
+              // Menata isi kartu secara vertikal.
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header yang menandai bagian informasi destinasi.
                   // Label Header Informasi Utama
                   Row(
                     children: const [
@@ -310,6 +365,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                           color: Color(0xFF0066FF), size: 18),
                       SizedBox(width: 6),
                       Text(
+                        // Judul bagian informasi utama.
                         'INFORMASI UTAMA',
                         style: TextStyle(
                           fontSize: 12,
@@ -323,6 +379,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 16),
 
+                  // Label dan kolom teks untuk nama destinasi wisata.
                   // Input 1: Nama Destinasi Wisata
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -357,6 +414,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                     controller: _nameController,
                     style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600),
+                    // Mengatur tampilan kolom input, seperti warna latar, ikon, dan border.
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
@@ -377,6 +435,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 14),
 
+                  // Label dan dropdown untuk memilih kategori destinasi.
                   // Input 2: Kategori Wisata
                   Row(
                     children: const [
@@ -400,6 +459,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     value: _selectedCategory,
+                    // Daftar pilihan kategori yang tersedia di dropdown.
                     items: ['Pantai', 'Danau & Air', 'Sejarah & Benteng']
                         .map((cat) => DropdownMenuItem(
                               value: cat,
@@ -410,11 +470,14 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                               ),
                             ))
                         .toList(),
+                    // Callback yang dijalankan saat pengguna memilih kategori lain.
                     onChanged: (val) {
                       if (val != null) {
+                        // Memperbarui kategori dan meminta Flutter membangun ulang tampilan.
                         setState(() => _selectedCategory = val);
                       }
                     },
+                    // Mengatur tampilan kolom input, seperti warna latar, ikon, dan border.
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
@@ -438,6 +501,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 14),
 
+                  // Menyediakan pilihan untuk menampilkan destinasi ke publik atau menyimpannya sebagai draft.
                   // Input 3: Status Publikasi
                   Row(
                     children: const [
@@ -462,6 +526,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   Row(
                     children: [
+                      // Kartu pilihan pertama; destinasi akan ditandai aktif/publik.
                       // Opsi 1: Aktif / Publik
                       Expanded(
                         child: GestureDetector(
@@ -530,6 +595,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                       const SizedBox(width: 8),
 
+                      // Kartu pilihan kedua; destinasi ditandai draft/arsip dan disembunyikan.
                       // Opsi 2: Draft / Arsip
                       Expanded(
                         child: GestureDetector(
@@ -592,6 +658,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 14),
 
+                  // Label dan kolom teks panjang untuk menjelaskan destinasi wisata.
                   // Input 4: Deskripsi Destinasi
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -627,6 +694,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                     maxLines: 5,
                     style: const TextStyle(
                         fontSize: 12, color: Colors.black87, height: 1.4),
+                    // Mengatur tampilan kolom input, seperti warna latar, ikon, dan border.
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
@@ -650,19 +718,25 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
     );
   }
 
+// Fungsi pembantu agar setiap foto galeri dibuat dengan tampilan yang sama.
   // Widget Pembantu untuk Item Galeri Pendukung
+  // Menerima URL gambar dan mengembalikan widget thumbnail galeri.
   Widget _buildGalleryItem(String url) {
+    // Menumpuk gambar dan ikon tutup di atas satu sama lain.
     return Stack(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
+          // Memuat gambar dari alamat URL internet.
           child: Image.network(
             url,
             width: 62,
             height: 62,
+            // Memenuhi kotak thumbnail tanpa mengubah rasio gambar.
             fit: BoxFit.cover,
           ),
         ),
+        // Menempatkan ikon secara absolut pada posisi tertentu di atas gambar.
         Positioned(
           top: 4,
           right: 4,

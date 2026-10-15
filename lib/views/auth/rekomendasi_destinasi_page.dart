@@ -1,598 +1,598 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';  // Mengimpor library atau file yang dibutuhkan.
 
-class RekomendasiDestinasiPage extends StatefulWidget {
-  const RekomendasiDestinasiPage({super.key});
+class RekomendasiDestinasiPage extends StatefulWidget {  // Mendefinisikan halaman rekomendasi destinasi sebagai StatefulWidget.
+  const RekomendasiDestinasiPage({super.key});  // Konstruktor halaman rekomendasi.
 
-  @override
-  State<RekomendasiDestinasiPage> createState() => _RekomendasiDestinasiPageState();
-}
+  @override  // Menandai bahwa metode dari kelas induk ditimpa.
+  State<RekomendasiDestinasiPage> createState() => _RekomendasiDestinasiPageState();  // Membuat objek State untuk mengelola perubahan tampilan.
+} 
 
-class _RekomendasiDestinasiPageState extends State<RekomendasiDestinasiPage> {
-  int _selectedFilterIndex = 0;
+class _RekomendasiDestinasiPageState extends State<RekomendasiDestinasiPage> {  // Mendefinisikan state dan perilaku halaman rekomendasi.
+  int _selectedFilterIndex = 0;  // Menyimpan indeks filter yang sedang dipilih; awalnya filter pertama.
 
-  final List<String> _filters = [
-    'Semua',
-    'Populer',
-    'Bahari',
-    'Budaya',
-    'Gunung',
+  final List<String> _filters = [  // Membuat daftar pilihan filter.
+    'Semua',  // Nilai teks untuk daftar atau tampilan.
+    'Populer',  // Nilai teks untuk daftar atau tampilan.
+    'Bahari',  // Nilai teks untuk daftar atau tampilan.
+    'Budaya',  // Nilai teks untuk daftar atau tampilan.
+    'Gunung',  // Nilai teks untuk daftar atau tampilan.
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leadingWidth: 56,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Center(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => Navigator.pop(context),
-                child: const Padding(
-                  padding: EdgeInsets.all(4.0),
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: Colors.black87,
-                    size: 20,
+  @override  // Menandai bahwa metode dari kelas induk ditimpa.
+  Widget build(BuildContext context) {  // Membangun dan mengembalikan tampilan halaman.
+    return Scaffold(  // Membuat kerangka utama halaman.
+      backgroundColor: const Color(0xFFF7F9FC),  // Menentukan warna tampilan.
+      appBar: AppBar(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+        backgroundColor: Colors.white,  // Menggunakan warna bawaan Flutter.
+        elevation: 0,  // Mengatur ketinggian/bayangan komponen.
+        leadingWidth: 56,  // Memisahkan argumen atau properti berikutnya.
+        leading: Padding(  // Memberikan ruang kosong di sekitar widget.
+          padding: const EdgeInsets.only(left: 16.0),  // Mengatur jarak bagian dalam atau luar widget.
+          child: Center(  // Menentukan widget anak yang ditampilkan.
+            child: Material(  // Menyediakan lapisan Material untuk efek interaksi.
+              color: Colors.transparent,  // Menggunakan warna bawaan Flutter.
+              child: InkWell(  // Memberikan efek sentuhan pada widget.
+                borderRadius: BorderRadius.circular(20),  // Membulatkan sudut dengan radius yang ditentukan.
+                onTap: () => Navigator.pop(context),  // Menutup halaman saat ini dan kembali ke halaman sebelumnya.
+                child: const Padding(  // Memberikan ruang kosong di sekitar widget.
+                  padding: EdgeInsets.all(4.0),  // Mengatur jarak bagian dalam atau luar widget.
+                  child: Icon(  // Menampilkan ikon.
+                    Icons.arrow_back,  // Memilih ikon yang ditampilkan.
+                    color: Colors.black87,  // Menggunakan warna bawaan Flutter.
+                    size: 20,  // Memisahkan argumen atau properti berikutnya.
                   ),
                 ),
               ),
             ),
           ),
         ),
-        title: const Text(
-          'Rekomendasi Destinasi',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        title: const Text(  // Menampilkan teks pada antarmuka.
+          'Rekomendasi Destinasi',  // Nilai teks untuk daftar atau tampilan.
+          style: TextStyle(  // Mengatur gaya teks.
+            color: Colors.black87,  // Menggunakan warna bawaan Flutter.
+            fontSize: 18,  // Menentukan ukuran huruf.
+            fontWeight: FontWeight.bold,  // Menentukan ketebalan teks.
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SingleChildScrollView(  // Membuat konten halaman dapat digulir.
+        padding: const EdgeInsets.all(16.0),  // Mengatur jarak bagian dalam atau luar widget.
+        child: Column(  // Menyusun widget secara vertikal.
+          crossAxisAlignment: CrossAxisAlignment.start,  // Menentukan posisi atau perataan widget.
+          children: [  // Menentukan kumpulan widget anak.
             // CARD 1: PUBLIC & SLOT PROGRESS
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFEDF2F7)),
+            Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+              padding: const EdgeInsets.all(16),  // Mengatur jarak bagian dalam atau luar widget.
+              decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+                color: Colors.white,  // Menggunakan warna bawaan Flutter.
+                borderRadius: BorderRadius.circular(16),  // Membulatkan sudut dengan radius yang ditentukan.
+                border: Border.all(color: const Color(0xFFEDF2F7)),  // Mengatur garis tepi di semua sisi.
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF0052CC),
-                              shape: BoxShape.circle,
+              child: Column(  // Menyusun widget secara vertikal.
+                crossAxisAlignment: CrossAxisAlignment.start,  // Menentukan posisi atau perataan widget.
+                children: [  // Menentukan kumpulan widget anak.
+                  Row(  // Menyusun widget secara horizontal.
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,  // Menentukan posisi atau perataan widget.
+                    children: [  // Menentukan kumpulan widget anak.
+                      Row(  // Menyusun widget secara horizontal.
+                        children: [  // Menentukan kumpulan widget anak.
+                          Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+                            width: 8,  // Menentukan ukuran widget.
+                            height: 8,  // Menentukan ukuran widget.
+                            decoration: const BoxDecoration(  // Mengatur dekorasi wadah.
+                              color: Color(0xFF0052CC),  // Menentukan warna tampilan.
+                              shape: BoxShape.circle,  // Memisahkan argumen atau properti berikutnya.
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'PUBLIC',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0052CC),
-                              letterSpacing: 0.5,
+                          const SizedBox(width: 6),  // Memberi jarak atau menentukan ukuran widget.
+                          const Text(  // Menampilkan teks pada antarmuka.
+                            'PUBLIC',  // Nilai teks untuk daftar atau tampilan.
+                            style: TextStyle(  // Mengatur gaya teks.
+                              fontSize: 11,  // Menentukan ukuran huruf.
+                              fontWeight: FontWeight.bold,  // Menentukan ketebalan teks.
+                              color: Color(0xFF0052CC),  // Menentukan warna tampilan.
+                              letterSpacing: 0.5,  // Memisahkan argumen atau properti berikutnya.
                             ),
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
+                      Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+                        padding: const EdgeInsets.symmetric(  // Mengatur jarak bagian dalam atau luar widget.
+                            horizontal: 10, vertical: 4),  // Memisahkan argumen atau properti berikutnya.
+                        decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+                          color: const Color(0xFFF1F5F9),  // Menentukan warna tampilan.
+                          borderRadius: BorderRadius.circular(12),  // Membulatkan sudut dengan radius yang ditentukan.
                         ),
-                        child: Row(
-                          children: const [
-                            Icon(Icons.cloud_done_outlined,
-                                size: 13, color: Colors.grey),
-                            SizedBox(width: 4),
-                            Text(
-                              'Sinkron Otomatis',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w500),
-                            ),
+                        child: Row(  // Menyusun widget secara horizontal.
+                          children: const [  // Menentukan kumpulan widget anak.
+                            Icon(Icons.cloud_done_outlined,  // Menampilkan ikon.
+                                size: 13, color: Colors.grey),  // Menggunakan warna bawaan Flutter.
+                            SizedBox(width: 4),  // Memberi jarak atau menentukan ukuran widget.
+                            Text(  // Menampilkan teks pada antarmuka.
+                              'Sinkron Otomatis',  // Nilai teks untuk daftar atau tampilan.
+                              style: TextStyle(  // Mengatur gaya teks.
+                                  fontSize: 10,  // Menentukan ukuran huruf.
+                                  color: Colors.grey,  // Menggunakan warna bawaan Flutter.
+                                  fontWeight: FontWeight.w500),  // Menentukan ketebalan teks.
+                            ), 
                           ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: const [
-                              Text(
-                                '6',
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              Text(
-                                ' / 6',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Slot carousel beranda terisi\noptimal',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey,
-                              height: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.file_download_outlined,
-                            size: 16, color: Colors.white),
-                        label: const Text(
-                          'Publikasikan',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0066FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                          elevation: 0,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: const LinearProgressIndicator(
-                      value: 1.0,
-                      backgroundColor: Color(0xFFE2E8F0),
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFF0066FF)),
-                      minHeight: 4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                        ),  // Menutup pemanggilan widget atau fungsi.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                    ],  // Menutup daftar widget atau nilai.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  const SizedBox(height: 12),  // Memberi jarak atau menentukan ukuran widget.
+                  Row(  // Menyusun widget secara horizontal.
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,  // Menentukan posisi atau perataan widget.
+                    crossAxisAlignment: CrossAxisAlignment.center,  // Menentukan posisi atau perataan widget.
+                    children: [  // Menentukan kumpulan widget anak.
+                      Column(  // Menyusun widget secara vertikal.
+                        crossAxisAlignment: CrossAxisAlignment.start,  // Menentukan posisi atau perataan widget.
+                        children: [  // Menentukan kumpulan widget anak.
+                          Row(  // Menyusun widget secara horizontal.
+                            crossAxisAlignment: CrossAxisAlignment.baseline,  // Menentukan posisi atau perataan widget.
+                            textBaseline: TextBaseline.alphabetic,  // Memisahkan argumen atau properti berikutnya.
+                            children: const [  // Menentukan kumpulan widget anak.
+                              Text(  // Menampilkan teks pada antarmuka.
+                                '6',  // Nilai teks untuk daftar atau tampilan.
+                                style: TextStyle(  // Mengatur gaya teks.
+                                  fontSize: 26,  // Menentukan ukuran huruf.
+                                  fontWeight: FontWeight.bold,  // Menentukan ketebalan teks.
+                                  color: Colors.black87,  // Menggunakan warna bawaan Flutter.
+                                ),  // Menutup pemanggilan widget atau fungsi.
+                              ),  // Menutup pemanggilan widget atau fungsi.
+                              Text(  // Menampilkan teks pada antarmuka.
+                                ' / 6',  // Nilai teks untuk daftar atau tampilan.
+                                style: TextStyle(  // Mengatur gaya teks.
+                                  fontSize: 16,  // Menentukan ukuran huruf.
+                                  fontWeight: FontWeight.w500,  // Menentukan ketebalan teks.
+                                  color: Colors.grey,  // Menggunakan warna bawaan Flutter.
+                                ),  // Menutup pemanggilan widget atau fungsi.
+                              ),  // Menutup pemanggilan widget atau fungsi.
+                            ],  // Menutup daftar widget atau nilai.
+                          ),  // Menutup pemanggilan widget atau fungsi.
+                          const SizedBox(height: 2),  // Memberi jarak atau menentukan ukuran widget.
+                          const Text(  // Menampilkan teks pada antarmuka.
+                            'Slot carousel beranda terisi\noptimal',  // Nilai teks untuk daftar atau tampilan.
+                            style: TextStyle(  // Mengatur gaya teks.
+                              fontSize: 11,  // Menentukan ukuran huruf.
+                              color: Colors.grey,  // Menggunakan warna bawaan Flutter.
+                              height: 1.2,  // Menentukan ukuran widget.
+                            ),  // Menutup pemanggilan widget atau fungsi.
+                          ),  // Menutup pemanggilan widget atau fungsi.
+                        ],  // Menutup daftar widget atau nilai.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                      ElevatedButton.icon(  // Membuat tombol berwarna yang memiliki ikon dan teks.
+                        onPressed: () {},  // Menentukan tindakan saat tombol ditekan.
+                        icon: const Icon(Icons.file_download_outlined,  // Menampilkan ikon.
+                            size: 16, color: Colors.white),  // Menggunakan warna bawaan Flutter.
+                        label: const Text(  // Menampilkan teks pada antarmuka.
+                          'Publikasikan',  // Nilai teks untuk daftar atau tampilan.
+                          style: TextStyle(  // Mengatur gaya teks.
+                              fontSize: 12,  // Menentukan ukuran huruf.
+                              fontWeight: FontWeight.bold,  // Menentukan ketebalan teks.
+                              color: Colors.white),  // Menggunakan warna bawaan Flutter.
+                        ),  // Menutup pemanggilan widget atau fungsi.
+                        style: ElevatedButton.styleFrom(  // Menentukan gaya tampilan.
+                          backgroundColor: const Color(0xFF0066FF),  // Menentukan warna tampilan.
+                          shape: RoundedRectangleBorder(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                            borderRadius: BorderRadius.circular(10),  // Membulatkan sudut dengan radius yang ditentukan.
+                          ),  // Menutup pemanggilan widget atau fungsi.
+                          padding: const EdgeInsets.symmetric(  // Mengatur jarak bagian dalam atau luar widget.
+                              horizontal: 14, vertical: 12),  // Memisahkan argumen atau properti berikutnya.
+                          elevation: 0,  // Mengatur ketinggian/bayangan komponen.
+                        ),  // Menutup pemanggilan widget atau fungsi.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                    ],  // Menutup daftar widget atau nilai.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  const SizedBox(height: 14),  // Memberi jarak atau menentukan ukuran widget.
+                  ClipRRect(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                    borderRadius: BorderRadius.circular(4),  // Membulatkan sudut dengan radius yang ditentukan.
+                    child: const LinearProgressIndicator(  // Menampilkan indikator kemajuan.
+                      value: 1.0,  // Menentukan nilai properti.
+                      backgroundColor: Color(0xFFE2E8F0),  // Menentukan warna tampilan.
+                      valueColor:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                          AlwaysStoppedAnimation<Color>(Color(0xFF0066FF)),  // Menentukan warna tampilan.
+                      minHeight: 4,  // Memisahkan argumen atau properti berikutnya.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                ],  // Menutup daftar widget atau nilai.
+              ),  // Menutup pemanggilan widget atau fungsi.
+            ),  // Menutup pemanggilan widget atau fungsi.
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 16),  // Memberi jarak atau menentukan ukuran widget.
 
             // GRID REKOMENDASI 6 ITEM
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.86,
-              children: [
-                _buildRecommendationCard(
-                  tag: '#1 Utama',
-                  tagBgColor: Colors.white,
-                  tagTextColor: const Color(0xFF0066FF),
-                  title: 'Pantai Sulamadaha',
-                  category: 'Pantai • Kota Ternate',
-                  imageUrl:
-                      'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/Pantai.jpeg',
-                ),
-                _buildRecommendationCard(
-                  tag: '#2 Sejarah',
-                  tagBgColor: Colors.white,
-                  tagTextColor: const Color(0xFF0066FF),
-                  title: 'Benteng Tolluko',
-                  category: 'Sejarah • Kota Ternate',
-                  imageUrl:
-                      'https://indotimur.com/images/nits/2023/08/preview_brtcc0hw_gzrlhpmv.jpg',
-                ),
-                _buildRecommendationCard(
-                  tag: '#3 Pantai',
-                  tagBgColor: Colors.white,
-                  tagTextColor: const Color(0xFF0066FF),
-                  title: 'Pantai Jikomalamo',
-                  category: 'Pantai • Kota Ternate',
-                  imageUrl:
-                      'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/Pantai.jpeg',
-                ),
-                _buildRecommendationCard(
-                  tag: '#4 Alam',
-                  tagBgColor: Colors.white,
-                  tagTextColor: const Color(0xFF0066FF),
-                  title: 'Danau Tolire Besar',
-                  category: 'Alam • Kota Ternate',
-                  imageUrl:
-                      'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/newsOg_2024_6_9_1717902356726-iifq7h.jpeg',
-                ),
-                _buildRecommendationCard(
-                  tag: '#5 Siap Ditukar',
-                  tagBgColor: const Color(0xFFD35400),
-                  tagTextColor: Colors.white,
-                  title: 'Danau Tolire Kecil',
-                  category: 'Alam • Kota Ternate',
-                  imageUrl:
-                      'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/newsOg_2024_6_9_1717902356726-iifq7h.jpeg',
-                  isSwapIconHighlight: true,
-                ),
-                _buildRecommendationCard(
-                  tag: '#6 Baru Ditautkan',
-                  tagBgColor: Colors.white,
-                  tagTextColor: const Color(0xFF0066FF),
-                  title: 'Kedaton Kesultanan',
-                  category: 'Sejarah • Kota Ternate',
-                  imageUrl:
-                      'https://indotimur.com/images/nits/2023/08/preview_brtcc0hw_gzrlhpmv.jpg',
-                ),
-              ],
-            ),
+            GridView.count(  // Menyusun kartu rekomendasi dalam grid dengan jumlah kolom tertentu.
+              crossAxisCount: 2,  // Menentukan jumlah kolom grid.
+              shrinkWrap: true,  // Menyesuaikan ukuran daftar dengan isi kontennya.
+              physics: const NeverScrollableScrollPhysics(),  // Mengatur perilaku gulir widget.
+              crossAxisSpacing: 12,  // Mengatur jarak antaritem pada grid.
+              mainAxisSpacing: 12,  // Mengatur jarak antaritem pada grid.
+              childAspectRatio: 0.86,  // Menentukan perbandingan lebar dan tinggi item grid.
+              children: [  // Menentukan kumpulan widget anak.
+                _buildRecommendationCard(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                  tag: '#1 Utama',  // Memisahkan argumen atau properti berikutnya.
+                  tagBgColor: Colors.white,  // Menggunakan warna bawaan Flutter.
+                  tagTextColor: const Color(0xFF0066FF),  // Menentukan warna tampilan.
+                  title: 'Pantai Sulamadaha',  // Memisahkan argumen atau properti berikutnya.
+                  category: 'Pantai • Kota Ternate',  // Memisahkan argumen atau properti berikutnya.
+                  imageUrl:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                      'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/Pantai.jpeg',  // Nilai teks untuk daftar atau tampilan.
+                ),  // Menutup pemanggilan widget atau fungsi.
+                _buildRecommendationCard(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                  tag: '#2 Sejarah',  // Memisahkan argumen atau properti berikutnya.
+                  tagBgColor: Colors.white,  // Menggunakan warna bawaan Flutter.
+                  tagTextColor: const Color(0xFF0066FF),  // Menentukan warna tampilan.
+                  title: 'Benteng Tolluko',  // Memisahkan argumen atau properti berikutnya.
+                  category: 'Sejarah • Kota Ternate',  // Memisahkan argumen atau properti berikutnya.
+                  imageUrl:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                      'https://indotimur.com/images/nits/2023/08/preview_brtcc0hw_gzrlhpmv.jpg',  // Nilai teks untuk daftar atau tampilan.
+                ),  // Menutup pemanggilan widget atau fungsi.
+                _buildRecommendationCard(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                  tag: '#3 Pantai',  // Memisahkan argumen atau properti berikutnya.
+                  tagBgColor: Colors.white,  // Menggunakan warna bawaan Flutter.
+                  tagTextColor: const Color(0xFF0066FF),  // Menentukan warna tampilan.
+                  title: 'Pantai Jikomalamo',  // Memisahkan argumen atau properti berikutnya.
+                  category: 'Pantai • Kota Ternate',  // Memisahkan argumen atau properti berikutnya.
+                  imageUrl:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                      'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/Pantai.jpeg',  // Nilai teks untuk daftar atau tampilan.
+                ),  // Menutup pemanggilan widget atau fungsi.
+                _buildRecommendationCard(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                  tag: '#4 Alam',  // Memisahkan argumen atau properti berikutnya.
+                  tagBgColor: Colors.white,  // Menggunakan warna bawaan Flutter.
+                  tagTextColor: const Color(0xFF0066FF),  // Menentukan warna tampilan.
+                  title: 'Danau Tolire Besar',  // Memisahkan argumen atau properti berikutnya.
+                  category: 'Alam • Kota Ternate',  // Memisahkan argumen atau properti berikutnya.
+                  imageUrl:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                      'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/newsOg_2024_6_9_1717902356726-iifq7h.jpeg',  // Nilai teks untuk daftar atau tampilan.
+                ),  // Menutup pemanggilan widget atau fungsi.
+                _buildRecommendationCard(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                  tag: '#5 Siap Ditukar',  // Memisahkan argumen atau properti berikutnya.
+                  tagBgColor: const Color(0xFFD35400),  // Menentukan warna tampilan.
+                  tagTextColor: Colors.white,  // Menggunakan warna bawaan Flutter.
+                  title: 'Danau Tolire Kecil',  // Memisahkan argumen atau properti berikutnya.
+                  category: 'Alam • Kota Ternate',  // Memisahkan argumen atau properti berikutnya.
+                  imageUrl:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                      'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/newsOg_2024_6_9_1717902356726-iifq7h.jpeg',  // Nilai teks untuk daftar atau tampilan.
+                  isSwapIconHighlight: true,  // Memisahkan argumen atau properti berikutnya.
+                ),  // Menutup pemanggilan widget atau fungsi.
+                _buildRecommendationCard(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                  tag: '#6 Baru Ditautkan',  // Memisahkan argumen atau properti berikutnya.
+                  tagBgColor: Colors.white,  // Menggunakan warna bawaan Flutter.
+                  tagTextColor: const Color(0xFF0066FF),  // Menentukan warna tampilan.
+                  title: 'Kedaton Kesultanan',  // Memisahkan argumen atau properti berikutnya.
+                  category: 'Sejarah • Kota Ternate',  // Memisahkan argumen atau properti berikutnya.
+                  imageUrl:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                      'https://indotimur.com/images/nits/2023/08/preview_brtcc0hw_gzrlhpmv.jpg',  // Nilai teks untuk daftar atau tampilan.
+                ),  // Menutup pemanggilan widget atau fungsi.
+              ],  // Menutup daftar widget atau nilai.
+            ),  // Menutup pemanggilan widget atau fungsi.
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 16),  // Memberi jarak atau menentukan ukuran widget.
 
             // BANNER TOAST BIRU (URUNGKAN)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0066FF),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Color(0xFF0066FF),
-                      size: 12,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Danau Toba berhasil dipasang ke Slo',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text(
-                      'URUNGKAN',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Icon(Icons.close,
-                        color: Colors.white, size: 16),
-                  ),
-                ],
-              ),
-            ),
+            Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+              padding:  // Mengatur jarak widget.
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),  // Mengatur jarak bagian dalam atau luar widget.
+              decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+                color: const Color(0xFF0066FF),  // Menentukan warna tampilan.
+                borderRadius: BorderRadius.circular(12),  // Membulatkan sudut dengan radius yang ditentukan.
+              ),  // Menutup pemanggilan widget atau fungsi.
+              child: Row(  // Menyusun widget secara horizontal.
+                children: [  // Menentukan kumpulan widget anak.
+                  Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+                    padding: const EdgeInsets.all(2),  // Mengatur jarak bagian dalam atau luar widget.
+                    decoration: const BoxDecoration(  // Mengatur dekorasi wadah.
+                      color: Colors.white,  // Menggunakan warna bawaan Flutter.
+                      shape: BoxShape.circle,  // Memisahkan argumen atau properti berikutnya.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                    child: const Icon(  // Menampilkan ikon.
+                      Icons.check,  // Memilih ikon yang ditampilkan.
+                      color: Color(0xFF0066FF),  // Menentukan warna tampilan.
+                      size: 12,  // Memisahkan argumen atau properti berikutnya.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  const SizedBox(width: 8),  // Memberi jarak atau menentukan ukuran widget.
+                  const Expanded(  // Menggunakan ruang yang tersedia pada tata letak.
+                    child: Text(  // Menampilkan teks pada antarmuka.
+                      'Danau Toba berhasil dipasang ke Slo',  // Nilai teks untuk daftar atau tampilan.
+                      style: TextStyle(  // Mengatur gaya teks.
+                        color: Colors.white,  // Menggunakan warna bawaan Flutter.
+                        fontSize: 11,  // Menentukan ukuran huruf.
+                        fontWeight: FontWeight.w500,  // Menentukan ketebalan teks.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                      overflow: TextOverflow.ellipsis,  // Menentukan perilaku teks ketika ruang tidak cukup.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  TextButton(  // Membuat tombol teks.
+                    onPressed: () {},  // Menentukan tindakan saat tombol ditekan.
+                    style: TextButton.styleFrom(  // Menentukan gaya tampilan.
+                      padding: EdgeInsets.zero,  // Mengatur jarak bagian dalam atau luar widget.
+                      minimumSize: Size.zero,  // Memisahkan argumen atau properti berikutnya.
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,  // Memisahkan argumen atau properti berikutnya.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                    child: const Text(  // Menampilkan teks pada antarmuka.
+                      'URUNGKAN',  // Nilai teks untuk daftar atau tampilan.
+                      style: TextStyle(  // Mengatur gaya teks.
+                        color: Colors.white,  // Menggunakan warna bawaan Flutter.
+                        fontSize: 11,  // Menentukan ukuran huruf.
+                        fontWeight: FontWeight.bold,  // Menentukan ketebalan teks.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  const SizedBox(width: 10),  // Memberi jarak atau menentukan ukuran widget.
+                  GestureDetector(  // Mendeteksi sentuhan atau ketukan pengguna.
+                    onTap: () {},  // Menentukan tindakan saat area ini diketuk.
+                    child: const Icon(Icons.close,  // Menampilkan ikon.
+                        color: Colors.white, size: 16),  // Menggunakan warna bawaan Flutter.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                ],  // Menutup daftar widget atau nilai.
+              ),  // Menutup pemanggilan widget atau fungsi.
+            ),  // Menutup pemanggilan widget atau fungsi.
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 20),  // Memberi jarak atau menentukan ukuran widget.
 
             // KATALOG DESTINASI TERSEDIA SECTION
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F8F0),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.insert_drive_file_outlined,
-                        color: Color(0xFF27AE60),
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Katalog Destinasi Tersedia',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const Text(
-                  '42 Destinasi Total',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-              ],
-            ),
+            Row(  // Menyusun widget secara horizontal.
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,  // Menentukan posisi atau perataan widget.
+              children: [  // Menentukan kumpulan widget anak.
+                Row(  // Menyusun widget secara horizontal.
+                  children: [  // Menentukan kumpulan widget anak.
+                    Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+                      padding: const EdgeInsets.all(4),  // Mengatur jarak bagian dalam atau luar widget.
+                      decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+                        color: const Color(0xFFE8F8F0),  // Menentukan warna tampilan.
+                        borderRadius: BorderRadius.circular(6),  // Membulatkan sudut dengan radius yang ditentukan.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                      child: const Icon(  // Menampilkan ikon.
+                        Icons.insert_drive_file_outlined,  // Memilih ikon yang ditampilkan.
+                        color: Color(0xFF27AE60),  // Menentukan warna tampilan.
+                        size: 16,  // Memisahkan argumen atau properti berikutnya.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                    const SizedBox(width: 8),  // Memberi jarak atau menentukan ukuran widget.
+                    const Text(  // Menampilkan teks pada antarmuka.
+                      'Katalog Destinasi Tersedia',  // Nilai teks untuk daftar atau tampilan.
+                      style: TextStyle(  // Mengatur gaya teks.
+                        fontSize: 14,  // Menentukan ukuran huruf.
+                        fontWeight: FontWeight.bold,  // Menentukan ketebalan teks.
+                        color: Colors.black87,  // Menggunakan warna bawaan Flutter.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                  ],  // Menutup daftar widget atau nilai.
+                ),  // Menutup pemanggilan widget atau fungsi.
+                const Text(  // Menampilkan teks pada antarmuka.
+                  '42 Destinasi Total',  // Nilai teks untuk daftar atau tampilan.
+                  style: TextStyle(fontSize: 11, color: Colors.grey),  // Menggunakan warna bawaan Flutter.
+                ),  // Menutup pemanggilan widget atau fungsi.
+              ],  // Menutup daftar widget atau nilai.
+            ),  // Menutup pemanggilan widget atau fungsi.
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 12),  // Memberi jarak atau menentukan ukuran widget.
 
             // SEARCH BAR
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Cari nama pulau, gunung, atau kota...',
-                hintStyle:
-                    TextStyle(color: Colors.grey.shade400, fontSize: 12),
-                prefixIcon:
-                    Icon(Icons.search, color: Colors.grey.shade400, size: 18),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-              ),
-            ),
+            TextField(  // Membuat kolom input teks untuk pencarian.
+              decoration: InputDecoration(  // Mengatur petunjuk, ikon, dan dekorasi kolom input.
+                hintText: 'Cari nama pulau, gunung, atau kota...',  // Memisahkan argumen atau properti berikutnya.
+                hintStyle:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                    TextStyle(color: Colors.grey.shade400, fontSize: 12),  // Menggunakan warna bawaan Flutter.
+                prefixIcon:  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                    Icon(Icons.search, color: Colors.grey.shade400, size: 18),  // Menampilkan ikon.
+                filled: true,  // Memisahkan argumen atau properti berikutnya.
+                fillColor: Colors.white,  // Menggunakan warna bawaan Flutter.
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),  // Mengatur jarak bagian dalam atau luar widget.
+                border: OutlineInputBorder(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                  borderRadius: BorderRadius.circular(10),  // Membulatkan sudut dengan radius yang ditentukan.
+                  borderSide: BorderSide(color: Colors.grey.shade200),  // Menggunakan warna bawaan Flutter.
+                ),  // Menutup pemanggilan widget atau fungsi.
+                enabledBorder: OutlineInputBorder(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                  borderRadius: BorderRadius.circular(10),  // Membulatkan sudut dengan radius yang ditentukan.
+                  borderSide: BorderSide(color: Colors.grey.shade200),  // Menggunakan warna bawaan Flutter.
+                ),  // Menutup pemanggilan widget atau fungsi.
+              ),  // Menutup pemanggilan widget atau fungsi.
+            ),  // Menutup pemanggilan widget atau fungsi.
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 12),  // Memberi jarak atau menentukan ukuran widget.
 
             // CHIP FILTER HORIZONTAL
-            SizedBox(
-              height: 34,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _filters.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 6),
-                itemBuilder: (context, index) {
-                  final isSelected = _selectedFilterIndex == index;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedFilterIndex = index;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFF0066FF)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isSelected
-                              ? const Color(0xFF0066FF)
-                              : Colors.grey.shade200,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          _filters[index],
-                          style: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.grey.shade700,
-                            fontSize: 11,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            SizedBox(  // Memberi jarak atau menentukan ukuran widget.
+              height: 34,  // Menentukan ukuran widget.
+              child: ListView.separated(  // Membuat daftar horizontal dengan pemisah antaritem.
+                scrollDirection: Axis.horizontal,  // Menentukan arah gulir daftar.
+                itemCount: _filters.length,  // Menentukan jumlah item yang dibuat.
+                separatorBuilder: (context, index) => const SizedBox(width: 6),  // Menentukan jarak atau widget pemisah antaritem.
+                itemBuilder: (context, index) {  // Menentukan widget yang dibuat untuk setiap item.
+                  final isSelected = _selectedFilterIndex == index;  // Memeriksa apakah filter pada indeks ini sedang dipilih.
+                  return GestureDetector(  // Mendeteksi sentuhan atau ketukan pengguna.
+                    onTap: () {  // Menentukan tindakan saat area ini diketuk.
+                      setState(() {  // Memberi tahu Flutter bahwa state berubah sehingga tampilan dibangun ulang.
+                        _selectedFilterIndex = index;  // Menyimpan indeks filter yang baru dipilih.
+                      });  // Menutup callback dan pemanggilan fungsi.
+                    },  // Menutup blok atau pemanggilan widget sebelumnya.
+                    child: Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+                      padding: const EdgeInsets.symmetric(  // Mengatur jarak bagian dalam atau luar widget.
+                          horizontal: 14, vertical: 6),  // Memisahkan argumen atau properti berikutnya.
+                      decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+                        color: isSelected  // Menentukan warna properti.
+                            ? const Color(0xFF0066FF)  // Menentukan warna tampilan.
+                            : Colors.white,  // Menggunakan warna bawaan Flutter.
+                        borderRadius: BorderRadius.circular(16),  // Membulatkan sudut dengan radius yang ditentukan.
+                        border: Border.all(  // Mengatur garis tepi di semua sisi.
+                          color: isSelected  // Menentukan warna properti.
+                              ? const Color(0xFF0066FF)  // Menentukan warna tampilan.
+                              : Colors.grey.shade200,  // Menggunakan warna bawaan Flutter.
+                        ),  // Menutup pemanggilan widget atau fungsi.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                      child: Center(  // Menentukan widget anak yang ditampilkan.
+                        child: Text(  // Menampilkan teks pada antarmuka.
+                          _filters[index],  // Memisahkan argumen atau properti berikutnya.
+                          style: TextStyle(  // Mengatur gaya teks.
+                            color: isSelected  // Menentukan warna properti.
+                                ? Colors.white  // Menggunakan warna bawaan Flutter.
+                                : Colors.grey.shade700,  // Menggunakan warna bawaan Flutter.
+                            fontSize: 11,  // Menentukan ukuran huruf.
+                            fontWeight: isSelected  // Menentukan ketebalan huruf.
+                                ? FontWeight.bold  // Menentukan ketebalan teks.
+                                : FontWeight.normal,  // Menentukan ketebalan teks.
+                          ),  // Menutup pemanggilan widget atau fungsi.
+                        ),  // Menutup pemanggilan widget atau fungsi.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                  );  // Menutup blok atau pemanggilan widget sebelumnya.
+                },  // Menutup blok atau pemanggilan widget sebelumnya.
+              ),  // Menutup pemanggilan widget atau fungsi.
+            ),  // Menutup pemanggilan widget atau fungsi.
+          ],  // Menutup daftar widget atau nilai.
+        ),  // Menutup pemanggilan widget atau fungsi.
+      ),  // Menutup pemanggilan widget atau fungsi.
+    );  // Menutup blok atau pemanggilan widget sebelumnya.
+  }  // Menutup blok atau pemanggilan widget sebelumnya.
 
   // WIDGET PEMBANTU UNTUK KARTU REKOMENDASI
-  Widget _buildRecommendationCard({
-    required String tag,
-    required Color tagBgColor,
-    required Color tagTextColor,
-    required String title,
-    required String category,
-    required String imageUrl,
-    bool isSwapIconHighlight = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEDF2F7)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+  Widget _buildRecommendationCard({  // Membuat widget pembantu untuk satu kartu rekomendasi.
+    required String tag,  // Parameter teks wajib untuk mengisi informasi kartu.
+    required Color tagBgColor,  // Parameter warna wajib untuk mengatur tampilan kartu.
+    required Color tagTextColor,  // Parameter warna wajib untuk mengatur tampilan kartu.
+    required String title,  // Parameter teks wajib untuk mengisi informasi kartu.
+    required String category,  // Parameter teks wajib untuk mengisi informasi kartu.
+    required String imageUrl,  // Parameter teks wajib untuk mengisi informasi kartu.
+    bool isSwapIconHighlight = false,  // Parameter opsional untuk menyorot ikon tukar.
+  }) {  // Menutup blok kode.
+    return Container(  // Mengembalikan wadah untuk menyusun tampilan.
+      decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+        color: Colors.white,  // Menggunakan warna bawaan Flutter.
+        borderRadius: BorderRadius.circular(14),  // Membulatkan sudut dengan radius yang ditentukan.
+        border: Border.all(color: const Color(0xFFEDF2F7)),  // Mengatur garis tepi di semua sisi.
+      ),  // Menutup pemanggilan widget atau fungsi.
+      child: Column(  // Menyusun widget secara vertikal.
+        crossAxisAlignment: CrossAxisAlignment.start,  // Menentukan posisi atau perataan widget.
+        children: [  // Menentukan kumpulan widget anak.
           // Gambar dengan Overlay Tag dan Title
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(14)),
-                child: Image.network(
-                  imageUrl,
-                  height: 100,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 100,
-                    width: double.infinity,
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.image, color: Colors.grey),
-                  ),
-                ),
-              ),
+          Stack(  // Menumpuk widget agar dapat saling menindih.
+            children: [  // Menentukan kumpulan widget anak.
+              ClipRRect(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                borderRadius:  // Mengatur pembulatan sudut.
+                    const BorderRadius.vertical(top: Radius.circular(14)),  // Mengatur bentuk sudut widget.
+                child: Image.network(  // Memuat gambar dari alamat internet.
+                  imageUrl,  // Memisahkan argumen atau properti berikutnya.
+                  height: 100,  // Menentukan ukuran widget.
+                  width: double.infinity,  // Menentukan ukuran widget.
+                  fit: BoxFit.cover,  // Mengatur cara gambar menyesuaikan ruang.
+                  errorBuilder: (context, error, stackTrace) => Container(  // Menampilkan tampilan pengganti jika gambar gagal dimuat.
+                    height: 100,  // Menentukan ukuran widget.
+                    width: double.infinity,  // Menentukan ukuran widget.
+                    color: Colors.grey.shade300,  // Menggunakan warna bawaan Flutter.
+                    child: const Icon(Icons.image, color: Colors.grey),  // Menampilkan ikon.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                ),  // Menutup pemanggilan widget atau fungsi.
+              ),  // Menutup pemanggilan widget atau fungsi.
 
               // Tag Atas (Misal: #1 Utama)
-              Positioned(
-                top: 8,
-                left: 8,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: tagBgColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    tag,
-                    style: TextStyle(
-                      color: tagTextColor,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+              Positioned(  // Menempatkan widget pada posisi tertentu di dalam Stack.
+                top: 8,  // Memisahkan argumen atau properti berikutnya.
+                left: 8,  // Memisahkan argumen atau properti berikutnya.
+                child: Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+                  padding:  // Mengatur jarak widget.
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),  // Mengatur jarak bagian dalam atau luar widget.
+                  decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+                    color: tagBgColor,  // Menentukan warna properti.
+                    borderRadius: BorderRadius.circular(10),  // Membulatkan sudut dengan radius yang ditentukan.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  child: Text(  // Menampilkan teks pada antarmuka.
+                    tag,  // Memisahkan argumen atau properti berikutnya.
+                    style: TextStyle(  // Mengatur gaya teks.
+                      color: tagTextColor,  // Menentukan warna properti.
+                      fontSize: 9,  // Menentukan ukuran huruf.
+                      fontWeight: FontWeight.bold,  // Menentukan ketebalan teks.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                ),  // Menutup pemanggilan widget atau fungsi.
+              ),  // Menutup pemanggilan widget atau fungsi.
 
               // Judul Tempat di Bawah Gambar
-              Positioned(
-                bottom: 8,
-                left: 8,
-                right: 8,
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 4,
-                        color: Colors.black87,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+              Positioned(  // Menempatkan widget pada posisi tertentu di dalam Stack.
+                bottom: 8,  // Memisahkan argumen atau properti berikutnya.
+                left: 8,  // Memisahkan argumen atau properti berikutnya.
+                right: 8,  // Memisahkan argumen atau properti berikutnya.
+                child: Text(  // Menampilkan teks pada antarmuka.
+                  title,  // Memisahkan argumen atau properti berikutnya.
+                  style: const TextStyle(  // Mengatur gaya teks.
+                    color: Colors.white,  // Menggunakan warna bawaan Flutter.
+                    fontSize: 11,  // Menentukan ukuran huruf.
+                    fontWeight: FontWeight.bold,  // Menentukan ketebalan teks.
+                    shadows: [  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                      Shadow(  // Mengatur bagian kode ini sesuai struktur widget Flutter.
+                        blurRadius: 4,  // Memisahkan argumen atau properti berikutnya.
+                        color: Colors.black87,  // Menggunakan warna bawaan Flutter.
+                        offset: Offset(0, 1),  // Memisahkan argumen atau properti berikutnya.
+                      ),  // Menutup pemanggilan widget atau fungsi.
+                    ],  // Menutup daftar widget atau nilai.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  maxLines: 1,  // Membatasi jumlah baris teks.
+                  overflow: TextOverflow.ellipsis,  // Menentukan perilaku teks ketika ruang tidak cukup.
+                ),  // Menutup pemanggilan widget atau fungsi.
+              ),  // Menutup pemanggilan widget atau fungsi.
+            ],  // Menutup daftar widget atau nilai.
+          ),  // Menutup pemanggilan widget atau fungsi.
 
           // Area Info Kategori & Tombol Aksi Bottom
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    category,
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+          Padding(  // Memberikan ruang kosong di sekitar widget.
+            padding: const EdgeInsets.all(8.0),  // Mengatur jarak bagian dalam atau luar widget.
+            child: Row(  // Menyusun widget secara horizontal.
+              children: [  // Menentukan kumpulan widget anak.
+                Expanded(  // Menggunakan ruang yang tersedia pada tata letak.
+                  child: Text(  // Menampilkan teks pada antarmuka.
+                    category,  // Memisahkan argumen atau properti berikutnya.
+                    style: TextStyle(  // Mengatur gaya teks.
+                      fontSize: 9,  // Menentukan ukuran huruf.
+                      color: Colors.grey.shade700,  // Menggunakan warna bawaan Flutter.
+                      fontWeight: FontWeight.w500,  // Menentukan ketebalan teks.
+                    ),  // Menutup pemanggilan widget atau fungsi.
+                    maxLines: 1,  // Membatasi jumlah baris teks.
+                    overflow: TextOverflow.ellipsis,  // Menentukan perilaku teks ketika ruang tidak cukup.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                ),  // Menutup pemanggilan widget atau fungsi.
 
                 // Tombol Tukar (Swap)
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: isSwapIconHighlight
-                        ? const Color(0xFFEBF2FF)
-                        : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    isSwapIconHighlight ? Icons.sync : Icons.swap_horiz_rounded,
-                    size: 14,
-                    color: isSwapIconHighlight
-                        ? const Color(0xFF0066FF)
-                        : Colors.black87,
-                  ),
-                ),
+                Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+                  width: 26,  // Menentukan ukuran widget.
+                  height: 26,  // Menentukan ukuran widget.
+                  decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+                    color: isSwapIconHighlight  // Menentukan warna properti.
+                        ? const Color(0xFFEBF2FF)  // Menentukan warna tampilan.
+                        : const Color(0xFFF1F5F9),  // Menentukan warna tampilan.
+                    borderRadius: BorderRadius.circular(6),  // Membulatkan sudut dengan radius yang ditentukan.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  child: Icon(  // Menampilkan ikon.
+                    isSwapIconHighlight ? Icons.sync : Icons.swap_horiz_rounded,  // Memilih ikon yang ditampilkan.
+                    size: 14,  // Memisahkan argumen atau properti berikutnya.
+                    color: isSwapIconHighlight  // Menentukan warna properti.
+                        ? const Color(0xFF0066FF)  // Menentukan warna tampilan.
+                        : Colors.black87,  // Menggunakan warna bawaan Flutter.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                ),  // Menutup pemanggilan widget atau fungsi.
 
-                const SizedBox(width: 4),
+                const SizedBox(width: 4),  // Memberi jarak atau menentukan ukuran widget.
 
                 // Tombol Hapus (Silang)
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF0F0),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    size: 14,
-                    color: Color(0xFFE53935),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+                Container(  // Membuat wadah untuk mengatur ukuran, warna, jarak, dan dekorasi.
+                  width: 26,  // Menentukan ukuran widget.
+                  height: 26,  // Menentukan ukuran widget.
+                  decoration: BoxDecoration(  // Mengatur dekorasi wadah.
+                    color: const Color(0xFFFFF0F0),  // Menentukan warna tampilan.
+                    borderRadius: BorderRadius.circular(6),  // Membulatkan sudut dengan radius yang ditentukan.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                  child: const Icon(  // Menampilkan ikon.
+                    Icons.close,  // Memilih ikon yang ditampilkan.
+                    size: 14,  // Memisahkan argumen atau properti berikutnya.
+                    color: Color(0xFFE53935),  // Menentukan warna tampilan.
+                  ),  // Menutup pemanggilan widget atau fungsi.
+                ),  // Menutup pemanggilan widget atau fungsi.
+              ],  // Menutup daftar widget atau nilai.
+            ),  // Menutup pemanggilan widget atau fungsi.
+          ),  // Menutup pemanggilan widget atau fungsi.
+        ],  // Menutup daftar widget atau nilai.
+      ),  // Menutup pemanggilan widget atau fungsi.
+    );  // Menutup blok atau pemanggilan widget sebelumnya.
+  }  // Menutup blok atau pemanggilan widget sebelumnya.
+}  // Menutup blok atau pemanggilan widget sebelumnya.
