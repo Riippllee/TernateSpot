@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ternatespot/views/home/home_page.dart';
+import 'package:ternatespot/views/user/review/review_page.dart';
 
 void main() {
   runApp(const MyApp());

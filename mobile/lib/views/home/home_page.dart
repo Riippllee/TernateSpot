@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/views/user/review/review_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -93,9 +94,7 @@ class _HomePageState extends State<HomePage> {
             padding: EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
-              backgroundImage: NetworkImage(
-                'https://i.pravatar.cc/100?img=5',
-              ),
+              backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=5'),
             ),
           ),
         ],
@@ -214,6 +213,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(width: 8),
+
+
                   Expanded(
                     flex: 3,
                     child: OutlinedButton(
@@ -403,8 +404,7 @@ class _HomePageState extends State<HomePage> {
               // Daftar Item Destinasi Populer
               _buildDestinationListItem(
                 rank: '#1',
-                imageUrl:
-                    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300',
+                imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300',
                 title: 'Pantai Sulamadaha',
                 location: 'Kelurahan Sulamadaha, Kota Ternate',
                 views: '3.420 tontonan',
@@ -414,8 +414,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 10),
               _buildDestinationListItem(
                 rank: '#2',
-                imageUrl:
-                    'https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?q=80&w=300',
+                imageUrl: 'https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?q=80&w=300',
                 title: 'Landmark',
                 location: 'Kelurahan Muhajirin, Kota Ternate',
                 views: '2.890 tontonan',
@@ -425,8 +424,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 10),
               _buildDestinationListItem(
                 rank: '#3',
-                imageUrl:
-                    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=300',
+                imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=300',
                 title: 'Taman Nukila',
                 location: 'Kelurahan Gamalama, Kota Ternate',
                 views: '2.150 tontonan',
@@ -468,6 +466,7 @@ class _HomePageState extends State<HomePage> {
             label: 'Users',
           ),
           BottomNavigationBarItem(
+            activeIcon: ReviewPage(),
             icon: Icon(Icons.rate_review_outlined),
             label: 'Review',
           ),
@@ -604,8 +603,10 @@ class _HomePageState extends State<HomePage> {
                 top: 4,
                 left: 4,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(6),
