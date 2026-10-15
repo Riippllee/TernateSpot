@@ -18,7 +18,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthController _authController = AuthController();
-  
 
   @override
   void dispose() {
@@ -163,7 +162,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 24),
 
-              // 4. Input Email atau No. Handphone
+              // 4. Input Email
               const Text(
                 'Email',
                 style: TextStyle(
@@ -321,7 +320,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 24),
 
-              // 7. Tombol "Masuk ke Akun"
+              // 7. Tombol "Masuk ke Akun" -> ada perubahan logic
               ElevatedButton(
                 onPressed: () async {
                   try {
@@ -330,11 +329,9 @@ class _LoginPageState extends State<LoginPage> {
 
                       _passwordController.text.trim(),
                     );
-                      print("USER ID : ${response.user!.id}");
+                    print("USER ID : ${response.user!.id}");
 
-  print("EMAIL : ${response.user!.email}");
-
-                    
+                    print("EMAIL : ${response.user!.email}");
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Login berhasil")),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'views/auth/splash_page.dart';
+import 'views/admin/test_user_management_page.dart.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,9 +20,9 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashPage(), // Menampilkan LoginPage di emulator
+      home: TestUserManagementPage(), // Menampilkan LoginPage di emulator
     );
   }
 }
