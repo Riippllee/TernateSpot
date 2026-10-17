@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ternatespot/views/user/review/review_page.dart';
+import 'package:ternatespot/widgate/lib/widgets/admin_bottom_nav.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -9,7 +10,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -439,43 +439,8 @@ class _HomePageState extends State<HomePage> {
       ),
 
       // Bottom Navigation Bar Admin (Dashboard, Destinasi, Users, Review, Profil)
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF1D61E7),
-        unselectedItemColor: const Color(0xFFA0AEC0),
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view_rounded),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore_outlined),
-            label: 'Destinasi',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline_rounded),
-            label: 'Users',
-          ),
-          BottomNavigationBarItem(
-            activeIcon: ReviewPage(),
-            icon: Icon(Icons.rate_review_outlined),
-            label: 'Review',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline_rounded),
-            label: 'Profil',
-          ),
-        ],
-      ),
+  
+
     );
   }
 

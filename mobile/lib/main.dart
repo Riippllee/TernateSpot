@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ternatespot/views/home/home_page.dart';
-import 'package:ternatespot/views/user/review/review_page.dart';
+import 'package:ternatespot/views/admin/admin_shell.dart';
+import 'package:ternatespot/views/admin/home_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Poppins',
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const AdminShell(),
     );
   }
 }

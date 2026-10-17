@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ternatespot/views/home/home_page.dart';
+import 'package:ternatespot/views/admin/home_page.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
