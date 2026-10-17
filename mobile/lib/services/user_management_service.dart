@@ -41,20 +41,15 @@ class UserManagementService {
   }
 
   Future<void> deleteUserProfile(String idUser) async {
-    final response = await _supabase
-        .from('user')
-        .delete()
-        .eq('id_user', idUser)
-        .select('id_user');
+    print('SERVICE DELETE ACCOUNT: $idUser');
 
-    print('HASIL DELETE: $response');
+    final response = await _supabase.functions.invoke(
+      'delete-user',
+      body: {'userId': idUser},
+    );
 
-    if (response.isEmpty) {
-      throw Exception(
-        'Tidak ada data terhapus. Periksa UUID dan policy RLS DELETE.',
-      );
-    }
+    print('HASIL DELETE ACCOUNT: ${response.data}');
 
-    print('Data profil berhasil dihapus.');
+    print('Akun dan profil berhasil dihapus.');
   }
 }

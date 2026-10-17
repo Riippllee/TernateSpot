@@ -40,22 +40,25 @@ class TestUserManagementPage extends StatelessWidget {
   }
 
   Future<void> testDeleteUser() async {
-    const testUserId = '07efe45e-2cfb-4923-ab7c-9f9a6bf1cd1c';
+    const testUserId = '51377400-0e24-4e4a-9c5c-681e98a4a8d3';
 
     try {
+      print('MULAI DELETE USER: $testUserId');
+
       await controller.deleteUserProfile(testUserId);
 
-      print('Permintaan delete selesai.');
+      print('Permintaan Edge Function berhasil.');
 
       final user = await controller.getUserById(testUserId);
 
       if (user == null) {
-        print('Profil user berhasil dihapus.');
+        print('VERIFIKASI: Profil tidak ditemukan lagi.');
       } else {
-        print('Profil user masih ditemukan.');
+        print('VERIFIKASI: Profil masih ditemukan.');
       }
-    } catch (e) {
-      print('Gagal menghapus profil: $e');
+    } catch (e, stackTrace) {
+      print('DELETE GAGAL: $e');
+      print(stackTrace);
     }
   }
 
