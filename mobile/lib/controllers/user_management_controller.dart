@@ -19,4 +19,8 @@ class UserManagementController {
 
     print("CONTROLLER SELESAI");
   }
+
+  Future<void> deleteUserProfile(String idUser) async {
+    await _service.deleteUserProfile(idUser);
+  }
 }

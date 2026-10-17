@@ -39,4 +39,22 @@ class UserManagementService {
     print("HASIL UPDATE:");
     print(response);
   }
+
+  Future<void> deleteUserProfile(String idUser) async {
+    final response = await _supabase
+        .from('user')
+        .delete()
+        .eq('id_user', idUser)
+        .select('id_user');
+
+    print('HASIL DELETE: $response');
+
+    if (response.isEmpty) {
+      throw Exception(
+        'Tidak ada data terhapus. Periksa UUID dan policy RLS DELETE.',
+      );
+    }
+
+    print('Data profil berhasil dihapus.');
+  }
 }

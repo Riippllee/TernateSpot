@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/views/admin/test_user_management_page.dart.dart';
 import 'package:ternatespot/views/auth/daftar_page.dart';
 import 'package:ternatespot/views/auth/forgot_password_page.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../controllers/auth_controller.dart';
 
@@ -324,19 +326,60 @@ class _LoginPageState extends State<LoginPage> {
               ElevatedButton(
                 onPressed: () async {
                   try {
+                    // 1. Login menggunakan Supabase Auth
                     final response = await _authController.login(
                       _emailController.text.trim(),
-
                       _passwordController.text.trim(),
                     );
-                    print("USER ID : ${response.user!.id}");
 
-                    print("EMAIL : ${response.user!.email}");
+                    // Pastikan user berhasil login
+                    final authUser = response.user;
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Login berhasil")),
+                    if (authUser == null) {
+                      throw Exception('Login gagal. Silakan coba lagi.');
+                    }
+
+                    // 2. Ambil profil dari tabel public.user
+                    final userController = UserController();
+
+                    final profile = await userController.getProfile(
+                      authUser.id,
+                    );
+
+                    if (profile == null) {
+                      throw Exception('Profil pengguna tidak ditemukan.');
+                    }
+
+                    // 3. Periksa status akun
+                    if (!profile.status) {
+                      await Supabase.instance.client.auth.signOut();
+                      throw Exception('Akun sedang dinonaktifkan.');
+                    }
+
+                    // 4. Periksa role
+                    if (profile.role != 'admin') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Akses ditolak. Halaman ini khusus admin.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    // 5. Admin berhasil login, buka halaman Management User
+                    if (!mounted) return;
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TestUserManagementPage(),
+                      ),
                     );
                   } catch (e) {
+                    if (!mounted) return;
+
                     ScaffoldMessenger.of(context)
                         .showSnackBar(SnackBar(content: Text(e.toString())));
                   }
