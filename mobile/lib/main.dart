@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 // Mengimpor halaman Management User.
 // File ini berisi tampilan untuk mengelola data pengguna.
-import 'views/auth/admin/management_user_page.dart';
+import 'views/admin/management_user_page.dart';
 
 // Fungsi main adalah titik awal ketika aplikasi dijalankan.
 // Future<void> digunakan karena proses inisialisasi
