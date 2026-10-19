@@ -1,69 +1,57 @@
-// Mengimpor komponen Material Design Flutter, seperti Scaffold, AppBar, TextField, dan Icon.
 import 'package:flutter/material.dart';
 
-// Widget halaman untuk mengedit informasi destinasi. StatefulWidget dipakai karena isi form dapat berubah.
 class EditDestinasiPage extends StatefulWidget {
-  // Menyimpan judul destinasi yang dikirim dari halaman sebelumnya; nilainya tidak dapat diubah.
   final String destinationTitle;
 
-  // Konstruktor halaman; menerima judul destinasi secara opsional.
   const EditDestinasiPage({
-    // Key membantu Flutter mengenali widget saat susunan widget berubah.
     super.key,
-    // Jika judul tidak dikirim, gunakan Pantai Sulamadaha sebagai nilai bawaan.
     this.destinationTitle = 'Pantai Sulamadaha',
   });
 
   @override
-  // Menghubungkan widget ini dengan objek State yang mengelola data dan tampilan dinamis.
   State<EditDestinasiPage> createState() => _EditDestinasiPageState();
 }
 
-// State halaman: menyimpan nilai input dan status pilihan yang bisa berubah.
 class _EditDestinasiPageState extends State<EditDestinasiPage> {
-  // Controller untuk membaca dan mengatur teks pada kolom nama destinasi.
   late TextEditingController _nameController;
-  // Controller untuk membaca dan mengatur teks pada kolom deskripsi.
   late TextEditingController _descController;
-  // Kategori yang sedang dipilih; nilai awalnya adalah Pantai.
+  late TextEditingController _addressController;
+  late TextEditingController _latitudeController;
+  late TextEditingController _longitudeController;
+
   String _selectedCategory = 'Pantai';
-  // true berarti destinasi aktif/publik, false berarti draft/arsip.
   bool _isPublicActive = true;
 
   @override
-  // Dipanggil saat State pertama kali dibuat untuk menyiapkan nilai awal form.
   void initState() {
-    // Menjalankan proses inisialisasi milik kelas induk.
     super.initState();
-    // Mengisi kolom nama menggunakan judul yang diterima oleh widget.
     _nameController = TextEditingController(text: widget.destinationTitle);
-    // Membuat controller deskripsi dan mengisi teks deskripsi awal.
     _descController = TextEditingController(
       text:
           'Pantai Sulamadaha terkenal dengan julukan "Pantai Air Kaca" karena kejernihan air lautnya di Teluk Saomadoro. Pengunjung dapat menikmati sensasi menaiki kano transparan seolah melayang di atas air, snorkeling menikmati terumbu karang alami, serta',
     );
+    _addressController = TextEditingController(
+      text:
+          'Kelurahan Sulamadaha, Kecamatan Pulau Ternate, Kota Ternate, Maluku Utara',
+    );
+    _latitudeController = TextEditingController(text: '0.866100');
+    _longitudeController = TextEditingController(text: '127.329200');
   }
 
   @override
-  // Dipanggil ketika halaman dilepas; resource controller harus dibersihkan.
   void dispose() {
-    // Melepaskan resource controller nama agar tidak terjadi kebocoran memori.
     _nameController.dispose();
-    // Melepaskan resource controller deskripsi.
     _descController.dispose();
-    // Menyelesaikan proses pembersihan dari kelas induk.
+    _addressController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
     super.dispose();
   }
 
   @override
-  // Menyusun seluruh tampilan halaman berdasarkan state saat ini.
   Widget build(BuildContext context) {
-    // Scaffold menyediakan kerangka dasar halaman: app bar dan area isi.
-    // Kerangka halaman yang berisi AppBar dan konten utama.
     return Scaffold(
-      // Memberi warna latar abu-abu kebiruan yang lembut pada halaman.
-      backgroundColor: const Color(0xFFF4F7FA),
-      // Membuat bilah atas halaman.
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -76,7 +64,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
-                // Menutup halaman edit dan kembali ke halaman sebelumnya saat tombol ditekan.
                 onTap: () => Navigator.pop(context),
                 child: const Padding(
                   padding: EdgeInsets.all(8.0),
@@ -91,7 +78,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
           ),
         ),
         title: const Text(
-          // Judul yang ditampilkan pada AppBar.
           'Edit Destinasi',
           style: TextStyle(
             color: Colors.black87,
@@ -100,32 +86,21 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
           ),
         ),
       ),
-      // Membuat isi halaman dapat digulir jika kontennya melebihi tinggi layar.
       body: SingleChildScrollView(
-        // Memberi jarak 16 piksel di sekeliling konten.
         padding: const EdgeInsets.all(16.0),
-        // Menyusun kartu-kartu form secara vertikal dari atas ke bawah.
         child: Column(
           children: [
-            // Kartu pertama menampilkan foto sampul destinasi dan galeri foto pendukung.
             // CARD 1: FOTO UTAMA & GALERI PENDUKUNG
-            // Container membungkus bagian UI agar mudah diberi padding dan dekorasi.
             Container(
               padding: const EdgeInsets.all(16),
-              // Mengatur tampilan kotak, termasuk warna, sudut membulat, dan garis tepi.
               decoration: BoxDecoration(
-                // Memberi latar putih pada kartu.
                 color: Colors.white,
-                // Membulatkan sudut kartu sebesar 16 piksel.
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFEDF2F7)),
               ),
-              // Menata isi kartu secara vertikal.
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Baris judul bagian foto utama dan informasi batas format/ukuran file.
-                  // Label Foto Utama
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -135,7 +110,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                               color: Color(0xFF0066FF), size: 18),
                           SizedBox(width: 6),
                           Text(
-                            // Label untuk menandai bagian foto sampul destinasi.
                             'FOTO UTAMA DESTINASI',
                             style: TextStyle(
                               fontSize: 12,
@@ -162,12 +136,10 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Menampilkan foto sampul yang saat ini digunakan.
-                  // Display Gambar Utama Sampul
+                  // Display Gambar Utama
                   Container(
                     height: 175,
                     width: double.infinity,
-                    // Mengatur latar gambar dan bentuk kotak foto.
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       image: const DecorationImage(
@@ -177,11 +149,8 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                         fit: BoxFit.cover,
                       ),
                     ),
-                    // Stack memungkinkan label dan tombol ditumpuk di atas gambar.
                     child: Stack(
                       children: [
-                        // Label kecil yang diletakkan di atas foto sebagai penanda foto sampul.
-                        // Badge Foto Sampul Utama
                         Positioned(
                           top: 10,
                           left: 10,
@@ -202,9 +171,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                             ),
                           ),
                         ),
-
-                        // Ikon hapus dekoratif yang ditempatkan di sudut kanan atas foto.
-                        // Tombol Hapus Sampul (Pojok Kanan Atas)
                         Positioned(
                           top: 10,
                           right: 10,
@@ -222,9 +188,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                             ),
                           ),
                         ),
-
-                        // Menampilkan label Ganti Foto dan nama file di bagian bawah foto.
-                        // Tombol Ganti Foto & Nama File (Bawah)
                         Positioned(
                           bottom: 10,
                           left: 10,
@@ -281,10 +244,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 16),
 
-                  // Bagian galeri berisi beberapa foto pendukung destinasi.
-                  // Foto Pendukung (Galeri Tambahan)
                   const Text(
-                    // Judul bagian galeri foto tambahan.
                     'Foto Pendukung (Galeri Tambahan)',
                     style: TextStyle(
                       fontSize: 11,
@@ -304,9 +264,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                         'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/newsOg_2024_6_9_1717902356726-iifq7h.jpeg',
                       ),
                       const SizedBox(width: 8),
-
-                      // Kotak ajakan untuk menambahkan foto ke galeri; pada kode ini masih berupa tampilan UI.
-                      // Tombol Upload (Border Putus-putus)
                       Container(
                         width: 62,
                         height: 62,
@@ -315,7 +272,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: Colors.grey.shade300,
-                            style: BorderStyle.solid,
                           ),
                         ),
                         child: Column(
@@ -324,7 +280,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                             Icon(Icons.add, color: Colors.grey, size: 18),
                             SizedBox(height: 2),
                             Text(
-                              // Teks pada kotak untuk menambahkan foto.
                               'Upload',
                               style:
                                   TextStyle(fontSize: 9, color: Colors.grey),
@@ -340,32 +295,23 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
             const SizedBox(height: 16),
 
-            // Kartu kedua berisi kolom nama, kategori, status publikasi, dan deskripsi.
             // CARD 2: INFORMASI UTAMA
-            // Container membungkus bagian UI agar mudah diberi padding dan dekorasi.
             Container(
               padding: const EdgeInsets.all(16),
-              // Mengatur tampilan kotak, termasuk warna, sudut membulat, dan garis tepi.
               decoration: BoxDecoration(
-                // Memberi latar putih pada kartu.
                 color: Colors.white,
-                // Membulatkan sudut kartu sebesar 16 piksel.
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFFEDF2F7)),
               ),
-              // Menata isi kartu secara vertikal.
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header yang menandai bagian informasi destinasi.
-                  // Label Header Informasi Utama
                   Row(
                     children: const [
                       Icon(Icons.info_rounded,
                           color: Color(0xFF0066FF), size: 18),
                       SizedBox(width: 6),
                       Text(
-                        // Judul bagian informasi utama.
                         'INFORMASI UTAMA',
                         style: TextStyle(
                           fontSize: 12,
@@ -379,8 +325,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 16),
 
-                  // Label dan kolom teks untuk nama destinasi wisata.
-                  // Input 1: Nama Destinasi Wisata
+                  // Nama Destinasi
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -414,7 +359,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                     controller: _nameController,
                     style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600),
-                    // Mengatur tampilan kolom input, seperti warna latar, ikon, dan border.
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
@@ -435,8 +379,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 14),
 
-                  // Label dan dropdown untuk memilih kategori destinasi.
-                  // Input 2: Kategori Wisata
+                  // Kategori Wisata
                   Row(
                     children: const [
                       Text(
@@ -459,7 +402,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     value: _selectedCategory,
-                    // Daftar pilihan kategori yang tersedia di dropdown.
                     items: ['Pantai', 'Danau & Air', 'Sejarah & Benteng']
                         .map((cat) => DropdownMenuItem(
                               value: cat,
@@ -470,14 +412,11 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                               ),
                             ))
                         .toList(),
-                    // Callback yang dijalankan saat pengguna memilih kategori lain.
                     onChanged: (val) {
                       if (val != null) {
-                        // Memperbarui kategori dan meminta Flutter membangun ulang tampilan.
                         setState(() => _selectedCategory = val);
                       }
                     },
-                    // Mengatur tampilan kolom input, seperti warna latar, ikon, dan border.
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
@@ -501,8 +440,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 14),
 
-                  // Menyediakan pilihan untuk menampilkan destinasi ke publik atau menyimpannya sebagai draft.
-                  // Input 3: Status Publikasi
+                  // Status Publikasi
                   Row(
                     children: const [
                       Text(
@@ -526,8 +464,6 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   Row(
                     children: [
-                      // Kartu pilihan pertama; destinasi akan ditandai aktif/publik.
-                      // Opsi 1: Aktif / Publik
                       Expanded(
                         child: GestureDetector(
                           onTap: () => setState(() => _isPublicActive = true),
@@ -592,11 +528,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 8),
-
-                      // Kartu pilihan kedua; destinasi ditandai draft/arsip dan disembunyikan.
-                      // Opsi 2: Draft / Arsip
                       Expanded(
                         child: GestureDetector(
                           onTap: () => setState(() => _isPublicActive = false),
@@ -658,8 +590,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 14),
 
-                  // Label dan kolom teks panjang untuk menjelaskan destinasi wisata.
-                  // Input 4: Deskripsi Destinasi
+                  // Deskripsi Destinasi
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -691,10 +622,9 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                   const SizedBox(height: 6),
                   TextField(
                     controller: _descController,
-                    maxLines: 5,
+                    maxLines: 4,
                     style: const TextStyle(
                         fontSize: 12, color: Colors.black87, height: 1.4),
-                    // Mengatur tampilan kolom input, seperti warna latar, ikon, dan border.
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
@@ -712,31 +642,465 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                 ],
               ),
             ),
+
+            const SizedBox(height: 16),
+
+            // CARD 3: LOKASI & KOORDINAT PETA
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFEDF2F7)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.map_rounded,
+                              color: Color(0xFF0066FF), size: 18),
+                          SizedBox(width: 6),
+                          Text(
+                            'LOKASI & KOORDINAT PETA',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEBF2FF),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'GPS Valid',
+                          style: TextStyle(
+                            color: Color(0xFF0066FF),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Alamat Lengkap
+                  Row(
+                    children: const [
+                      Text(
+                        'Alamat Lengkap ',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        '*',
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _addressController,
+                    maxLines: 2,
+                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      suffixIcon: const Icon(Icons.location_on,
+                          color: Colors.redAccent, size: 18),
+                      contentPadding: const EdgeInsets.all(12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Mini Map Preview dengan Pin
+                  Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8EEF5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Stack(
+                      children: [
+                        // Gambar Peta Latar
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            color: const Color(0xFFE2ECF8),
+                            child: CustomPaint(
+                              size: const Size(double.infinity, 120),
+                              painter: _MapRoadsPainter(),
+                            ),
+                          ),
+                        ),
+
+                        // Pin Lokasi Biru di Tengah
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.location_on,
+                                color: Color(0xFF0066FF),
+                                size: 36,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Tombol Floating Sesuai Pin
+                        Positioned(
+                          bottom: 10,
+                          right: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.gps_fixed_rounded,
+                                    size: 12, color: Color(0xFF0066FF)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Sesuaikan Pin',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0066FF),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Latitude & Longitude Inputs
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Latitude (Lintang)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: _latitudeController,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade200),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade200),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Longitude (Bujur)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: _longitudeController,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade200),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade200),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // CARD 4: RIWAYAT AUDIT SISTEM
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F7FA),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'RIWAYAT AUDIT SISTEM',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('ID Destinasi:',
+                                style: TextStyle(
+                                    fontSize: 10, color: Colors.grey)),
+                            SizedBox(height: 2),
+                            Text('#DST-12',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87)),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Editor Terakhir (id_user):',
+                                style: TextStyle(
+                                    fontSize: 10, color: Colors.grey)),
+                            SizedBox(height: 2),
+                            Text('Admin_TernateSpot',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Tanggal Daftar:',
+                                style: TextStyle(
+                                    fontSize: 10, color: Colors.grey)),
+                            SizedBox(height: 2),
+                            Text('12 Jan 2024, 09:30',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87)),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Pembaruan Terakhir:',
+                                style: TextStyle(
+                                    fontSize: 10, color: Colors.grey)),
+                            SizedBox(height: 2),
+                            Text('Hari ini, 16:45 WIT',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // TOMBOL HAPUS DESTINASI WISATA INI
+            GestureDetector(
+              onTap: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.delete_outline_rounded,
+                      color: Colors.redAccent, size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    'Hapus Destinasi Wisata Ini',
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // BOTTOM BUTTONS: BATAL & SIMPAN PERUBAHAN
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Batal',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.save_rounded,
+                          size: 16, color: Colors.white),
+                      label: const Text(
+                        'Simpan Perubahan',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0066FF),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-// Fungsi pembantu agar setiap foto galeri dibuat dengan tampilan yang sama.
-  // Widget Pembantu untuk Item Galeri Pendukung
-  // Menerima URL gambar dan mengembalikan widget thumbnail galeri.
   Widget _buildGalleryItem(String url) {
-    // Menumpuk gambar dan ikon tutup di atas satu sama lain.
     return Stack(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          // Memuat gambar dari alamat URL internet.
           child: Image.network(
             url,
             width: 62,
             height: 62,
-            // Memenuhi kotak thumbnail tanpa mengubah rasio gambar.
             fit: BoxFit.cover,
           ),
         ),
-        // Menempatkan ikon secara absolut pada posisi tertentu di atas gambar.
         Positioned(
           top: 4,
           right: 4,
@@ -756,4 +1120,34 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
       ],
     );
   }
+}
+
+// Custom Painter untuk Ilustrasi Jalan di Mini Map
+class _MapRoadsPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paintRoad = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 20
+      ..style = PaintingStyle.stroke;
+
+    final paintMainRoad = Paint()
+      ..color = const Color(0xFFCCE0F5)
+      ..strokeWidth = 28
+      ..style = PaintingStyle.stroke;
+
+    final path1 = Path()
+      ..moveTo(0, size.height * 0.8)
+      ..lineTo(size.width, size.height * 0.2);
+
+    final path2 = Path()
+      ..moveTo(size.width * 0.3, 0)
+      ..lineTo(size.width * 0.6, size.height);
+
+    canvas.drawPath(path1, paintMainRoad);
+    canvas.drawPath(path2, paintRoad);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
