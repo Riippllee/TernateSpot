@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/views/admin/admin_shell.dart';
 import 'package:ternatespot/views/admin/home_page.dart';
 import 'package:ternatespot/views/auth/daftar_page.dart';
 import 'package:ternatespot/views/auth/forgot_password_page.dart';
@@ -374,7 +375,7 @@ class _LoginPageState extends State<LoginPage> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => HomePage(),
+                        builder: (context) => AdminShell(),
                       ),
                     );
                   } catch (e) {
