@@ -23,4 +23,12 @@ class UserManagementController {
   Future<void> deleteUserProfile(String idUser) async {
     await _service.deleteUserProfile(idUser);
   }
+
+  Future<void> createUser({
+    required String nama,
+    required String email,
+    required String password,
+  }) async {
+    await _service.createUser(nama: nama, email: email, password: password);
+  }
 }

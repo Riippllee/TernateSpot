@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/views/admin/management_user_page.dart';
 
 import 'home_page.dart';
 
@@ -20,11 +21,7 @@ class _AdminShellState extends State<AdminShell> {
       message: 'Halaman pengelolaan destinasi belum tersedia.',
       icon: Icons.explore_outlined,
     ),
-    const _ComingSoonPage(
-      title: 'Management user',
-      message: 'Halaman user admin belum tersedia.',
-      icon: Icons.person_outline_rounded,
-    ),
+    const ManagementUserPage(),
     const _ComingSoonPage(
       title: 'Review Page',
       message: 'Halaman Review admin belum tersedia.',
