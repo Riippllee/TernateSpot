@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ternatespot/views/auth/login_page.dart';
-
-import 'views/admin/test_user_management_page.dart.dart';
+import 'package:ternatespot/views/auth/splash_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +21,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(), // Menampilkan LoginPage di emulator
+      home: SplashPage(), // Menampilkan LoginPage di emulator
     );
   }
 }

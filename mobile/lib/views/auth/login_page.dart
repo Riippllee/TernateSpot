@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ternatespot/views/admin/test_user_management_page.dart.dart';
+import 'package:ternatespot/views/admin/home_page.dart';
 import 'package:ternatespot/views/auth/daftar_page.dart';
 import 'package:ternatespot/views/auth/forgot_password_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -374,7 +374,7 @@ class _LoginPageState extends State<LoginPage> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => TestUserManagementPage(),
+                        builder: (context) => HomePage(),
                       ),
                     );
                   } catch (e) {
