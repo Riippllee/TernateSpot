@@ -1,14 +1,10 @@
-// Mengimpor library Material Flutter.
-// Library ini digunakan untuk membuat tampilan aplikasi,
-// seperti halaman, tombol, teks, dan komponen lainnya.
+// membuat tampilan aplikasi, seperti halaman, tombol, teks, dan komponen lainnya.
 import 'package:flutter/material.dart';
-// Mengimpor library Supabase.
-// Library ini digunakan untuk menghubungkan aplikasi
-// Flutter dengan layanan Supabase.
+// menghubungkan aplikasi Flutter dengan layanan Supabase.
 import 'package:supabase_flutter/supabase_flutter.dart';
 // Mengimpor halaman Management User.
 // File ini berisi tampilan untuk mengelola data pengguna.
-import 'views/auth/admin/management_user_page.dart';
+import 'views/auth/admin/profile_admin_page.dart';
 
 // Fungsi main adalah titik awal ketika aplikasi dijalankan.
 // Future<void> digunakan karena proses inisialisasi
@@ -22,8 +18,8 @@ Future<void> main() async {
   await Supabase.initialize(
     // URL menunjukkan alamat proyek Supabase.
     url: 'https://ciarqtbkgdmupfiuuvab.supabase.co',
-     // publishableKey digunakan untuk mengenali proyek
-     // saat aplikasi melakukan permintaan ke Supabase.
+    // publishableKey digunakan untuk mengenali proyek
+    // saat aplikasi melakukan permintaan ke Supabase.
     publishableKey: 'sb_publishable_xh9OxC4GQLHuhv46L8MjQQ_5TeP1IG_',
   );
 
@@ -55,7 +51,7 @@ class MainApp extends StatelessWidget {
       title: 'TernateSpot',
 
        // Halaman pertama yang dibuka
-       home: const ManagementUserPage(),
+       home: const ProfileAdminPage(),
     );
   }
 }

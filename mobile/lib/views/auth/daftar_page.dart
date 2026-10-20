@@ -1,26 +1,39 @@
+// Mengambil library Flutter untuk membuat tampilan, tombol, teks, 
+// kolom input, ikon, dan komponen lainnya.
 import 'package:flutter/material.dart';
+
+// Mengambil library Supabase untuk menjalankan proses pendaftaran akun
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Membuat halaman pendaftaran akun TernateSpot.
 class DaftarPage extends StatefulWidget {
   const DaftarPage({super.key});
 
+  // Menghubungkan halaman dengan bagian yang mengatur perubahan tampilan.
   @override
   State<DaftarPage> createState() => _DaftarPageState();
 }
-
 class _DaftarPageState extends State<DaftarPage> {
+
+  // Digunakan untuk memeriksa apakah semua kolom sudah diisi dengan benar
   final _formKey = GlobalKey<FormState>();
 
+  // Menyimpan teks yang dimasukkan pengguna pada setiap kolom.
   final namaController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final konfirmasiController = TextEditingController();
 
+  // Mengatur apakah password ditampilkan atau disembunyikan.
   bool passwordVisible = false;
   bool konfirmasiVisible = false;
+  //Menyimpan status persetujuan syarat dan ketentuan.
   bool setuju = false;
+  // Menandai apakah proses pendaftaran sedang berlangsung.
   bool loading = false;
 
+  // Membersihkan controller ketika halaman tidak digunakan lagi.
+  // Tujuannya agar sumber daya yang digunakan tidak terbuang.
   @override
   void dispose() {
     namaController.dispose();
@@ -30,9 +43,12 @@ class _DaftarPageState extends State<DaftarPage> {
     super.dispose();
   }
 
+  // Fungsi yang dijalankan ketika pengguna menekan tombol Daftar Sekarang.
   Future<void> daftarAkun() async {
+    // Memeriksa semua kolom. Jika ada yang tidak sesuai, 
+    // proses pendaftaran langsung dihentikan.
     if (!_formKey.currentState!.validate()) return;
-
+    // Memeriksa apakah pengguna sudah menyetujui syarat dan ketentuan yang telah di tentukan
     if (!setuju) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -44,21 +60,29 @@ class _DaftarPageState extends State<DaftarPage> {
       return;
     }
 
+    // Mengubah status menjadi loading agar pengguna tahu 
+    // bahwa aplikasi sedang memproses pendaftaran.
     setState(() {
       loading = true;
     });
 
     try {
+      // Mengirim email, password, dan nama pengguna ke Supabase 
+      // untuk membuat akun baru.
       final response = await Supabase.instance.client.auth.signUp(
         email: emailController.text.trim(),
         password: passwordController.text,
         data: {
+          // Menyimpan nama lengkap sebagai informasi tambahan akun.
           'nama_lengkap': namaController.text.trim(),
         },
       );
 
+      // Memastikan halaman masih terbuka sebelum menampilkan pesan.
       if (!mounted) return;
 
+      // Jika Supabase mengembalikan data pengguna, 
+      // aplikasi menampilkan pesan bahwa pendaftaran telah berhasil
       if (response.user != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -69,6 +93,9 @@ class _DaftarPageState extends State<DaftarPage> {
         );
       }
     } on AuthException catch (e) {
+
+      // Menampilkan pesan jika terjadi kesalahan saat proses
+      // pendaftaran melalui Supabase.
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,6 +104,7 @@ class _DaftarPageState extends State<DaftarPage> {
         ),
       );
     } catch (e) {
+      // Menampilkan pesan jika terjadi kesalahan lainnya.
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -85,6 +113,8 @@ class _DaftarPageState extends State<DaftarPage> {
         ),
       );
     } finally {
+      // Menghentikan loading setelah proses selesai,
+      // baik pendaftaran berhasil maupun mengalami kesalahan.
       if (mounted) {
         setState(() {
           loading = false;
@@ -93,41 +123,58 @@ class _DaftarPageState extends State<DaftarPage> {
     }
   }
 
+  // Membuat pengaturan tampilan kolom input supaya semuanya seragam.
+  // Petunjuk, ikon, dan ikon tambahan bisa diatur sesuai kebutuhan.  
   InputDecoration inputDecoration({
     required String hint,
     required IconData icon,
     Widget? suffixIcon,
   }) {
     return InputDecoration(
+      // Menampilkan petunjuk di dalam kolom sebelum diisi
       hintText: hint,
+      // Mengatur warna dan ukuran tulisan petunjuk.
       hintStyle: const TextStyle(
         color: Color(0xFFB8C0CC),
         fontSize: 13,
       ),
+
+      // Menampilkan ikon di sebelah kiri kolom.
       prefixIcon: Icon(
         icon,
         size: 18,
         color: const Color(0xFFB8C0CC),
       ),
+
+      // Menampilkan ikon tambahan di sebelah kanan, 
+      // misalnya ikon mata pada kolom password.
       suffixIcon: suffixIcon,
+      // Memberikan warna putih pada latar kolom.
       filled: true,
       fillColor: Colors.white,
+      // Mengatur jarak teks dari tepi kolom.
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 12,
         vertical: 15,
       ),
+
+      // Mengatur bentuk sudut dan garis kolom input.
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
           color: Color(0xFFE4E9F2),
         ),
       ),
+
+      // Mengatur garis kolom ketika belum dipilih.
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
           color: Color(0xFFE4E9F2),
         ),
       ),
+
+      // Mengubah warna garis ketika kolom sedang dipilih.
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
@@ -138,23 +185,30 @@ class _DaftarPageState extends State<DaftarPage> {
     );
   }
 
+  // Menyusun seluruh tampilan halaman pendaftaran.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Memberikan warna latar belakang halaman.
       backgroundColor: const Color(0xFFF7F9FE),
+      // Menjaga tampilan agar tidak tertutup bagian sistem HP.
       body: SafeArea(
         child: Center(
+          // Membuat halaman bisa digulir jika isinya terlalu panjang.
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
               horizontal: 24,
               vertical: 20,
             ),
+
+            // Mengelompokkan kolom input agar dapat diperiksa
+            // menggunakan _formKey.
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // LOGO
+                  // LOGO dan nama TernateSpot.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -172,6 +226,8 @@ class _DaftarPageState extends State<DaftarPage> {
                         ),
                       ),
                       const SizedBox(width: 5),
+
+                      // Membuat tulisan TernateSpot dengan dua warna.
                       RichText(
                         text: const TextSpan(
                           children: [
@@ -199,7 +255,7 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 28),
 
-                  // JUDUL
+                  // JUDUL halaman pendaftaran
                   const Text(
                     'Buat Akun Baru',
                     style: TextStyle(
@@ -211,6 +267,7 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 8),
 
+                  // Menjelaskan tujuan pengguna membuat akun.
                   const Text(
                     'Daftar untuk mulai menjelajahi pesona\n'
                     'rempah Kota Ternate',
@@ -282,6 +339,8 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 7),
 
+                  // Kolom untuk memasukkan nama lengkap. 
+                  // Jika kosong, pengguna diminta mengisinya.
                   TextFormField(
                     controller: namaController,
                     textInputAction: TextInputAction.next,
@@ -299,7 +358,7 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 16),
 
-                  // EMAIL
+                  // Membuat label EMAIL
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -313,6 +372,7 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 7),
 
+                  // Kolom untuk memasukkan email pengguna.
                   TextFormField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -322,10 +382,12 @@ class _DaftarPageState extends State<DaftarPage> {
                       icon: Icons.email_outlined,
                     ),
                     validator: (value) {
+                      // Email tidak boleh kosong.
                       if (value == null || value.trim().isEmpty) {
                         return 'Email wajib diisi';
                       }
 
+                      // Pemeriksaan sederhana untuk tanda @.
                       if (!value.contains('@')) {
                         return 'Masukkan email yang valid';
                       }
@@ -350,6 +412,8 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 7),
 
+                  // Kolom untuk membuat password.
+                  // Password disembunyikan jika passwordVisible bernilai false.
                   TextFormField(
                     controller: passwordController,
                     obscureText: !passwordVisible,
@@ -357,6 +421,8 @@ class _DaftarPageState extends State<DaftarPage> {
                     decoration: inputDecoration(
                       hint: 'Minimal 6 karakter',
                       icon: Icons.lock_outline,
+
+                      // Tombol mata untuk melihat atau menyembunyikan password.
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
@@ -372,11 +438,14 @@ class _DaftarPageState extends State<DaftarPage> {
                         ),
                       ),
                     ),
+
                     validator: (value) {
+                      // Password tidak boleh kosong.
                       if (value == null || value.isEmpty) {
                         return 'Kata sandi wajib diisi';
                       }
 
+                      // Password harus terdiri dari minimal 6 karakter.
                       if (value.length < 6) {
                         return 'Minimal 6 karakter';
                       }
@@ -401,6 +470,8 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 7),
 
+                  // Kolom untuk mengetik ulang password. 
+                  // Password harus sama dengan kolom sebelumnya.
                   TextFormField(
                     controller: konfirmasiController,
                     obscureText: !konfirmasiVisible,
@@ -408,6 +479,8 @@ class _DaftarPageState extends State<DaftarPage> {
                     decoration: inputDecoration(
                       hint: 'Ulangi kata sandi',
                       icon: Icons.verified_user_outlined,
+                      // Tombol untuk melihat atau menyembunyikan 
+                      // password konfirmasi.
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
@@ -423,11 +496,13 @@ class _DaftarPageState extends State<DaftarPage> {
                         ),
                       ),
                     ),
+
                     validator: (value) {
+                      // Konfirmasi password tidak boleh kosong.
                       if (value == null || value.isEmpty) {
                         return 'Konfirmasi kata sandi';
                       }
-
+                      // Memastikan password yang diketik sama.
                       if (value != passwordController.text) {
                         return 'Kata sandi tidak sama';
                       }
@@ -447,6 +522,8 @@ class _DaftarPageState extends State<DaftarPage> {
                         height: 22,
                         child: Checkbox(
                           value: setuju,
+                          // Menyimpan perubahan saat checkbox dicentang 
+                          // atau dilepas.
                           onChanged: (value) {
                             setState(() {
                               setuju = value ?? false;
@@ -455,7 +532,9 @@ class _DaftarPageState extends State<DaftarPage> {
                           activeColor: const Color(0xFF1769E0),
                         ),
                       ),
+
                       const SizedBox(width: 5),
+                      // Menampilkan teks persetujuan dengan warna tertentu.
                       const Expanded(
                         child: Text.rich(
                           TextSpan(
@@ -497,11 +576,14 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 18),
 
-                  // DAFTAR SEKARANG
+                  // Membuat tomboL DAFTAR SEKARANG
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
+
+                      // Tombol tidak bisa ditekan selama proses berlangsung. 
+                      // Jika tidak loading, tombol menjalankan daftarAkun().
                       onPressed: loading ? null : daftarAkun,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1769E0),
@@ -512,6 +594,9 @@ class _DaftarPageState extends State<DaftarPage> {
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
+                      
+                      // Menampilkan loading atau tulisan tombol,
+                      // sesuai keadaan proses pendaftaran.
                       child: loading
                           ? const SizedBox(
                               width: 22,
@@ -543,7 +628,8 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 20),
 
-                  // PEMBATAS
+                  // PEMBATAS, Membuat garis pemisah antara pendaftaran biasa
+                  // dan pilihan pendaftaran menggunakan Google.
                   Row(
                     children: [
                       Expanded(
@@ -571,7 +657,7 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 15),
 
-                  // GOOGLE
+                  // Membuat tombol GOOGLE
                   SizedBox(
                     width: double.infinity,
                     height: 44,
@@ -620,7 +706,9 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 18),
 
-                  // SUDAH PUNYA AKUN
+                  // SUDAH PUNYA AKUN, Menampilkan ajakan masuk bagi pengguna
+                  // yang sudah memiliki akun.
+                  // Pada kode ini, tulisan belum menjalankan navigasi.
                   const Text.rich(
                     TextSpan(
                       style: TextStyle(
@@ -644,7 +732,8 @@ class _DaftarPageState extends State<DaftarPage> {
 
                   const SizedBox(height: 15),
 
-                  // TAMU
+                  // Membuat tombol untuk menjelajahi aplikasi sebagai tamu.
+                  // onPressed masih kosong, jadi tombol belum menjalankan aksi.
                   TextButton.icon(
                     onPressed: () {},
                     icon: const Icon(
