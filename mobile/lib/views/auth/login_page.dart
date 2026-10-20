@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ternatespot/views/admin/admin_shell.dart';
-import 'package:ternatespot/views/admin/home_page.dart';
 import 'package:ternatespot/views/auth/daftar_page.dart';
 import 'package:ternatespot/views/auth/forgot_password_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
