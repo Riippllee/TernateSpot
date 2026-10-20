@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/views/admin/katalog_destinasi.dart';
 import 'package:ternatespot/views/admin/management_user_page.dart';
 
 import 'home_page.dart';
@@ -16,11 +17,7 @@ class _AdminShellState extends State<AdminShell> {
   // Urutan halaman harus sama dengan urutan menu navigasi.
   late final List<Widget> _pages = [
     const HomePage(),
-    const _ComingSoonPage(
-      title: 'Destinasi',
-      message: 'Halaman pengelolaan destinasi belum tersedia.',
-      icon: Icons.explore_outlined,
-    ),
+    KatalogDestinasiPage(),
     const ManagementUserPage(),
     const _ComingSoonPage(
       title: 'Review Page',
