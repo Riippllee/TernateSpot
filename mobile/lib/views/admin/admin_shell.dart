@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ternatespot/views/admin/katalog_destinasi.dart';
 import 'package:ternatespot/views/admin/management_user_page.dart';
+import 'package:ternatespot/views/admin/profile_admin_page.dart';
 
 import 'home_page.dart';
 
@@ -24,11 +25,7 @@ class _AdminShellState extends State<AdminShell> {
       message: 'Halaman Review admin belum tersedia.',
       icon: Icons.person_outline_rounded,
     ),
-    const _ComingSoonPage(
-      title: 'Profil Admin',
-      message: 'Halaman profil admin belum tersedia.',
-      icon: Icons.person_outline_rounded,
-    ),
+    ProfileAdminPage()
   ];
 
   @override
