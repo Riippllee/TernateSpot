@@ -437,57 +437,6 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
         ),
       ),
 
-      // Navigasi bawah.
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: menuAktif,
-        selectedItemColor: warnaBiru,
-        unselectedItemColor: warnaAbu,
-        backgroundColor: Colors.white,
-        selectedFontSize: 11,
-        unselectedFontSize: 10,
-        onTap: (index) {
-          setState(() {
-            menuAktif = index;
-          });
-
-          const namaMenu = [
-            'Dashboard',
-            'Destinasi',
-            'Users',
-            'Moderasi',
-            'Profil',
-          ];
-
-          if (index != 4) {
-            tampilkanPesan(
-              'Menu ${namaMenu[index]} belum dihubungkan.',
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.place_outlined),
-            label: 'Destinasi',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Users',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.verified_user_outlined),
-            label: 'Moderasi',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Profil',
-          ),
-        ],
-      ),
     );
   }
 }
