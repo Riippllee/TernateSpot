@@ -8,120 +8,114 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-function jsonResponse(
-  body: Record<string, unknown>,
-  status = 200,
-) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-    },
-  });
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const respond = (status: number, body: Record<string, unknown>) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
+
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return respond(405, {
+      error: "Method tidak diizinkan.",
+    });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+    return respond(500, {
+      error: "Konfigurasi Supabase server belum lengkap.",
+    });
+  }
+
+  const authorization = req.headers.get("Authorization");
+
+  if (!authorization?.startsWith("Bearer ")) {
+    return respond(401, {
+      error: "Sesi login diperlukan.",
+    });
+  }
+
+  const callerClient = createClient(supabaseUrl, anonKey, {
+    global: {
+      headers: { Authorization: authorization },
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
+  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get(
-      "SUPABASE_SERVICE_ROLE_KEY",
-    );
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      console.error("Konfigurasi Supabase server belum lengkap.");
-      return jsonResponse(
-        { error: "Konfigurasi server belum lengkap." },
-        500,
-      );
-    }
-
-    // Client khusus server. Jangan pernah menaruh key ini di Flutter.
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      serviceRoleKey,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      },
-    );
-
-    // 1. Periksa token pengguna yang memanggil function.
-    const authHeader = req.headers.get("Authorization");
-
-    if (!authHeader?.startsWith("Bearer ")) {
-      return jsonResponse(
-        { error: "Session login diperlukan." },
-        401,
-      );
-    }
-
-    const token = authHeader.substring("Bearer ".length);
-
+    // 1. Verifikasi identitas pemanggil.
     const {
       data: { user: caller },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(token);
+      error: callerError,
+    } = await callerClient.auth.getUser();
 
-    if (authError || !caller) {
-      return jsonResponse(
-        { error: "Session tidak valid." },
-        401,
-      );
+    if (callerError || !caller) {
+      return respond(401, {
+        error: "Sesi login tidak valid.",
+      });
     }
 
-    // 2. Periksa role dan status admin dari database.
-    const { data: adminProfile, error: adminError } =
-      await supabaseAdmin
+    // 2. Pastikan pemanggil adalah admin aktif.
+    const { data: adminProfile, error: adminProfileError } =
+      await adminClient
         .from("user")
         .select("role, status")
         .eq("id_user", caller.id)
         .maybeSingle();
 
     if (
-      adminError ||
+      adminProfileError ||
       !adminProfile ||
       adminProfile.role !== "admin" ||
       adminProfile.status !== true
     ) {
-      return jsonResponse(
-        { error: "Hanya admin aktif yang boleh menghapus pengguna." },
-        403,
-      );
+      return respond(403, {
+        error: "Hanya admin aktif yang boleh menghapus pengguna.",
+      });
     }
 
-    // 3. Validasi ID target.
+    // 3. Ambil ID pengguna target.
     const body = await req.json();
-    const userId = body.userId;
+    const userId =
+      typeof body.userId === "string" ? body.userId.trim() : "";
 
-    if (
-      typeof userId !== "string" ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-        .test(userId)
-    ) {
-      return jsonResponse({ error: "UUID pengguna tidak valid." }, 400);
+    if (!userId) {
+      return respond(400, {
+        error: "ID pengguna wajib diisi.",
+      });
     }
 
+    // Admin tidak boleh menghapus akunnya sendiri.
     if (userId === caller.id) {
-      return jsonResponse(
-        { error: "Admin tidak boleh menghapus akun sendiri." },
-        400,
-      );
+      return respond(403, {
+        error: "Admin tidak dapat menghapus akun sendiri.",
+      });
     }
 
-    // 4. Pastikan target merupakan user biasa.
+    // 4. Pastikan target memiliki profil dengan role user.
     const { data: targetProfile, error: targetError } =
-      await supabaseAdmin
+      await adminClient
         .from("user")
         .select("id_user, role")
         .eq("id_user", userId)
@@ -129,74 +123,78 @@ Deno.serve(async (req: Request) => {
 
     if (targetError) {
       console.error("Gagal memeriksa target:", targetError.message);
-      return jsonResponse(
-        { error: "Gagal memeriksa profil pengguna." },
-        500,
-      );
+      return respond(500, {
+        error: "Gagal memeriksa data pengguna.",
+      });
     }
 
     if (!targetProfile) {
-      return jsonResponse(
-        { error: "Profil pengguna tidak ditemukan." },
-        404,
-      );
+      return respond(404, {
+        error: "Profil pengguna tidak ditemukan.",
+      });
     }
 
     if (targetProfile.role !== "user") {
-      return jsonResponse(
-        { error: "Hanya akun dengan role user yang boleh dihapus." },
-        403,
-      );
+      return respond(403, {
+        error: "Hanya akun dengan role user yang boleh dihapus.",
+      });
     }
 
-    // 5. Hapus akun Auth terlebih dahulu.
-    // Jika gagal, profil tidak dihapus oleh langkah berikutnya.
-    const { error: deleteAuthError } =
-      await supabaseAdmin.auth.admin.deleteUser(userId);
-
-    if (deleteAuthError) {
-      console.error(
-        "Gagal menghapus akun Auth:",
-        deleteAuthError.message,
-      );
-
-      return jsonResponse(
-        { error: "Gagal menghapus akun Authentication." },
-        500,
-      );
-    }
-
-    // 6. Hapus profil jika tidak terhapus melalui foreign key cascade.
-    const { error: deleteProfileError } = await supabaseAdmin
-      .from("user")
-      .delete()
-      .eq("id_user", userId);
+    // 5. Hapus profil terlebih dahulu.
+    // Jika gagal, akun Authentication belum dihapus.
+    const { data: deletedProfiles, error: deleteProfileError } =
+      await adminClient
+        .from("user")
+        .delete()
+        .eq("id_user", userId)
+        .select("id_user");
 
     if (deleteProfileError) {
       console.error(
-        "Akun Auth terhapus, tetapi profil gagal dihapus:",
+        "Gagal menghapus profil:",
         deleteProfileError.message,
       );
 
-      return jsonResponse(
-        {
-          error:
-            "Akun Auth telah dihapus, tetapi profil perlu diperiksa.",
-        },
-        500,
-      );
+      return respond(500, {
+        error: "Gagal menghapus profil pengguna.",
+      });
     }
 
-    return jsonResponse({
-      message: "Akun dan profil pengguna berhasil dihapus.",
+    if (!deletedProfiles || deletedProfiles.length === 0) {
+      return respond(500, {
+        error: "Profil tidak terhapus. Periksa kebijakan database.",
+      });
+    }
+
+    // 6. Hapus akun Authentication.
+    const { error: deleteAuthError } =
+      await adminClient.auth.admin.deleteUser(userId);
+
+    if (deleteAuthError) {
+      console.error(
+        "Gagal menghapus akun Authentication:",
+        deleteAuthError.message,
+      );
+
+      // Profil telah dihapus, tetapi akun Auth mungkin masih ada.
+      // Laporkan kondisi ini agar dapat ditangani.
+      return respond(500, {
+        error:
+          "Profil terhapus, tetapi akun Authentication gagal dihapus. " +
+          "Periksa log server dan lakukan rekonsiliasi akun.",
+      });
+    }
+
+    return respond(200, {
+      success: true,
+      message: "Pengguna berhasil dihapus.",
       userId,
     });
   } catch (error) {
-    console.error("Kesalahan delete-user:", error);
+    console.error("delete-user error:", error);
 
-    return jsonResponse(
-      { error: "Terjadi kesalahan pada server." },
-      500,
-    );
+    return respond(500, {
+      error: "Terjadi kesalahan pada server.",
+    });
   }
 });
