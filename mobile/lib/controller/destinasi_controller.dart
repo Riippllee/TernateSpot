@@ -22,6 +22,7 @@ class DestinasiController {
 
   // Fungsi untuk menambahkan data destinasi lengkap
   // Meliputi data destinasi dan upload gambar
+
   Future<bool> tambahDestinasiLengkap({
     required int idKategori,
     required String nama,
@@ -30,6 +31,7 @@ class DestinasiController {
     required double latitude,
     required double longitude,
     required Uint8List fotoBytes,
+    required bool status,
   }) async {
     try {
       // Upload gambar terlebih dahulu dan mengambil URL gambar
@@ -45,7 +47,7 @@ class DestinasiController {
         latitude: latitude,
         longitude: longitude,
         fotoUtama: fotoUrl, // Menyimpan URL gambar
-        status: true, // Status aktif destinasi
+        status: status, // Status aktif destinasi
         tanggalDaftar: DateTime.now(), // Waktu data dibuat
         tanggalPerubahan: DateTime.now(), // Waktu perubahan data
       );

@@ -1,6 +1,8 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../controller/destinasi_controller.dart';
 import '../../models/destinasi_model.dart';
 import '../../models/kategori_model.dart';
@@ -177,6 +179,7 @@ class _DestinasiListPageState extends State<DestinasiListPage> {
         latitude: safeLat,
         longitude: safeLong,
         fotoBytes: _selectedImageBytes!,
+        status: true,
       );
 
       if (success) {
