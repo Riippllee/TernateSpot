@@ -18,10 +18,10 @@ class ReviewPage extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0, // Menghilangkan bayangan di bawah AppBar
         
-        // Tombol kembali (Back Button)
+        // [PERTANYAAN PENGUJI]: Bagian navigasi kembali ke halaman sebelumnya
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context), // Mengeluarkan route aktif dari stack
         ),
         
         // Judul halaman
@@ -52,6 +52,7 @@ class ReviewPage extends StatelessWidget {
       // ==========================================
       // BODY (Konten Utama yang Bisa Di-scroll)
       // ==========================================
+      // [PERTANYAAN PENGUJI]: Mencegah error 'Bottom Overflowed' saat konten panjang
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -92,7 +93,7 @@ class ReviewPage extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              // 5 Bintang kecil warna emas
+                              // [PERTANYAAN PENGUJI]: Generator dinamis untuk ikon bintang 5
                               Row(
                                 children: List.generate(
                                   5,
@@ -118,6 +119,7 @@ class ReviewPage extends StatelessWidget {
                         const SizedBox(width: 16),
 
                         // --- Progress Bar Breakdown Rating (1-5 Bintang) ---
+                        // [PERTANYAAN PENGUJI]: Expanded memastikan child mengambil sisa ruang horizontal yang ada
                         Expanded(
                           child: Column(
                             children: [
@@ -176,6 +178,7 @@ class ReviewPage extends StatelessWidget {
             // ----------------------------------------------------
             // 2. TAB FILTER ULASAN (Horizontal Scroll)
             // ----------------------------------------------------
+            // [PERTANYAAN PENGUJI]: Menangani daftar filter berderet ke samping agar tidak overflow
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -241,10 +244,10 @@ class ReviewPage extends StatelessWidget {
           const Icon(Icons.star, size: 10, color: Colors.amber),
           const SizedBox(width: 6),
           
-          // Progress bar horizontal
+          // [PERTANYAAN PENGUJI]: Komponen visual bar indikator nilai persentase rating
           Expanded(
             child: LinearProgressIndicator(
-              value: percent,
+              value: percent, // Mengontrol panjang bar terisi (0.0 - 1.0)
               backgroundColor: Colors.grey.shade200,
               color: Colors.amber,
               minHeight: 6,
@@ -273,6 +276,7 @@ class ReviewPage extends StatelessWidget {
   Widget _buildFilterChip(String label, {required bool isSelected}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      // [PERTANYAAN PENGUJI]: Kondisional styling berdasarkan status keaktifan chip (isSelected)
       decoration: BoxDecoration(
         color: isSelected ? const Color(0xFF0056C6) : Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -297,6 +301,7 @@ class ReviewPage extends StatelessWidget {
   /// - [rating]: Nilai rating yang diberikan (misal: "5.0")
   /// - [comment]: Isi teks ulasan
   /// - [likesCount]: Jumlah orang yang merasa ulasan ini membantu
+  // [PERTANYAAN PENGUJI]: Modul reusable widget untuk modularitas kode dan efisiensi memori
   Widget _buildReviewCard({
     required String name,
     required bool isVerified,
@@ -331,7 +336,7 @@ class ReviewPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Nama + Icon Centang Terverifikasi
+                      // [PERTANYAAN PENGUJI]: Kondisional rendering centang biru akun terverifikasi
                       Row(
                         children: [
                           Text(
@@ -352,7 +357,7 @@ class ReviewPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       
-                      // Kategori Pengguna + Tanggal
+                      // [PERTANYAAN PENGUJI]: Kondisional rendering label kategori pengguna
                       Row(
                         children: [
                           if (userCategory.isNotEmpty)

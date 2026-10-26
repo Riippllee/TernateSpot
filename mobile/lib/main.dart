@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ternatespot/views/review/review_admin_page.dart';
+import 'views/review/detail_destinasi_page.dart'; // Sesuaikan lokasi file kamu
 
 void main() {
   runApp(const MyApp());
@@ -10,14 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'TernateSpot Review Admin',
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Poppins',
-        useMaterial3: true,
-      ),
-      home: const ReviewPage(), // Memanggil Halaman Review Admin
+      home: DetailPage(), // Mengarah ke DetailPage
     );
   }
 }
