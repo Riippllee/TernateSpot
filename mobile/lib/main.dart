@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'views/review/detail_destinasi_page.dart'; // Sesuaikan lokasi file kamu
+import 'views/review/edit_destinasi_page.dart'; // Jalur import disesuaikan ke folder views/review
 
 void main() {
   runApp(const MyApp());
@@ -10,9 +10,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      title: 'TernateSpot',
       debugShowCheckedModeBanner: false,
-      home: DetailPage(), // Mengarah ke DetailPage
+      theme: ThemeData(
+        fontFamily: 'Poppins',
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        useMaterial3: true,
+      ),
+      home: const EditDestinasiPage(),
     );
   }
 }
