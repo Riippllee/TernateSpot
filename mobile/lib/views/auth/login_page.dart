@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ternatespot/views/auth/daftar_page.dart';
 import 'package:ternatespot/views/auth/forgot_password_page.dart';
+import 'package:ternatespot/views/test/test_profile_page.dart';
 
 import '../../controllers/auth_controller.dart';
 
@@ -18,7 +19,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthController _authController = AuthController();
-  
 
   @override
   void dispose() {
@@ -322,26 +322,44 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 24),
 
               // 7. Tombol "Masuk ke Akun"
+              // 7. Tombol "Masuk ke Akun"
               ElevatedButton(
                 onPressed: () async {
+                  // Tambahkan loading state jika perlu (opsional)
+
                   try {
                     final response = await _authController.login(
                       _emailController.text.trim(),
-
                       _passwordController.text.trim(),
                     );
-                      print("USER ID : ${response.user!.id}");
 
-  print("EMAIL : ${response.user!.email}");
+                    print("USER ID : ${response.user!.id}");
+                    print("EMAIL : ${response.user!.email}");
 
-                    
-
+                    // 1. Tampilkan pesan sukses
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Login berhasil")),
+                      const SnackBar(
+                        content: Text("Login berhasil"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+
+                    // 2. ARAHKAN KE HALAMAN UTAMA (Ganti 'HomePage' dengan nama file halaman utama Anda)
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TestProfilePage(),
+                      ), // <-- UBAH DI SINI
+                      (route) => false, // Ini penting: menghapus history login agar user tidak bisa klik 'back' kembali ke login
                     );
                   } catch (e) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(e.toString())));
+                    // Jika gagal (email/password salah, dll)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Login gagal: ${e.toString()}"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -352,9 +370,9 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   elevation: 2,
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Text(
                       'Masuk ke Akun',
                       style: TextStyle(

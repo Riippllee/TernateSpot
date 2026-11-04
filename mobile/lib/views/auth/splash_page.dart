@@ -19,9 +19,7 @@ class SplashPage extends StatelessWidget {
 
           // 2. Custom Painter
           const Positioned.fill(
-            child: CustomPaint(
-              painter: RealisticIslandPainter(),
-            ),
+            child: CustomPaint(painter: RealisticIslandPainter()),
           ),
 
           // 3. Overlay Gradient Tipis
@@ -139,7 +137,10 @@ class SplashPage extends StatelessWidget {
                   // Tombol "Mulai Jelajah"
                   InkWell(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));// Aksi navigasi ke halaman berikutnya
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                      ); // Aksi navigasi ke halaman berikutnya
                     },
                     borderRadius: BorderRadius.circular(30),
                     child: Container(

@@ -54,9 +54,8 @@ class _DaftarPageState extends State<DaftarPage> {
         namaController.text.trim(),
         emailController.text.trim(),
         passwordController.text,
-        
       );
-     print("EMAIL YANG DIKIRIM: '${emailController.text}'");
+      print("EMAIL YANG DIKIRIM: '${emailController.text}'");
       if (!mounted) return;
 
       if (response.user != null) {

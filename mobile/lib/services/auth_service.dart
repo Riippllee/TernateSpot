@@ -50,19 +50,18 @@ class AuthService {
       print("EMAIL MASUK SERVICE: '$email'");
       print("PASSWORD: '$password'");
 
-      try{
+      try {
         await supabase.from('user').insert({
-        'id_user': response.user!.id,
-        'nama': nama,
-        'email': email,
-        'foto_profil': null,
-        'role': 'user',
-        'status': true,
-      });
-      }catch(e){
-         print("Insert profile gagal: $e");
+          'id_user': response.user!.id,
+          'nama': nama,
+          'email': email,
+          'foto_profil': null,
+          'role': 'user',
+          'status': true,
+        });
+      } catch (e) {
+        print("Insert profile gagal: $e");
       }
-      
     }
 
     return response;
