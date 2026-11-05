@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // import 'views/favorit/favorit_page.dart'; //CRUD FAVORITE USER
-// import 'views/ulasan/ulasan_page.dart'; //CRUD ULASAN USER
-import 'views/rekomendasi/rekomendasi_page.dart'; //CRUD REKOMENDASI USER
+import '/views/review/review_page.dart'; //CRUD review USER
+import '/views/auth/splash_page.dart';
+
+// import 'views/rekomendasi/rekomendasi_page.dart'; //CRUD REKOMENDASI USER
 
 void main() async {
   //bagian penting jangan otak atik ini supabase punya
@@ -29,14 +31,13 @@ class MainApp extends StatelessWidget {
     //   home: FavoritPage(),
 
     //CRUD ULASAN
-    // return const MaterialApp(
-    //   debugShowCheckedModeBanner: false,
-    //   home: UlasanPage(),
-
-    //CRUD REKOMENDASI
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: RekomendasiPage(),
+      home: SplashPage(),
+      //CRUD REKOMENDASI
+      // return const MaterialApp(
+      //   debugShowCheckedModeBanner: false,
+      //   home: RekomendasiPage(),
 
       //cek terhubung / nda
       //    return MaterialApp(

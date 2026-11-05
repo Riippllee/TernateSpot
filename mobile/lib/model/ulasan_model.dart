@@ -8,6 +8,8 @@ class Ulasan {
   final bool status;
   final DateTime? tanggalDitambah;
   final DateTime? tanggalPerubahan;
+  final String? namaUser;
+  final String? fotoProfil;
 
   // Constructor untuk membuat objek Ulasan
   Ulasan({
@@ -19,10 +21,14 @@ class Ulasan {
     required this.status,
     this.tanggalDitambah,
     this.tanggalPerubahan,
+    this.namaUser,
+    this.fotoProfil,
   });
 
   // Mengubah data JSON Supabase menjadi objek Dart
   factory Ulasan.fromJson(Map<String, dynamic> json) {
+    final userData = json['user'] as Map<String, dynamic>?;
+
     return Ulasan(
       idUlasan: json['id_ulasan'],
       idUser: json['id_user'],
@@ -30,15 +36,20 @@ class Ulasan {
       rating: json['rating'],
       komentar: json['komentar'] ?? '',
       status: json['status'],
+
       tanggalDitambah: json['tanggal_ditambah'] != null
           ? DateTime.parse(json['tanggal_ditambah'])
           : null,
+
       tanggalPerubahan: json['tanggal_perubahan'] != null
           ? DateTime.parse(json['tanggal_perubahan'])
           : null,
+
+      // Mengambil nama dan foto dari tabel user
+      namaUser: userData?['nama'],
+      fotoProfil: userData?['foto_profil'],
     );
   }
-
   // Mengubah objek Dart menjadi JSON untuk Supabase
   Map<String, dynamic> toJson() {
     return {

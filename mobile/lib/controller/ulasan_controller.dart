@@ -5,9 +5,9 @@ import '../model/ulasan_model.dart';
 class UlasanController {
   final service = UlasanService();
 
-  // Menampilkan data ulasan
-  Future<List<Ulasan>> lihatUlasan() {
-    return service.getUlasan();
+  // Menampilkan ulasan berdasarkan ID destinasi
+  Future<List<Ulasan>> lihatUlasan(int idDestinasi) {
+    return service.getUlasan(idDestinasi);
   }
 
   // Menambahkan ulasan

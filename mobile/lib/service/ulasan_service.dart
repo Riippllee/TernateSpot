@@ -6,16 +6,23 @@ class UlasanService {
   // Mengambil koneksi Supabase dari main.dart
   final supabase = Supabase.instance.client;
 
-  // READ: melihat ulasan aktif dan ulasan sendiri
-  Future<List<Ulasan>> getUlasan() async {
-    final user = supabase.auth.currentUser;
+  // READ: Mengambil ulasan aktif beserta profil pengguna
+  Future<List<Ulasan>> getUlasan(int idDestinasi) async {
+    final data = await supabase
+        .from('ulasan')
+        .select('''
+  *,
+  user:user!ulasan_id_user_fkey (
+    nama,
+    foto_profil
+  )
+''')
+        .eq('status', true)
+        .eq('id_destinasi', idDestinasi)
+        .order('tanggal_ditambah', ascending: false);
 
-    final query = supabase.from('ulasan').select();
-
-    final data = user == null
-        ? await query.eq('status', true)
-        : await query.or('status.eq.true,id_user.eq.${user.id}');
-
+    // Cek hasil pengambilan data
+    print('DATA ULASAN: $data');
     // Mengubah JSON menjadi List objek Ulasan
     return data.map((e) => Ulasan.fromJson(e)).toList();
   }
