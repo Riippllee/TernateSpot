@@ -1,39 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/controllers/destinasi_controller.dart';
+import 'package:ternatespot/models/destinasi_model.dart';
 
-class EditDestinasiPage extends StatefulWidget {
-  final String destinationTitle;
+import 'coordinate_map_picker.dart';
 
-  const EditDestinasiPage({
-    super.key,
-    this.destinationTitle = 'Pantai Sulamadaha',
-  });
+import 'package:latlong2/latlong.dart';
+
+import 'dart:typed_data';
+
+import 'package:image_picker/image_picker.dart';
+
+class TambahDestinasiPage extends StatefulWidget {
+  const TambahDestinasiPage({super.key});
 
   @override
-  State<EditDestinasiPage> createState() => _EditDestinasiPageState();
+  State<TambahDestinasiPage> createState() => _TambahDestinasiPageState();
 }
 
-class _EditDestinasiPageState extends State<EditDestinasiPage> {
-  late TextEditingController _nameController;
-  late TextEditingController _descController;
-  late TextEditingController _addressController;
-  late TextEditingController _latitudeController;
-  late TextEditingController _longitudeController;
+class _TambahDestinasiPageState extends State<TambahDestinasiPage> {
+  final DestinasiController _controller = DestinasiController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _latitudeController = TextEditingController();
+  final TextEditingController _longitudeController = TextEditingController();
 
-  String _selectedCategory = 'Pantai';
+  final ImagePicker _picker = ImagePicker();
+
+  Uint8List? _fotoUtamaBytes;
+  String? _fotoUtamaName;
+
+  final List<Uint8List> _fotoGaleriBytes = [];
+  final List<String> _fotoGaleriNames = [];
+
+  int? _selectedCategoryId;
   bool _isPublicActive = true;
+
+  //pengaturan peta
+  // Koordinat awal peta, berpusat di kawasan Ternate.
+  double _mapLatitude = 0.7900;
+  double _mapLongitude = 127.3800;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.destinationTitle);
-    _descController = TextEditingController(
-      text: 'Pantai Sulamadaha terkenal dengan julukan "Pantai Air Kaca" karena kejernihan air lautnya di Teluk Saomadoro. Pengunjung dapat menikmati sensasi menaiki kano transparan seolah melayang di atas air, snorkeling menikmati terumbu karang alami, serta',
-    );
-    _addressController = TextEditingController(
-      text: 'Kelurahan Sulamadaha, Kecamatan Pulau Ternate, Kota Ternate, Maluku Utara',
-    );
-    _latitudeController = TextEditingController(text: '0.866100');
-    _longitudeController = TextEditingController(text: '127.329200');
+    _controller.addListener(_refreshPage);
+    _controller.loadKategori();
+  }
+
+  void _refreshPage() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -43,7 +61,259 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
     _addressController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
+    _controller.removeListener(_refreshPage);
+    _controller.dispose();
     super.dispose();
+  }
+
+  //konfigurasi peta
+  // Memindahkan pin peta berdasarkan koordinat yang diketik.
+  void _updateMapFromText() {
+    final lat = double.tryParse(_latitudeController.text.trim());
+    final lng = double.tryParse(_longitudeController.text.trim());
+
+    if (lat == null || lng == null) return;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+
+    setState(() {
+      _mapLatitude = lat;
+      _mapLongitude = lng;
+    });
+  }
+
+  // Mengisi kolom koordinat ketika admin mengetuk peta.
+  void _updateTextFromMap(LatLng point) {
+    _latitudeController.text = point.latitude.toStringAsFixed(6);
+    _longitudeController.text = point.longitude.toStringAsFixed(6);
+
+    setState(() {
+      _mapLatitude = point.latitude;
+      _mapLongitude = point.longitude;
+    });
+  }
+
+  //pilih foto galeri
+  Future<void> _pilihFotoGaleri() async {
+    try {
+      final List<XFile> fotoDipilih = await _picker.pickMultiImage(
+        imageQuality: 85,
+      );
+
+      if (fotoDipilih.isEmpty) return;
+
+      for (final foto in fotoDipilih) {
+        final ukuran = await foto.length();
+        final ekstensi = foto.name.split('.').last.toLowerCase();
+
+        if (ukuran > 5 * 1024 * 1024 ||
+            !['jpg', 'jpeg', 'png'].contains(ekstensi)) {
+          continue;
+        }
+
+        final bytes = await foto.readAsBytes();
+
+        if (!mounted) return;
+
+        _fotoGaleriBytes.add(bytes);
+        _fotoGaleriNames.add(foto.name);
+      }
+
+      if (!mounted) return;
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal memilih foto galeri: $e')));
+    }
+  }
+
+  //pilih foto
+  Future<void> _pilihFotoUtama() async {
+    try {
+      final XFile? foto = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (foto == null) return;
+
+      // Maksimal 5 MB.
+      final ukuran = await foto.length();
+
+      if (ukuran > 5 * 1024 * 1024) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ukuran foto maksimal 5 MB.')),
+        );
+        return;
+      }
+
+      final ekstensi = foto.name.split('.').last.toLowerCase();
+
+      if (!['jpg', 'jpeg', 'png'].contains(ekstensi)) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto harus berformat JPG atau PNG.')),
+        );
+        return;
+      }
+
+      final bytes = await foto.readAsBytes();
+
+      if (!mounted) return;
+
+      setState(() {
+        _fotoUtamaBytes = bytes;
+        _fotoUtamaName = foto.name;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal memilih foto: $e')));
+    }
+  }
+
+  //simpan destinasi
+  bool _isSaving = false;
+
+  Future<void> _simpanDestinasi() async {
+    final nama = _nameController.text.trim();
+    final deskripsi = _descController.text.trim();
+    final alamat = _addressController.text.trim();
+
+    final latitude = double.tryParse(_latitudeController.text.trim());
+    final longitude = double.tryParse(_longitudeController.text.trim());
+
+    if (nama.isEmpty ||
+        deskripsi.isEmpty ||
+        alamat.isEmpty ||
+        _selectedCategoryId == null ||
+        latitude == null ||
+        longitude == null ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Lengkapi semua data dan masukkan koordinat yang valid.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_fotoUtamaBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih foto utama destinasi terlebih dahulu.'),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // Upload foto utama ke Supabase Storage.
+      final String? fotoUrl = await _controller.uploadGambar(_fotoUtamaBytes!);
+
+      if (!mounted) return;
+
+      if (fotoUrl == null || fotoUrl.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _controller.errorMessage ?? 'Gagal mengunggah foto utama.',
+            ),
+          ),
+        );
+        return;
+      }
+      final sekarang = DateTime.now();
+
+      final destinasi = DestinasiModel(
+        idDestinasi: 0,
+        idKategori: _selectedCategoryId!,
+        namaDestinasi: nama,
+        deskripsi: deskripsi,
+        alamat: alamat,
+        latitude: latitude,
+        longitude: longitude,
+        fotoUtama: fotoUrl,
+        status: _isPublicActive,
+        tanggalDaftar: sekarang,
+        tanggalPerubahan: sekarang,
+      );
+
+      final destinasiBaru = await _controller.tambahDestinasiDanAmbilData(
+        destinasi,
+      );
+
+      final berhasil = destinasiBaru != null;
+      if (destinasiBaru != null && _fotoGaleriBytes.isNotEmpty) {
+        int berhasilUpload = 0;
+
+        for (final fotoBytes in _fotoGaleriBytes) {
+          final urlGambar = await _controller.uploadGambar(fotoBytes);
+
+          if (urlGambar == null || urlGambar.isEmpty) {
+            continue;
+          }
+
+          final tersimpan = await _controller.tambahGaleriDenganUpload(
+            destinasiBaru.idDestinasi,
+            urlGambar,
+            '',
+          );
+
+          if (tersimpan) {
+            berhasilUpload++;
+          }
+        }
+
+        debugPrint(
+          'Galeri berhasil disimpan: '
+          '$berhasilUpload dari ${_fotoGaleriBytes.length} foto',
+        );
+      }
+
+      if (!mounted) return;
+
+      if (berhasil) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Destinasi berhasil ditambahkan.')),
+        );
+
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _controller.errorMessage ?? 'Gagal menambahkan destinasi.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Terjadi kesalahan: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -76,7 +346,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
           ),
         ),
         title: const Text(
-          'Edit Destinasi',
+          'Tambah Destinasi',
           style: TextStyle(
             color: Colors.black87,
             fontSize: 18,
@@ -88,7 +358,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // CARD 1: FOTO UTAMA & GALERI PENDUKUNG
+            // CARD 1: FOTO UTAMA & GALERI PENDUKUNG (KOSONG)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -137,116 +407,47 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Display Gambar Utama
-                  Container(
-                    height: 175,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/Pantai.jpeg',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          top: 10,
-                          left: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0066FF).withOpacity(0.85),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'Foto Sampul Utama',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
+                  // Area Upload Foto Utama Kosong
+                  InkWell(
+                    onTap: _pilihFotoUtama,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      child: _fotoUtamaBytes != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.memory(
+                                _fotoUtamaBytes!,
+                                width: double.infinity,
+                                height: 160,
+                                fit: BoxFit.cover,
                               ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 10,
-                          right: 10,
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.delete_outline_rounded,
-                              size: 16,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 10,
-                          left: 10,
-                          right: 10,
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.cloud_upload_outlined,
+                                  color: Color(0xFF0066FF),
+                                  size: 30,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: const [
-                                    Icon(
-                                      Icons.camera_alt_rounded,
-                                      size: 14,
-                                      color: Color(0xFF0066FF),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      'Ganti Foto',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'sulamadaha_teluk_kaca.jpg',
+                                SizedBox(height: 10),
+                                Text(
+                                  'Pilih Foto Sampul Utama',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 11,
-                                    shadows: const [
-                                      Shadow(
-                                        blurRadius: 4,
-                                        color: Colors.black54,
-                                        offset: Offset(0, 1),
-                                      ),
-                                    ],
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                                SizedBox(height: 4),
+                                Text(
+                                  'Klik untuk mengunggah gambar destinasi',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
 
@@ -261,38 +462,49 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  Row(
-                    children: [
-                      _buildGalleryItem(
-                        'https://indotimur.com/images/nits/2023/08/preview_brtcc0hw_gzrlhpmv.jpg',
-                      ),
-                      const SizedBox(width: 8),
-                      _buildGalleryItem(
-                        'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/newsOg_2024_6_9_1717902356726-iifq7h.jpeg',
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 62,
-                        height: 62,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.add, color: Colors.grey, size: 18),
-                            SizedBox(height: 2),
-                            Text(
-                              'Upload',
-                              style: TextStyle(fontSize: 9, color: Colors.grey),
+                  if (_fotoGaleriBytes.isNotEmpty)
+                    SizedBox(
+                      height: 70,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _fotoGaleriBytes.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(
+                              _fotoGaleriBytes[index],
+                              width: 62,
+                              height: 62,
+                              fit: BoxFit.cover,
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    ],
+                    ),
+                  InkWell(
+                    onTap: _pilihFotoGaleri,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 62,
+                      height: 62,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.add, color: Colors.grey, size: 18),
+                          SizedBox(height: 2),
+                          Text(
+                            'Upload',
+                            style: TextStyle(fontSize: 9, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -370,13 +582,14 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
+                      hintText: 'Masukkan nama destinasi',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 12,
+                        fontWeight: FontWeight.normal,
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
-                      suffixIcon: const Icon(
-                        Icons.edit_outlined,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 12,
@@ -415,26 +628,25 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    value: _selectedCategory,
-                    items: ['Pantai', 'Danau & Air', 'Sejarah & Benteng']
-                        .map(
-                          (cat) => DropdownMenuItem(
-                            value: cat,
-                            child: Text(
-                              cat,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _selectedCategory = val);
-                      }
+                  DropdownButtonFormField<int>(
+                    value: _selectedCategoryId,
+                    hint: const Text(
+                      'Pilih kategori wisata',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    items: _controller.listKategori.map((kategori) {
+                      return DropdownMenuItem<int>(
+                        value: kategori.idKategori,
+                        child: Text(
+                          kategori.namaKategori,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCategoryId = value;
+                      });
                     },
                     decoration: InputDecoration(
                       filled: true,
@@ -445,18 +657,8 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Kategori membantu filter di aplikasi traveler.',
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
                   ),
 
                   const SizedBox(height: 14),
@@ -614,7 +816,7 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 14),
 
-                  // Deskripsi Destinasi
+                  // Deskripsi
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -653,6 +855,11 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                       height: 1.4,
                     ),
                     decoration: InputDecoration(
+                      hintText: 'Tuliskan deskripsi lengkap destinasi...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 12,
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
                       contentPadding: const EdgeInsets.all(12),
@@ -711,13 +918,13 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEBF2FF),
+                          color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
-                          'GPS Valid',
+                          'Peta Lokasi',
                           style: TextStyle(
-                            color: Color(0xFF0066FF),
+                            color: Colors.grey,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -754,11 +961,17 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                     maxLines: 2,
                     style: const TextStyle(fontSize: 12, color: Colors.black87),
                     decoration: InputDecoration(
+                      hintText:
+                          'Masukkan alamat lengkap (Kelurahan, Kecamatan)...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 12,
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
                       suffixIcon: const Icon(
-                        Icons.location_on,
-                        color: Colors.redAccent,
+                        Icons.location_on_outlined,
+                        color: Colors.grey,
                         size: 18,
                       ),
                       contentPadding: const EdgeInsets.all(12),
@@ -775,86 +988,12 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
 
                   const SizedBox(height: 14),
 
-                  // Mini Map Preview dengan Pin
-                  Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8EEF5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Gambar Peta Latar
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            color: const Color(0xFFE2ECF8),
-                            child: CustomPaint(
-                              size: const Size(double.infinity, 120),
-                              painter: _MapRoadsPainter(),
-                            ),
-                          ),
-                        ),
-
-                        // Pin Lokasi Biru di Tengah
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(
-                                Icons.location_on,
-                                color: Color(0xFF0066FF),
-                                size: 36,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Tombol Floating Sesuai Pin
-                        Positioned(
-                          bottom: 10,
-                          right: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: const [
-                                Icon(
-                                  Icons.gps_fixed_rounded,
-                                  size: 12,
-                                  color: Color(0xFF0066FF),
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Sesuaikan Pin',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0066FF),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  // Mini Map Preview
+                  CoordinateMapPicker(
+                    latitude: _mapLatitude,
+                    longitude: _mapLongitude,
+                    onLocationChanged: _updateTextFromMap,
                   ),
-
                   const SizedBox(height: 14),
 
                   // Latitude & Longitude Inputs
@@ -875,11 +1014,23 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                             const SizedBox(height: 6),
                             TextField(
                               controller: _latitudeController,
+                              onChanged: (_) => _updateMapFromText(),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
                               decoration: InputDecoration(
+                                hintText: 'Contoh: 0.866100',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                ),
                                 filled: true,
                                 fillColor: const Color(0xFFF8FAFC),
                                 contentPadding: const EdgeInsets.symmetric(
@@ -919,11 +1070,23 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                             const SizedBox(height: 6),
                             TextField(
                               controller: _longitudeController,
+                              onChanged: (_) => _updateMapFromText(),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
                               decoration: InputDecoration(
+                                hintText: 'Contoh: 127.329200',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                ),
                                 filled: true,
                                 fillColor: const Color(0xFFF8FAFC),
                                 contentPadding: const EdgeInsets.symmetric(
@@ -953,163 +1116,9 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
               ),
             ),
 
-            const SizedBox(height: 16),
-
-            // CARD 4: RIWAYAT AUDIT SISTEM
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F7FA),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'RIWAYAT AUDIT SISTEM',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'ID Destinasi:',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              '#DST-12',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Editor Terakhir (id_user):',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Admin_TernateSpot',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Tanggal Daftar:',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              '12 Jan 2024, 09:30',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Pembaruan Terakhir:',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Hari ini, 16:45 WIT',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // TOMBOL HAPUS DESTINASI WISATA INI
-            GestureDetector(
-              onTap: () {},
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(
-                    Icons.delete_outline_rounded,
-                    color: Colors.redAccent,
-                    size: 18,
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    'Hapus Destinasi Wisata Ini',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             const SizedBox(height: 24),
 
-            // BOTTOM BUTTONS: BATAL & SIMPAN PERUBAHAN
+            // BOTTOM BUTTONS: BATAL & SIMPAN
             Row(
               children: [
                 Expanded(
@@ -1139,14 +1148,14 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
                   child: SizedBox(
                     height: 44,
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: _isSaving ? null : _simpanDestinasi,
                       icon: const Icon(
-                        Icons.save_rounded,
+                        Icons.add,
                         size: 16,
                         color: Colors.white,
                       ),
                       label: const Text(
-                        'Simpan Perubahan',
+                        'Simpan Destinasi',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -1170,92 +1179,4 @@ class _EditDestinasiPageState extends State<EditDestinasiPage> {
       ),
     );
   }
-
-  Widget _buildGalleryItem(String url) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.network(
-            url,
-            width: 62,
-            height: 62,
-            fit: BoxFit.cover,
-
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-
-              return Container(
-                width: 62,
-                height: 62,
-                color: Colors.grey.shade200,
-                alignment: Alignment.center,
-                child: const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              );
-            },
-
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 62,
-                height: 62,
-                color: Colors.grey.shade200,
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.grey.shade500,
-                  size: 24,
-                ),
-              );
-            },
-          ),
-        ),
-        Positioned(
-          top: 4,
-          right: 4,
-          child: Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.close, size: 10, color: Colors.white),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Custom Painter untuk Ilustrasi Jalan di Mini Map
-class _MapRoadsPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paintRoad = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 20
-      ..style = PaintingStyle.stroke;
-
-    final paintMainRoad = Paint()
-      ..color = const Color(0xFFCCE0F5)
-      ..strokeWidth = 28
-      ..style = PaintingStyle.stroke;
-
-    final path1 = Path()
-      ..moveTo(0, size.height * 0.8)
-      ..lineTo(size.width, size.height * 0.2);
-
-    final path2 = Path()
-      ..moveTo(size.width * 0.3, 0)
-      ..lineTo(size.width * 0.6, size.height);
-
-    canvas.drawPath(path1, paintMainRoad);
-    canvas.drawPath(path2, paintRoad);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

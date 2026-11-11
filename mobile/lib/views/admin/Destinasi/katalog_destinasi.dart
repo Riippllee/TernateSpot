@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:ternatespot/controllers/destinasi_controller.dart';
+import 'package:ternatespot/models/destinasi_model.dart';
 
-import 'tambah_destinasi_page.dart';
-import 'rekomendasi_destinasi_page.dart';
-import 'edit_destinasi_page.dart';
+import '../Destinasi/tambah_destinasi_page.dart';
+import '../Destinasi/rekomendasi_destinasi_page.dart';
+import '../Destinasi/edit_destinasi_page.dart';
 
 class KatalogDestinasiPage extends StatefulWidget {
   const KatalogDestinasiPage({super.key});
@@ -12,6 +14,7 @@ class KatalogDestinasiPage extends StatefulWidget {
 }
 
 class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
+  final DestinasiController _controller = DestinasiController();
   int _selectedCategoryIndex = 0;
   int _currentBottomNavIndex = 1;
 
@@ -21,6 +24,87 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
     'Danau & Air',
     'Sejarah & Benteng',
   ];
+
+  String getNamaKategori(int idKategori) {
+    for (final kategori in _controller.listKategori) {
+      if (kategori.idKategori == idKategori) {
+        return kategori.namaKategori;
+      }
+    }
+
+    return 'Kategori tidak diketahui';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_refreshPage);
+    _controller.loadDestinasi();
+    _controller.loadKategori();
+  }
+
+  void _refreshPage() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_refreshPage);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  //fungsi hapus destinasi
+  Future<void> _hapusDestinasi(DestinasiModel destinasi) async {
+    final konfirmasi = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Hapus Destinasi?'),
+        content: Text(
+          'Apakah kamu yakin ingin menghapus '
+          '${destinasi.namaDestinasi}? '
+          'Tindakan ini tidak dapat dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext, false);
+            },
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext, true);
+            },
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (konfirmasi != true || !mounted) return;
+
+    final berhasil = await _controller.hapusDestinasi(destinasi.idDestinasi);
+
+    if (!mounted) return;
+
+    if (berhasil) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Destinasi berhasil dihapus.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _controller.errorMessage ?? 'Gagal menghapus destinasi.',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,13 +154,17 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
           Padding(
             padding: const EdgeInsets.only(right: 16.0, top: 10, bottom: 10),
             child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final berhasil = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const TambahDestinasiPage(),
                   ),
                 );
+
+                if (berhasil == true && mounted) {
+                  await _controller.loadDestinasi();
+                }
               },
               icon: const Icon(Icons.add, size: 16, color: Colors.white),
               label: const Text(
@@ -291,50 +379,41 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
             const SizedBox(height: 16),
 
             // Daftar Card Destinasi
-            _buildCard(
-              title: 'Pantai Sulamadaha',
-              category: 'PANTAI',
-              location: 'Sulamadaha, Ternate Barat',
-              desc: 'Pantai dengan air kaca jernih dan spot kano transparan ikonik di Teluk Saomadaha dengan tebing batuan vulkanik.',
-              rating: '4.9',
-              reviews: '186 ulasan',
-              photoCount: '12 Foto',
-              imageUrl: 'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/Pantai.jpeg',
-              isRecommended: true,
-            ),
-            _buildCard(
-              title: 'Pantai Kastela',
-              category: 'PANTAI',
-              location: 'Kastela, Pulau Ternate',
-              desc: 'Spot matahari terbenam magis dengan monumen sejarah pendaratan Portugis pertama serta gerbang reruntuhan...',
-              rating: '4.7',
-              reviews: '124 ulasan',
-              photoCount: '9 Foto',
-              imageUrl: 'https://indotimur.com/images/nits/2023/08/preview_brtcc0hw_gzrlhpmv.jpg',
-              isRecommended: false,
-            ),
-            _buildCard(
-              title: 'Danau Tolire',
-              category: 'DANAU & AIR',
-              location: 'Takome, Ternate Barat',
-              desc: 'Danau hijau mistis di kaki Gunung Gamalama dengan panorama kawah eksotis dan legenda lempar batu yang...',
-              rating: '4.8',
-              reviews: '211 ulasan',
-              photoCount: '15 Foto',
-              imageUrl: 'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/newsOg_2024_6_9_1717902356726-iifq7h.jpeg',
-              isRecommended: true,
-            ),
-            _buildCard(
-              title: 'Benteng Tolukko',
-              category: 'SEJARAH & BENTENG',
-              location: 'Sangaji, Ternate Utara',
-              desc: 'Benteng peninggalan Portugis 1540 dengan view lanskap laut Halmahera dan Gunung Gamalama dari puncak...',
-              rating: '4.7',
-              reviews: '168 ulasan',
-              photoCount: '18 Foto',
-              imageUrl: 'https://sultanbabullah-airport.com/wp-content/uploads/2025/02/Pantai.jpeg',
-              isRecommended: false,
-            ),
+            if (_controller.isLoadingDestinasi)
+              const Center(child: CircularProgressIndicator()),
+
+            if (_controller.errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  _controller.errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            if (!_controller.isLoadingDestinasi &&
+                _controller.errorMessage == null &&
+                _controller.listDestinasi.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(20),
+                child: Center(child: Text('Belum ada destinasi di database.')),
+              ),
+
+            if (!_controller.isLoadingDestinasi &&
+                _controller.errorMessage == null)
+              ..._controller.listDestinasi.map((destinasi) {
+                return _buildCard(
+                  destinasi: destinasi,
+                  title: destinasi.namaDestinasi,
+                  category: getNamaKategori(destinasi.idKategori),
+                  location: destinasi.alamat,
+                  desc: destinasi.deskripsi,
+                  rating: '-',
+                  reviews: '0 ulasan',
+                  photoCount: '0 Foto',
+                  imageUrl: destinasi.fotoUtama,
+                  isRecommended: false,
+                );
+              }),
 
             const SizedBox(height: 12),
 
@@ -428,6 +507,7 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
   }
 
   Widget _buildCard({
+    required DestinasiModel destinasi,
     required String title,
     required String category,
     required String location,
@@ -745,14 +825,18 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
               Expanded(
                 flex: 2,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final berhasil = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            EditDestinasiPage(destinationTitle: title),
+                            EditDestinasiPage(destinasi: destinasi),
                       ),
                     );
+
+                    if (berhasil == true && mounted) {
+                      await _controller.loadDestinasi();
+                    }
                   },
                   icon: const Icon(
                     Icons.edit_note_rounded,
@@ -788,7 +872,7 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () {},
+                    onTap: () => _hapusDestinasi(destinasi),
                     borderRadius: BorderRadius.circular(10),
                     child: const Center(
                       child: Icon(

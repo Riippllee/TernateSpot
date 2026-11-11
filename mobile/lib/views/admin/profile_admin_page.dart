@@ -1,5 +1,8 @@
-
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../utils/profile_update_notifier.dart';
 
 const Color warnaLatar = Color(0xFFF5F7FC);
 const Color warnaBiru = Color(0xFF246BFD);
@@ -15,14 +18,266 @@ class ProfileAdminPage extends StatefulWidget {
 }
 
 class _ProfileAdminPageState extends State<ProfileAdminPage> {
-  bool modeGelap = false;
-  bool notifikasiAktif = true;
+  Map<String, dynamic>? _dataAdmin;
+  bool _isLoadingProfil = true;
   int menuAktif = 4;
 
   void tampilkanPesan(String pesan) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(pesan)),
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfilAdmin();
+  }
+
+  Future<void> _loadProfilAdmin() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      debugPrint('AUTH USER ID: $userId');
+
+      if (userId == null) {
+        throw Exception('Pengguna belum login');
+      }
+
+      final data = await supabase
+          .from('user')
+          .select('id_user, nama, email, foto_profil, role')
+          .eq('id_user', userId)
+          .maybeSingle();
+      debugPrint('DATA PROFIL ADMIN: $data');
+      if (!mounted) return;
+
+      setState(() {
+        _dataAdmin = data;
+        _isLoadingProfil = false;
+      });
+    } catch (e) {
+      debugPrint('Gagal mengambil profil admin: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingProfil = false;
+      });
+    }
+  }
+
+  Future<void> _editProfilAdmin() async {
+    final namaController = TextEditingController(
+      text: _dataAdmin?['nama']?.toString() ?? '',
     );
+
+    XFile? fotoTerpilih;
+    bool sedangMenyimpan = false;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Edit Profil Admin'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: namaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama Admin',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    OutlinedButton.icon(
+                      onPressed: sedangMenyimpan
+                          ? null
+                          : () async {
+                              final picker = ImagePicker();
+
+                              final image = await picker.pickImage(
+                                source: ImageSource.gallery,
+                                imageQuality: 80,
+                              );
+
+                              if (image != null) {
+                                setDialogState(() {
+                                  fotoTerpilih = image;
+                                });
+                              }
+                            },
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('Pilih Foto Profil'),
+                    ),
+                    if (fotoTerpilih != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          fotoTerpilih!.name,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: sedangMenyimpan
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: sedangMenyimpan
+                      ? null
+                      : () async {
+                          final nama = namaController.text.trim();
+
+                          if (nama.isEmpty) {
+                            tampilkanPesan('Nama tidak boleh kosong.');
+                            return;
+                          }
+
+                          setDialogState(() {
+                            sedangMenyimpan = true;
+                          });
+
+                          try {
+                            final supabase = Supabase.instance.client;
+
+                            final userId = supabase.auth.currentUser?.id;
+
+                            if (userId == null) {
+                              throw Exception('Akun belum login.');
+                            }
+
+                            final updateData = <String, dynamic>{'nama': nama};
+                            final fotoLama = _dataAdmin?['foto_profil']
+                                ?.toString();
+
+                            // Upload foto jika admin memilih foto baru.
+                            if (fotoTerpilih != null) {
+                              final extension = fotoTerpilih!.name
+                                  .split('.')
+                                  .last
+                                  .toLowerCase();
+
+                              if (![
+                                'jpg',
+                                'jpeg',
+                                'png',
+                                'webp',
+                              ].contains(extension)) {
+                                throw Exception(
+                                  'Format foto harus JPG, PNG, atau WEBP.',
+                                );
+                              }
+
+                              final filePath =
+                                  '$userId/avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
+
+                              final bytes = await fotoTerpilih!.readAsBytes();
+
+                              final mimeType = {
+                                'jpg': 'image/jpeg',
+                                'jpeg': 'image/jpeg',
+                                'png': 'image/png',
+                                'webp': 'image/webp',
+                              }[extension]!;
+
+                              await supabase.storage
+                                  .from('foto-profil')
+                                  .uploadBinary(
+                                    filePath,
+                                    bytes,
+                                    fileOptions: FileOptions(
+                                      contentType: mimeType,
+                                    ),
+                                  );
+
+                              final fotoUrl = supabase.storage
+                                  .from('foto-profil')
+                                  .getPublicUrl(filePath);
+
+                              updateData['foto_profil'] = fotoUrl;
+                            }
+
+                            await supabase
+                                .from('user')
+                                .update(updateData)
+                                .eq('id_user', userId);
+
+                            // Hapus foto lama setelah foto baru berhasil disimpan.
+                            if (fotoTerpilih != null &&
+                                fotoLama != null &&
+                                fotoLama.isNotEmpty) {
+                              try {
+                                final uri = Uri.parse(fotoLama);
+                                final segments = uri.pathSegments;
+                                final bucketIndex = segments.indexOf(
+                                  'foto-profil',
+                                );
+
+                                if (bucketIndex != -1 &&
+                                    bucketIndex < segments.length - 1) {
+                                  final oldPath = segments
+                                      .skip(bucketIndex + 1)
+                                      .join('/');
+
+                                  // Pastikan foto lama milik admin yang sedang login.
+                                  if (oldPath.startsWith('$userId/')) {
+                                    await supabase.storage
+                                        .from('foto-profil')
+                                        .remove([oldPath]);
+                                  }
+                                }
+                              } catch (e) {
+                                debugPrint(
+                                  'Foto lama belum berhasil dihapus: $e',
+                                );
+                              }
+                            }
+
+                            await _loadProfilAdmin();
+
+                            ProfileUpdateNotifier.notifyUpdate();
+                            if (!dialogContext.mounted) return;
+
+                            Navigator.pop(dialogContext);
+
+                            if (!mounted) return;
+
+                            tampilkanPesan('Profil berhasil diperbarui.');
+                          } catch (e) {
+                            debugPrint('Gagal update profil: $e');
+
+                            setDialogState(() {
+                              sedangMenyimpan = false;
+                            });
+
+                            tampilkanPesan('Gagal memperbarui profil: $e');
+                          }
+                        },
+                  child: sedangMenyimpan
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Simpan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    namaController.dispose();
   }
 
   @override
@@ -58,17 +313,14 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF1760D2),
-                      Color(0xFF0645A5),
-                    ],
+                    colors: [Color(0xFF1760D2), Color(0xFF0645A5)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.15),
+                      color: Colors.blue.withValues(alpha: 0.15),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -87,7 +339,7 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.20),
+                            color: Colors.white.withValues(alpha: 0.20),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Row(
@@ -111,16 +363,12 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                           ),
                         ),
                         InkWell(
-                          onTap: () {
-                            tampilkanPesan(
-                              'Fitur edit profil belum dihubungkan.',
-                            );
-                          },
+                          onTap: _editProfilAdmin,
                           borderRadius: BorderRadius.circular(30),
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.20),
+                              color: Colors.white.withValues(alpha: 0.20),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -147,30 +395,56 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                               width: 1.5,
                             ),
                           ),
+
                           child: ClipOval(
-                            child: Image.asset(
-                              'assets/images/admin.jpg',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.white24,
-                                  child: const Icon(
-                                    Icons.person,
-                                    color: Colors.white,
-                                    size: 30,
-                                  ),
+                            child: Builder(
+                              builder: (context) {
+                                final foto = _dataAdmin?['foto_profil']
+                                    ?.toString()
+                                    .trim();
+
+                                if (foto == null || foto.isEmpty) {
+                                  return Container(
+                                    color: Colors.white24,
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: 30,
+                                    ),
+                                  );
+                                }
+
+                                return Image.network(
+                                  foto,
+                                  key: ValueKey(foto),
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.white24,
+                                      child: const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                        size: 30,
+                                      ),
+                                    );
+                                  },
                                 );
                               },
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Admin',
+                                _isLoadingProfil
+                                    ? 'Memuat...'
+                                    : (_dataAdmin?['nama']?.toString() ??
+                                          'Admin'),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -186,25 +460,6 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                                 ),
                               ),
                               SizedBox(height: 3),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.verified,
-                                    color: Colors.white70,
-                                    size: 11,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      'ID: ADM-TERNATE-001',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 9,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ],
                           ),
                         ),
@@ -218,7 +473,7 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                         Container(
                           padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
+                            color: Colors.white.withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
@@ -228,12 +483,11 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          'admin@ternatespot.com',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
+                        Text(
+                          _isLoadingProfil
+                              ? 'Memuat email...'
+                              : (_dataAdmin?['email']?.toString() ?? '-'),
+                          style: TextStyle(color: Colors.white, fontSize: 10),
                         ),
                       ],
                     ),
@@ -259,10 +513,7 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                   ),
                   Text(
                     'Real-time',
-                    style: TextStyle(
-                      color: warnaBiru,
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: warnaBiru, fontSize: 10),
                   ),
                 ],
               ),
@@ -341,102 +592,14 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                 judul: 'Keamanan & Akun',
                 deskripsi: 'Ganti Password • 2FA Aktif',
                 onTap: () {
-                  tampilkanPesan(
-                    'Pengaturan keamanan belum dihubungkan.',
-                  );
+                  tampilkanPesan('Pengaturan keamanan belum dihubungkan.');
                 },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Preferensi sistem dan aplikasi.
-              const Text(
-                'Preferensi Sistem & Aplikasi',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: warnaTeks,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: warnaGaris),
-                ),
-                child: Column(
-                  children: [
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      secondary: const Icon(
-                        Icons.dark_mode_outlined,
-                        color: warnaBiru,
-                      ),
-                      title: const Text(
-                        'Mode Tampilan',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Aktifkan mode gelap',
-                        style: TextStyle(fontSize: 11),
-                      ),
-                      value: modeGelap,
-                      activeColor: warnaBiru,
-                      onChanged: (nilai) {
-                        setState(() {
-                          modeGelap = nilai;
-                        });
-                        tampilkanPesan(
-                          nilai
-                              ? 'Mode gelap dipilih.'
-                              : 'Mode terang dipilih.',
-                        );
-                      },
-                    ),
-                    const Divider(height: 1),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      secondary: const Icon(
-                        Icons.notifications_active_outlined,
-                        color: warnaBiru,
-                      ),
-                      title: const Text(
-                        'Notifikasi Kejadian',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        '3 notifikasi tertunda',
-                        style: TextStyle(fontSize: 11),
-                      ),
-                      value: notifikasiAktif,
-                      activeColor: warnaBiru,
-                      onChanged: (nilai) {
-                        setState(() {
-                          notifikasiAktif = nilai;
-                        });
-                      },
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(height: 20),
             ],
           ),
         ),
       ),
-
     );
   }
 }
@@ -484,10 +647,7 @@ class KartuStatistik extends StatelessWidget {
             judul,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11,
-              color: warnaAbu,
-            ),
+            style: const TextStyle(fontSize: 11, color: warnaAbu),
           ),
         ],
       ),
@@ -530,14 +690,10 @@ class KartuMenuAdmin extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: warnaBiru.withOpacity(0.10),
+                  color: warnaBiru.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  ikon,
-                  color: warnaBiru,
-                  size: 22,
-                ),
+                child: Icon(ikon, color: warnaBiru, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -555,18 +711,12 @@ class KartuMenuAdmin extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       deskripsi,
-                      style: const TextStyle(
-                        color: warnaAbu,
-                        fontSize: 11,
-                      ),
+                      style: const TextStyle(color: warnaAbu, fontSize: 11),
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: warnaAbu,
-              ),
+              const Icon(Icons.chevron_right, color: warnaAbu),
             ],
           ),
         ),

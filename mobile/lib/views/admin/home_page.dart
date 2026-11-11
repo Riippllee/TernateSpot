@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../controllers/rekomendasi_controller.dart';
+import '../../models/destinasi_model.dart';
+import '../../services/destinasi_service.dart';
+import '../../utils/profile_update_notifier.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -8,10 +15,159 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
+  String _namaAdmin = 'Admin';
+  String? _fotoAdmin;
+  final DestinasiService _destinasiService = DestinasiService();
+
+  Map<String, int> _dashboardStats = {};
+
+  bool _isLoadingStats = true;
+  String? _statsError;
+  final RekomendasiController _rekomendasiController = RekomendasiController();
+  @override
+  void initState() {
+    super.initState();
+
+    _rekomendasiController.addListener(_refreshHome);
+
+    _rekomendasiController.loadRekomendasiAktif();
+    _rekomendasiController.loadDestinasi();
+    _loadDashboardStatistics();
+    _loadNamaAdmin();
+    ProfileUpdateNotifier.version.addListener(_onProfileUpdated);
+  }
+
+  void _onProfileUpdated() {
+    _loadNamaAdmin();
+  }
+
+  void _refreshHome() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  String _getTanggalHariIni() {
+    final sekarang = DateTime.now();
+
+    const namaHari = [
+      'SENIN',
+      'SELASA',
+      'RABU',
+      'KAMIS',
+      'JUMAT',
+      'SABTU',
+      'MINGGU',
+    ];
+
+    const namaBulan = [
+      'JANUARI',
+      'FEBRUARI',
+      'MARET',
+      'APRIL',
+      'MEI',
+      'JUNI',
+      'JULI',
+      'AGUSTUS',
+      'SEPTEMBER',
+      'OKTOBER',
+      'NOVEMBER',
+      'DESEMBER',
+    ];
+
+    final hari = namaHari[sekarang.weekday - 1];
+    final tanggal = sekarang.day;
+    final bulan = namaBulan[sekarang.month - 1];
+    final tahun = sekarang.year;
+
+    return '$hari, $tanggal $bulan $tahun';
+  }
+
+  @override
+  void dispose() {
+    _rekomendasiController.removeListener(_refreshHome);
+    _rekomendasiController.dispose();
+    ProfileUpdateNotifier.version.removeListener(_onProfileUpdated);
+    super.dispose();
+  }
+
+  Future<void> _loadDashboardStatistics() async {
+    try {
+      final result = await _destinasiService.getDashboardStatistics();
+
+      if (!mounted) return;
+
+      setState(() {
+        _dashboardStats = result;
+        _isLoadingStats = false;
+        _statsError = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingStats = false;
+        _statsError = e.toString();
+      });
+    }
+  }
+
+  String _getStatValue(String key) {
+    if (_isLoadingStats) return '...';
+    if (_statsError != null) return '—';
+
+    return (_dashboardStats[key] ?? 0).toString();
+  }
+
+  Future<void> _loadNamaAdmin() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId == null) return;
+
+      final data = await supabase
+          .from('user')
+          .select('nama, foto_profil')
+          .eq('id_user', userId)
+          .maybeSingle();
+      debugPrint('DATA ADMIN DASHBOARD: $data');
+
+      if (!mounted) return;
+
+      final nama = data?['nama']?.toString().trim();
+      final foto = data?['foto_profil']?.toString().trim();
+
+      setState(() {
+        _namaAdmin =
+            (nama != null &&
+                nama.isNotEmpty &&
+                nama.toLowerCase() != 'undefined')
+            ? nama
+            : 'Admin';
+
+        _fotoAdmin = (foto != null && foto.isNotEmpty) ? foto : null;
+      });
+    } catch (e) {
+      debugPrint('Gagal mengambil profil admin: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final rekomendasiTampil = <DestinasiModel>[];
+
+    for (final rekomendasi in _rekomendasiController.rekomendasiAktif) {
+      final hasil = _rekomendasiController.listDestinasi.where(
+        (item) => item.idDestinasi == rekomendasi.idDestinasi && item.status,
+      );
+
+      if (hasil.isNotEmpty) {
+        rekomendasiTampil.add(hasil.first);
+      }
+
+      if (rekomendasiTampil.length >= 6) break;
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FB),
       appBar: AppBar(
@@ -90,11 +246,18 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16, left: 4),
+
+          Padding(
+            padding: const EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
-              backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=5'),
+              backgroundColor: const Color(0xFFEBF3FE),
+              backgroundImage: _fotoAdmin != null
+                  ? NetworkImage(_fotoAdmin!)
+                  : null,
+              child: _fotoAdmin == null
+                  ? const Icon(Icons.person, color: Color(0xFF1D61E7), size: 20)
+                  : null,
             ),
           ),
         ],
@@ -111,9 +274,9 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'SENIN, 24 OKTOBER 2024',
-                    style: TextStyle(
+                  Text(
+                    _getTanggalHariIni(),
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF8A94A6),
@@ -121,6 +284,7 @@ class _HomePageState extends State<HomePage> {
                       fontFamily: 'Poppins',
                     ),
                   ),
+
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -160,9 +324,9 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 8),
 
               // Header Halo Admin
-              const Text(
-                'Halo, Admin Sarah! 👋',
-                style: TextStyle(
+              Text(
+                'Halo, $_namaAdmin! 👋',
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1A212A),
@@ -178,128 +342,7 @@ class _HomePageState extends State<HomePage> {
                   fontFamily: 'Poppins',
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // Tombol Cepat Aksi Admin
-              Row(
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.add_location_alt_outlined,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        '+ Destinasi Baru',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1D61E7),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 3,
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.rate_review_outlined,
-                            size: 15,
-                            color: Color(0xFF4A5568),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'Moderasi',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF4A5568),
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFE8E8),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Text(
-                              '12',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFE53E3E),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 2,
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.download_outlined,
-                        size: 15,
-                        color: Color(0xFF4A5568),
-                      ),
-                      label: const Text(
-                        'Export',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF4A5568),
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEDF2F7),
-                        side: BorderSide.none,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
               // Grid Kartu Statistik 2x2
               GridView.count(
                 crossAxisCount: 2,
@@ -308,45 +351,49 @@ class _HomePageState extends State<HomePage> {
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 childAspectRatio: 1.4,
+
                 children: [
                   _buildStatCard(
                     icon: Icons.people_outline_rounded,
                     iconBgColor: const Color(0xFFEBF3FE),
                     iconColor: const Color(0xFF1D61E7),
-                    badgeText: '📈 +12%',
+                    badgeText: 'Database',
                     badgeBgColor: const Color(0xFFEBF3FE),
                     badgeTextColor: const Color(0xFF1D61E7),
-                    value: '12.540',
+                    value: _getStatValue('total_pengguna'),
                     label: 'Total Pengguna',
                   ),
+
                   _buildStatCard(
                     icon: Icons.explore_outlined,
                     iconBgColor: const Color(0xFFEBF3FE),
                     iconColor: const Color(0xFF1D61E7),
-                    badgeText: '+14 baru',
+                    badgeText: 'Database',
                     badgeBgColor: const Color(0xFFEBF3FE),
                     badgeTextColor: const Color(0xFF1D61E7),
-                    value: '350',
+                    value: _getStatValue('total_destinasi'),
                     label: 'Total Destinasi',
                   ),
+
                   _buildStatCard(
                     icon: Icons.star_outline_rounded,
                     iconBgColor: const Color(0xFFEBF3FE),
                     iconColor: const Color(0xFF1D61E7),
-                    badgeText: '★ 4.8',
-                    badgeBgColor: const Color(0xFFF7FAFC),
-                    badgeTextColor: const Color(0xFF4A5568),
-                    value: '8.920',
+                    badgeText: 'Database',
+                    badgeBgColor: const Color(0xFFEBF3FE),
+                    badgeTextColor: const Color(0xFF1D61E7),
+                    value: _getStatValue('total_ulasan'),
                     label: 'Total Ulasan',
                   ),
+
                   _buildStatCard(
                     icon: Icons.collections_outlined,
                     iconBgColor: const Color(0xFFEBF3FE),
                     iconColor: const Color(0xFF1D61E7),
-                    badgeText: '+85 hari ini',
+                    badgeText: 'Database',
                     badgeBgColor: const Color(0xFFEBF3FE),
                     badgeTextColor: const Color(0xFF1D61E7),
-                    value: '5.200',
+                    value: _getStatValue('total_foto'),
                     label: 'Koleksi Foto',
                   ),
                 ],
@@ -399,38 +446,39 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 12),
 
-              // Daftar Item Destinasi Populer
-              _buildDestinationListItem(
-                rank: '#1',
-                imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300',
-                title: 'Pantai Sulamadaha',
-                location: 'Kelurahan Sulamadaha, Kota Ternate',
-                views: '3.420 tontonan',
-                category: 'Alam',
-                rating: '4.9',
-              ),
-              const SizedBox(height: 10),
-              _buildDestinationListItem(
-                rank: '#2',
-                imageUrl: 'https://images.unsplash.com/photo-1590523741831-ab7e8b8f9c7f?q=80&w=300',
-                title: 'Landmark',
-                location: 'Kelurahan Muhajirin, Kota Ternate',
-                views: '2.890 tontonan',
-                category: 'Alam',
-                rating: '4.8',
-              ),
-              const SizedBox(height: 10),
-              _buildDestinationListItem(
-                rank: '#3',
-                imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=300',
-                title: 'Taman Nukila',
-                location: 'Kelurahan Gamalama, Kota Ternate',
-                views: '2.150 tontonan',
-                category: 'Sejarah',
-                rating: '4.8',
-              ),
-
-              const SizedBox(height: 24),
+              // Rekomendasi Destinasi dari Supabase
+              if (_rekomendasiController.isLoading ||
+                  _rekomendasiController.isLoadingDestinasi)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (rekomendasiTampil.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Text(
+                    'Belum ada destinasi yang dipilih sebagai rekomendasi.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Color(0xFF718096)),
+                  ),
+                )
+              else
+                ...List.generate(rekomendasiTampil.length, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _buildDestinationListItem(
+                      destinasi: rekomendasiTampil[index],
+                      rank: '#${index + 1}',
+                    ),
+                  );
+                }),
             ],
           ),
         ),
@@ -458,7 +506,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -524,15 +572,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Widget Item Daftar Destinasi
   Widget _buildDestinationListItem({
+    required DestinasiModel destinasi,
     required String rank,
-    required String imageUrl,
-    required String title,
-    required String location,
-    required String views,
-    required String category,
-    required String rating,
   }) {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -541,7 +583,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -553,12 +595,31 @@ class _HomePageState extends State<HomePage> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  imageUrl,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                ),
+                child: destinasi.fotoUtama.isNotEmpty
+                    ? Image.network(
+                        destinasi.fotoUtama,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          width: 60,
+                          height: 60,
+                          color: const Color(0xFFEAF0F6),
+                          child: const Icon(
+                            Icons.image_not_supported_outlined,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: 60,
+                        height: 60,
+                        color: const Color(0xFFEAF0F6),
+                        child: const Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Colors.grey,
+                        ),
+                      ),
               ),
               Positioned(
                 top: 4,
@@ -569,7 +630,7 @@ class _HomePageState extends State<HomePage> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -584,95 +645,44 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
+
           const SizedBox(width: 12),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A212A),
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: Color(0xFF1D61E7),
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          rating,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1D61E7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
                 Text(
-                  location,
+                  destinasi.namaDestinasi,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF718096),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A212A),
                     fontFamily: 'Poppins',
                   ),
                 ),
-                const SizedBox(height: 6),
+
+                const SizedBox(height: 5),
+
                 Row(
                   children: [
                     const Icon(
-                      Icons.visibility_outlined,
-                      size: 11,
+                      Icons.location_on_outlined,
+                      size: 12,
                       color: Color(0xFF718096),
                     ),
                     const SizedBox(width: 3),
-                    Text(
-                      views,
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: Color(0xFF718096),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      width: 3,
-                      height: 3,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFCBD5E0),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEBF3FE),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    Expanded(
                       child: Text(
-                        category,
+                        destinasi.alamat,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1D61E7),
+                          fontSize: 10,
+                          color: Color(0xFF718096),
+                          fontFamily: 'Poppins',
                         ),
                       ),
                     ),

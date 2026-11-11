@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ternatespot/views/admin/katalog_destinasi.dart';
+import 'package:ternatespot/views/admin/Destinasi/katalog_destinasi.dart';
 import 'package:ternatespot/views/admin/management_user_page.dart';
 import 'package:ternatespot/views/admin/profile_admin_page.dart';
 import 'package:ternatespot/views/admin/review_admin_page.dart';
