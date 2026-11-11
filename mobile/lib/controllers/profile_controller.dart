@@ -1,26 +1,29 @@
-import 'package:image_picker/image_picker.dart'; // <-- WAJIB ADA INI
+import 'package:image_picker/image_picker.dart';
 
 import '../services/profile_service.dart';
 
+// Class untuk mengatur proses pengelolaan profil pengguna.
 class ProfileController {
+  // Membuat objek ProfileService untuk mengakses fungsi layanan profil.
   final ProfileService _service = ProfileService();
 
-  // Get current user ID
+  // Mengambil ID pengguna yang sedang login.
   String? getCurrentUserId() {
     return _service.getCurrentUserId();
   }
 
-  // Load profile
+  // Memuat data profil pengguna dari database.
   Future<Map<String, dynamic>?> loadProfile() async {
     final userId = getCurrentUserId();
+
     if (userId == null) {
-      print('User belum login');
+      print('❌ User belum login');
       return null;
     }
     return await _service.getUserProfile(userId);
   }
 
-  // Update profile
+  // Memperbarui data nama, email, dan foto profil pengguna.
   Future<bool> updateProfile({
     String? nama,
     String? email,
@@ -28,39 +31,42 @@ class ProfileController {
   }) async {
     final userId = getCurrentUserId();
     if (userId == null) {
-      print('User belum login');
+      print('❌ User belum login');
       return false;
     }
 
+    // Mengirim data perubahan profil ke ProfileService.
     final result = await _service.updateProfile(
       userId,
       nama: nama,
       email: email,
       fotoProfil: fotoProfil,
     );
-
     return result != null;
   }
 
-  // Upload foto (PERHATIKAN: Sekarang menggunakan XFile, BUKAN String)
+  // Mengunggah foto profil menggunakan objek XFile.
   Future<bool> uploadProfilePicture(XFile imageFile) async {
     final userId = getCurrentUserId();
+
     if (userId == null) {
-      print('User belum login');
+      print('❌ User belum login');
       return false;
     }
 
-    // Kirim objek imageFile (XFile) langsung ke service
+    // Mengirim file gambar ke ProfileService untuk diunggah.
     final photoUrl = await _service.uploadProfilePicture(userId, imageFile);
 
+    // Menyimpan URL foto ke dalam data profil jika upload berhasil.
     if (photoUrl != null) {
       return await updateProfile(fotoProfil: photoUrl);
     }
 
+    // Mengembalikan false jika upload foto gagal.
     return false;
   }
 
-  // Logout
+  // Mengeluarkan pengguna dari akun yang sedang login.
   Future<void> logout() async {
     await _service.logout();
   }

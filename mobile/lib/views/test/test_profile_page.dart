@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ternatespot/controllers/profile_controller.dart';
 
+// Halaman untuk menguji fitur pengelolaan profil pengguna.
 class TestProfilePage extends StatefulWidget {
   const TestProfilePage({Key? key}) : super(key: key);
 
@@ -10,19 +11,22 @@ class TestProfilePage extends StatefulWidget {
 }
 
 class _TestProfilePageState extends State<TestProfilePage> {
+  // Inisialisasi controller dan input data profil.
   final ProfileController _controller = ProfileController();
   final _namaController = TextEditingController();
   final _emailController = TextEditingController();
 
+  // Menyimpan data pengguna dan status loading.
   Map<String, dynamic>? _userData;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _loadProfile(); // Memuat profil saat halaman dibuka.
   }
 
+  // Mengambil data profil pengguna dari database.
   Future<void> _loadProfile() async {
     setState(() => _isLoading = true);
     final data = await _controller.loadProfile();
@@ -36,6 +40,7 @@ class _TestProfilePageState extends State<TestProfilePage> {
     setState(() => _isLoading = false);
   }
 
+  // Menguji proses pembaruan nama dan email pengguna.
   Future<void> _testUpdateProfile() async {
     setState(() => _isLoading = true);
     final success = await _controller.updateProfile(
@@ -50,6 +55,7 @@ class _TestProfilePageState extends State<TestProfilePage> {
     setState(() => _isLoading = false);
   }
 
+  // Menguji proses pemilihan dan upload foto profil.
   Future<void> _testUploadPhoto() async {
     final picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(
@@ -58,7 +64,10 @@ class _TestProfilePageState extends State<TestProfilePage> {
 
     if (pickedFile != null) {
       setState(() => _isLoading = true);
+
+      // Mengirim file gambar dalam bentuk XFile ke controller.
       final success = await _controller.uploadProfilePicture(pickedFile);
+
       _showMessage(
         success ? 'Upload foto BERHASIL' : 'Upload foto GAGAL',
         success,
@@ -68,6 +77,7 @@ class _TestProfilePageState extends State<TestProfilePage> {
     }
   }
 
+  // Menguji proses logout dan menghapus data profil dari tampilan.
   Future<void> _testLogout() async {
     setState(() => _isLoading = true);
     await _controller.logout();
@@ -80,6 +90,7 @@ class _TestProfilePageState extends State<TestProfilePage> {
     setState(() => _isLoading = false);
   }
 
+  // Menampilkan notifikasi keberhasilan atau kegagalan proses.
   void _showMessage(String message, bool isSuccess) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -90,6 +101,7 @@ class _TestProfilePageState extends State<TestProfilePage> {
   }
 
   @override
+  // Membangun tampilan halaman pengujian profil pengguna.
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -103,6 +115,7 @@ class _TestProfilePageState extends State<TestProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Menampilkan informasi profil pengguna.
                   Card(
                     color: Colors.blue[50],
                     child: Padding(
@@ -136,6 +149,8 @@ class _TestProfilePageState extends State<TestProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 20),
+
+                  // Bagian pengujian update profil.
                   const Text(
                     '1. Test Update Profile',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -162,6 +177,8 @@ class _TestProfilePageState extends State<TestProfilePage> {
                     child: const Text('TEST UPDATE PROFILE'),
                   ),
                   const SizedBox(height: 20),
+
+                  // Bagian pengujian upload foto profil.
                   const Text(
                     '2. Test Upload Foto',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -177,6 +194,8 @@ class _TestProfilePageState extends State<TestProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 20),
+
+                  // Bagian pengujian logout pengguna.
                   const Text(
                     '3. Test Logout',
                     style: TextStyle(
@@ -201,6 +220,7 @@ class _TestProfilePageState extends State<TestProfilePage> {
     );
   }
 
+  // Membersihkan controller ketika halaman ditutup.
   @override
   void dispose() {
     _namaController.dispose();
