@@ -4,6 +4,7 @@ import '../../controllers/rekomendasi_controller.dart';
 import '../../models/destinasi_model.dart';
 import '../../services/destinasi_service.dart';
 import '../../utils/profile_update_notifier.dart';
+import 'Destinasi/rekomendasi_destinasi_page.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -29,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
 
     _rekomendasiController.addListener(_refreshHome);
+    RekomendasiHomeSignal.version.addListener(_onRekomendasiUpdated);
 
     _rekomendasiController.loadRekomendasiAktif();
     _rekomendasiController.loadDestinasi();
@@ -45,6 +47,12 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  // Dipanggil ketika rekomendasi berhasil dipublikasikan dari halaman pengaturan.
+  void _onRekomendasiUpdated() {
+    if (!mounted) return;
+    _rekomendasiController.loadRekomendasiAktif();
   }
 
   String _getTanggalHariIni() {
@@ -86,6 +94,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _rekomendasiController.removeListener(_refreshHome);
+    RekomendasiHomeSignal.version.removeListener(_onRekomendasiUpdated);
     _rekomendasiController.dispose();
     ProfileUpdateNotifier.version.removeListener(_onProfileUpdated);
     super.dispose();
