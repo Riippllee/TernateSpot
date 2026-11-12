@@ -1,77 +1,100 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/user_model.dart';
 
-//user Servie
-class UserService {
+class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  Future<UserModel?> getUserProfile(String userId) async {
-    final data = await _supabase
-        .from('user')
-        .select()
-        .eq('id_user', userId)
-        .maybeSingle();
-
-    if (data == null) {
-      return null;
-    }
-
-    return UserModel.fromJson(data);
-  }
-}
-
-class AuthService {
-  final SupabaseClient supabase = Supabase.instance.client;
-
-  Future login(String email, String password) async {
-    final response = await supabase.auth.signInWithPassword(
+  // LOGIN EMAIL & PASSWORD
+  Future<AuthResponse> login(String email, String password) async {
+    final response = await _supabase.auth.signInWithPassword(
       email: email,
       password: password,
     );
 
-    print(response.user?.id);
-    print(response.user?.email);
-
     return response;
   }
 
-  Future signUp(String nama, String email, String password) async {
-    email = email.trim().toLowerCase();
-    password = password.trim();
+  // LOGIN DENGAN GOOGLE
+  Future<void> signInWithGoogle() async {
+    try {
+      await _supabase.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: Uri.base.origin,
+      );
 
-    final response = await supabase.auth.signUp(
+      debugPrint('Proses login Google dimulai');
+    } catch (e) {
+      debugPrint('Error Google Login: $e');
+      rethrow;
+    }
+  }
+
+  // REGISTER / SIGN UP
+  Future<AuthResponse> signUp(
+    String nama,
+    String email,
+    String password,
+  ) async {
+    final response = await _supabase.auth.signUp(
       email: email,
       password: password,
       data: {'nama': nama},
     );
-    if (response.user != null) {
-      //cmn uji
-      print("EMAIL MASUK SERVICE: '$email'");
-      print("PASSWORD: '$password'");
-
-      try {
-        await supabase.from('user').insert({
-          'id_user': response.user!.id,
-          'nama': nama,
-          'email': email,
-          'foto_profil': null,
-          'role': 'user',
-          'status': true,
-        });
-      } catch (e) {
-        print("Insert profile gagal: $e");
-      }
-    }
 
     return response;
   }
 
+  // FORGOT PASSWORD
   Future<void> forgotPassword(String email) async {
-    await supabase.auth.resetPasswordForEmail(email);
+    await _supabase.auth.resetPasswordForEmail(
+      email,
+      redirectTo: Uri.base.origin,
+    );
   }
 
+  // RESET PASSWORD
+  Future<void> resetPassword(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: Uri.base.origin,
+      );
+
+      debugPrint('Link reset password berhasil dikirim');
+      debugPrint('Redirect URL: ${Uri.base.origin}');
+    } catch (e) {
+      debugPrint('Error reset password: $e');
+      throw Exception('Gagal mengirim link reset: $e');
+    }
+  }
+
+  // GET USER PROFILE
+  Future<UserModel?> getUserProfile(String userId) async {
+    try {
+      final data = await _supabase
+          .from('user')
+          .select()
+          .eq('id_user', userId)
+          .maybeSingle();
+
+      if (data == null) return null;
+
+      return UserModel.fromJson(data);
+    } catch (e) {
+      debugPrint('Error get profile: $e');
+      return null;
+    }
+  }
+
+  // LOGOUT
   Future<void> logout() async {
-    await supabase.auth.signOut();
+    await _supabase.auth.signOut();
+  }
+
+  // GET CURRENT USER
+  User? getCurrentUser() {
+    return _supabase.auth.currentUser;
   }
 }

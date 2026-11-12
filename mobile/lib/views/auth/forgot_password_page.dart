@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ternatespot/controllers/auth_controller.dart';
 
+import 'login_page.dart';
+
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -9,78 +11,134 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  final TextEditingController _inputController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final AuthController _authController = AuthController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _inputController.dispose();
+    _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendResetLink() async {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email tidak boleh kosong'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!email.contains('@') || !email.contains('.')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Format email tidak valid'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final isSuccess = await _authController.resetPassword(email);
+
+      if (isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Link reset berhasil dikirim ke $email. Silakan cek inbox email Anda.',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        _emailController.clear();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email tidak terdaftar atau terjadi kesalahan.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 241, 238, 238),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0066FF)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Lupa Kata Sandi',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 12),
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEBF2FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.lock_reset_rounded,
-                    size: 48,
+              const SizedBox(height: 20),
+              const Center(
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Color(0xFFEBF2FF),
+                  child: Icon(
+                    Icons.lock_reset,
+                    size: 40,
                     color: Color(0xFF0066FF),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               const Text(
-                'Atur Ulang Kata Sandi',
+                'Lupa Kata Sandi?',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
-                'Masukkan email terdaftar kamu. Kami akan mengirimkan kode/tautan untuk mengatur ulang kata sandi.',
+                'Tenang, masukkan email Anda dan kami akan\nmengirimkan link untuk mereset kata sandi.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
+                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
               ),
               const SizedBox(height: 32),
               const Text(
-                'Email atau No. Handphone',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                'Email',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 6),
               TextField(
-                controller: _inputController,
-                style: const TextStyle(fontSize: 13),
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   hintText: 'nama@email.com',
                   hintStyle: TextStyle(
@@ -88,12 +146,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     fontSize: 13,
                   ),
                   prefixIcon: const Icon(
-                    Icons.contact_mail_outlined,
+                    Icons.email_outlined,
                     color: Colors.grey,
                     size: 20,
                   ),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -103,28 +161,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey.shade200),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF0066FF)),
+                  ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: () async {
-                  try {
-                    await _authController.forgotPassword(
-                      _inputController.text.trim(),
-                    );
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Link reset password telah dikirim ke email kamu.',
-                        ),
-                      ),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(e.toString())));
-                  }
-                },
+                onPressed: _isLoading ? null : _sendResetLink,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0066FF),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -133,12 +178,42 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                   elevation: 2,
                 ),
-                child: const Text(
-                  'Kirim Tautan Atur Ulang',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Kirim Link Reset',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Kembali ke Halaman Login',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF0066FF),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

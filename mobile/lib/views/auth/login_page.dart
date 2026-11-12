@@ -15,9 +15,12 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   bool _rememberMe = false;
   bool _obscurePassword = true;
+  bool _isGoogleLoading = false;
+  bool _isLoginLoading = false;
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
   final AuthController _authController = AuthController();
 
   @override
@@ -25,6 +28,92 @@ class _LoginPageState extends State<LoginPage> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // =========================
+  // LOGIN EMAIL & PASSWORD
+  // =========================
+  Future<void> _login() async {
+    if (_isLoginLoading) return;
+
+    setState(() {
+      _isLoginLoading = true;
+    });
+
+    try {
+      final response = await _authController.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      if (response.user == null) {
+        throw Exception('Login gagal. Silakan coba kembali.');
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login berhasil'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const TestProfilePage()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login gagal: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoginLoading = false;
+        });
+      }
+    }
+  }
+
+  // =========================
+  // LOGIN DENGAN GOOGLE
+  // =========================
+  Future<void> _loginWithGoogle() async {
+    if (_isGoogleLoading) return;
+
+    setState(() {
+      _isGoogleLoading = true;
+    });
+
+    try {
+      await _authController.loginWithGoogle();
+
+      // Supabase akan mengarahkan browser ke Google.
+      // Setelah autentikasi berhasil, AuthWrapper
+      // akan menangani sesi dan membuka halaman utama.
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login Google gagal: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -39,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               const SizedBox(height: 12),
 
-              // 1. Logo TernateSpot
+              // 1. LOGO TERNATESPOT
               Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -78,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 28),
 
-              // 2. Judul & Subjudul
+              // 2. JUDUL & SUBJUDUL
               const Text(
                 'Selamat Datang Kembali!',
                 textAlign: TextAlign.center,
@@ -88,7 +177,9 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.black87,
                 ),
               ),
+
               const SizedBox(height: 8),
+
               const Text(
                 'Masuk untuk menjelajahi keindahan surga\nrempah Kota Ternate',
                 textAlign: TextAlign.center,
@@ -97,14 +188,13 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 24),
 
-              // 3. Tab Switcher (Masuk / Daftar Akun)
+              // 3. TAB MASUK / DAFTAR AKUN
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEBF2FF),
                   borderRadius: BorderRadius.circular(25),
                 ),
-
                 child: Row(
                   children: [
                     Expanded(
@@ -132,6 +222,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+
                     Expanded(
                       child: InkWell(
                         borderRadius: BorderRadius.circular(20),
@@ -163,7 +254,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 24),
 
-              // 4. Input Email atau No. Handphone
+              // 4. INPUT EMAIL
               const Text(
                 'Email',
                 style: TextStyle(
@@ -172,9 +263,12 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.black87,
                 ),
               ),
+
               const SizedBox(height: 6),
+
               TextField(
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'nama@email.com',
@@ -207,7 +301,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 16),
 
-              // 5. Input Kata Sandi
+              // 5. INPUT KATA SANDI
               const Text(
                 'Kata Sandi',
                 style: TextStyle(
@@ -216,7 +310,9 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.black87,
                 ),
               ),
+
               const SizedBox(height: 6),
+
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
@@ -266,7 +362,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 10),
 
-              // 6. Checkbox Ingat Saya & Link Lupa Kata Sandi
+              // 6. INGAT SAYA & LUPA PASSWORD
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -288,13 +384,16 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                       ),
+
                       const SizedBox(width: 8),
+
                       const Text(
                         'Ingat Saya',
                         style: TextStyle(fontSize: 12, color: Colors.black87),
                       ),
                     ],
                   ),
+
                   InkWell(
                     onTap: () {
                       Navigator.push(
@@ -321,47 +420,9 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 24),
 
-              // 7. Tombol "Masuk ke Akun"
-              // 7. Tombol "Masuk ke Akun"
+              // 7. TOMBOL MASUK
               ElevatedButton(
-                onPressed: () async {
-                  // Tambahkan loading state jika perlu (opsional)
-
-                  try {
-                    final response = await _authController.login(
-                      _emailController.text.trim(),
-                      _passwordController.text.trim(),
-                    );
-
-                    print("USER ID : ${response.user!.id}");
-                    print("EMAIL : ${response.user!.email}");
-
-                    // 1. Tampilkan pesan sukses
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Login berhasil"),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-
-                    // 2. ARAHKAN KE HALAMAN UTAMA (Ganti 'HomePage' dengan nama file halaman utama Anda)
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TestProfilePage(),
-                      ), // <-- UBAH DI SINI
-                      (route) => false, // Ini penting: menghapus history login agar user tidak bisa klik 'back' kembali ke login
-                    );
-                  } catch (e) {
-                    // Jika gagal (email/password salah, dll)
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Login gagal: ${e.toString()}"),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
+                onPressed: _isLoginLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0066FF),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -370,30 +431,39 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   elevation: 2,
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Masuk ke Akun',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                child: _isLoginLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Masuk ke Akun',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                        ],
                       ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: 20),
 
-              // 8. Pembatas Teks "atau lanjutkan dengan"
+              // 8. PEMBATAS
               Row(
                 children: const [
                   Expanded(child: Divider(color: Colors.grey, thickness: 0.2)),
@@ -410,9 +480,9 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 16),
 
-              // 9. Tombol Login dengan Google
+              // 9. TOMBOL LOGIN GOOGLE
               OutlinedButton(
-                onPressed: () {},
+                onPressed: _isGoogleLoading ? null : _loginWithGoogle,
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -421,30 +491,39 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'Asset/Image/Google.jpeg',
-                      height: 18,
-                      width: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Google',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                child: _isGoogleLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF0066FF),
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'Asset/Image/Google.jpeg',
+                            height: 18,
+                            width: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Google',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: 20),
 
-              // 10. Link Teks "Daftar Sekarang"
+              // 10. DAFTAR SEKARANG
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -473,7 +552,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 16),
 
-              // 11. Tombol Kapsul "Jelajah sebagai Tamu"
+              // 11. JELAJAH SEBAGAI TAMU
               Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(

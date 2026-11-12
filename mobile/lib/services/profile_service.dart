@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
-// Class untuk mengelola data profil pengguna.
 class ProfileService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -10,7 +9,66 @@ class ProfileService {
     return _supabase.auth.currentUser?.id;
   }
 
-  // Mengambil data profil pengguna berdasarkan ID.
+  // Memastikan profil pengguna tersedia di tabel user.
+  Future<Map<String, dynamic>?> ensureUserProfile() async {
+    try {
+      final authUser = _supabase.auth.currentUser;
+
+      if (authUser == null) {
+        print('❌ User belum login');
+        return null;
+      }
+
+      final userId = authUser.id;
+      final email = authUser.email;
+
+      if (email == null || email.isEmpty) {
+        print('❌ Email pengguna tidak tersedia');
+        return null;
+      }
+
+      // Periksa apakah profil sudah ada.
+      final existingProfile = await getUserProfile(userId);
+
+      if (existingProfile != null) {
+        print('✅ Profil pengguna sudah tersedia');
+        return existingProfile;
+      }
+
+      // Ambil nama dari metadata Google.
+      final metadata = authUser.userMetadata ?? {};
+
+      String nama =
+          metadata['full_name']?.toString() ??
+          metadata['name']?.toString() ??
+          metadata['nama']?.toString() ??
+          email.split('@').first;
+
+      // Buat profil baru.
+      final newProfile = await _supabase
+          .from('user')
+          .insert({
+            'id_user': userId,
+            'nama': nama,
+            'email': email,
+            'role': 'user',
+            'status': true,
+          })
+          .select()
+          .single();
+
+      print('✅ Profil pengguna berhasil dibuat');
+      print('UID: $userId');
+      print('Nama: $nama');
+
+      return newProfile;
+    } catch (e) {
+      print('❌ Error ensure user profile: $e');
+      return null;
+    }
+  }
+
+  // Mengambil profil berdasarkan UID.
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
       final data = await _supabase
@@ -19,7 +77,6 @@ class ProfileService {
           .eq('id_user', userId)
           .maybeSingle();
 
-      if (data == null) return null;
       return data;
     } catch (e) {
       print('❌ Error get profile: $e');
@@ -27,7 +84,7 @@ class ProfileService {
     }
   }
 
-  // Memperbarui data profil pengguna.
+  // Memperbarui profil pengguna.
   Future<Map<String, dynamic>?> updateProfile(
     String userId, {
     String? nama,
@@ -35,35 +92,43 @@ class ProfileService {
     String? fotoProfil,
   }) async {
     try {
-      // Menyiapkan data yang akan diperbarui.
       final Map<String, dynamic> updateData = {
         'tanggal_perubahan': DateTime.now().toIso8601String(),
       };
 
-      if (nama != null) updateData['nama'] = nama;
+      if (nama != null) {
+        updateData['nama'] = nama;
+      }
 
-      if (email != null) updateData['email'] = email;
+      if (email != null) {
+        updateData['email'] = email;
+      }
 
-      if (fotoProfil != null) updateData['foto_profil'] = fotoProfil;
+      if (fotoProfil != null) {
+        updateData['foto_profil'] = fotoProfil;
+      }
 
-      // Menyimpan perubahan profil ke database.
       final data = await _supabase
           .from('user')
           .update(updateData)
           .eq('id_user', userId)
           .select()
-          .single();
+          .maybeSingle();
 
-      // Mengembalikan data profil terbaru.
+      if (data == null) {
+        print('❌ Profil tidak ditemukan untuk diperbarui');
+        return null;
+      }
+
+      print('✅ Profil berhasil diperbarui');
       return data;
     } catch (e) {
-      // Menampilkan pesan kesalahan.
       print('❌ Error update profile: $e');
       return null;
     }
   }
 
-  // Mengunggah foto profil pengguna ke Supabase Storage.
+  // Upload foto profil.
   Future<String?> uploadProfilePicture(String userId, XFile imageFile) async {
     try {
       final fileName =
@@ -79,16 +144,16 @@ class ProfileService {
           .from('foto-profil')
           .getPublicUrl(fileName);
 
-      // Menampilkan URL foto yang berhasil diunggah.
       print('✅ Foto berhasil diupload: $publicUrl');
+
       return publicUrl;
     } catch (e) {
-      // Menampilkan pesan kesalahan.
       print('❌ Error upload foto: $e');
       return null;
     }
   }
 
+  // Logout.
   Future<void> logout() async {
     await _supabase.auth.signOut();
   }
