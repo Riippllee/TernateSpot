@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'views/auth/profile_user_page.dart';
+import 'views/auth/favorite_user_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,13 +15,13 @@ Future<void> main() async {
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  const MainApp({super.key});  
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-    home: const ProfileUserPage(), // Menampilkan LoginPage di emulator
+   home: const FavoritePage(), // Menampilkan LoginPage di emulator
     );
   }
 }
