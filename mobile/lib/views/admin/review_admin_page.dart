@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../controllers/review_admin_controller.dart';
+
 class ReviewPage extends StatefulWidget {
   const ReviewPage({super.key});
 
@@ -8,14 +10,44 @@ class ReviewPage extends StatefulWidget {
 }
 
 class _ReviewPageState extends State<ReviewPage> {
-  int _selectedIndex = 3; // Mengaktifkan tab "Review" pada bottom navigation bar
-  int _selectedFilterIndex = 0;
+  final ReviewAdminController _controller = ReviewAdminController();
 
-  final List<Map<String, dynamic>> _filters = [
-    {'label': 'Perlu Moderasi', 'count': '12'},
-    {'label': 'Disetujui', 'count': '8.850'},
-    {'label': 'Dilaporkan / Spam', 'count': ''},
-  ];
+  String _formatTanggal(String? tanggal) {
+    if (tanggal == null || tanggal.isEmpty) {
+      return '-';
+    }
+
+    try {
+      final date = DateTime.parse(tanggal).toLocal();
+
+      return '${date.day.toString().padLeft(2, '0')}/'
+          '${date.month.toString().padLeft(2, '0')}/'
+          '${date.year}';
+    } catch (e) {
+      return '-';
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller.addListener(_onReviewChanged);
+    _controller.loadUlasan();
+  }
+
+  void _onReviewChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onReviewChanged);
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,9 +132,7 @@ class _ReviewPageState extends State<ReviewPage> {
             padding: EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
-              backgroundImage: NetworkImage(
-                'https://i.pravatar.cc/100?img=5',
-              ),
+              backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=5'),
             ),
           ),
         ],
@@ -142,14 +172,15 @@ class _ReviewPageState extends State<ReviewPage> {
                             borderRadius: BorderRadius.circular(22),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
+                                color: Colors.black.withValues(alpha: .02),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: const TextField(
-                            decoration: InputDecoration(
+                          child: TextField(
+                            onChanged: _controller.searchUlasan,
+                            decoration: const InputDecoration(
                               hintText: 'Cari destinasi atau user...',
                               hintStyle: TextStyle(
                                 color: Color(0xFFA0AEC0),
@@ -161,7 +192,9 @@ class _ReviewPageState extends State<ReviewPage> {
                                 size: 20,
                               ),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 10),
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 10,
+                              ),
                             ),
                           ),
                         ),
@@ -175,7 +208,7 @@ class _ReviewPageState extends State<ReviewPage> {
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.02),
+                              color: Colors.black.withValues(alpha: .02),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -213,134 +246,112 @@ class _ReviewPageState extends State<ReviewPage> {
                   const SizedBox(height: 14),
 
                   // Filter Tab Horizontal (Perlu Moderasi, Disetujui, Dilaporkan/Spam)
-                  SizedBox(
-                    height: 36,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _filters.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final isSelected = _selectedFilterIndex == index;
-                        final filter = _filters[index];
 
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedFilterIndex = index;
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(18),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? (index == 2
-                                      ? const Color(0xFFFFF5F5)
-                                      : const Color(0xFF1D61E7))
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: isSelected
-                                    ? (index == 2
-                                        ? const Color(0xFFFEB2B2)
-                                        : const Color(0xFF1D61E7))
-                                    : const Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                if (index == 2) ...[
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFE53E3E),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                ],
-                                Text(
-                                  filter['label'],
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected
-                                        ? (index == 2
-                                            ? const Color(0xFFC53030)
-                                            : Colors.white)
-                                        : const Color(0xFF4A5568),
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                                if (filter['count'].toString().isNotEmpty) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? Colors.white.withOpacity(0.25)
-                                          : const Color(0xFFEDF2F7),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      filter['count'],
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : const Color(0xFF718096),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                  // Filter status ulasan.
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildStatusTab(
+                          label: 'Semua',
+                          count: _controller.jumlahSemua,
+                          status: null,
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        _buildStatusTab(
+                          label: 'Ditampilkan',
+                          count: _controller.jumlahDitampilkan,
+                          status: true,
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        _buildStatusTab(
+                          label: 'Disembunyikan',
+                          count: _controller.jumlahDisembunyikan,
+                          status: false,
+                        ),
+                      ],
                     ),
                   ),
 
                   const SizedBox(height: 16),
 
                   // Kartu Ulasan 1: Dimas Aditya
-                  _buildReviewCard(
-                    avatarUrl: 'https://i.pravatar.cc/100?img=12',
-                    name: 'Dimas Aditya',
-                    badgeText: 'Wisatawan Terverifikasi',
-                    isVerified: true,
-                    timeAgo: '10 Menit lalu',
-                    rating: '5.0',
-                    locationName: 'Jikamalamo, Ternate',
-                    locationIcon: Icons.location_on_outlined,
-                    comment:
-                        '"Air laut di Jikomalamo benar-benar jernih sebening kaca dan dikelilingi pasir putih yang lembut. Suasananya tenang dan cocok untuk melepas penat, paling enak datang agak pagi supaya bisa menikmati pemandangan bawah laut dengan lebih puas!"',
-                  ),
 
-                  const SizedBox(height: 14),
+                  // Menampilkan data ulasan dari Supabase.
+                  if (_controller.isLoading)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(30),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_controller.errorMessage != null)
+                    Center(
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 35,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('Gagal memuat ulasan'),
+                          TextButton(
+                            onPressed: _controller.loadUlasan,
+                            child: const Text('Coba Lagi'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (_controller.filteredUlasan.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(30),
+                        child: Text('Belum ada ulasan ditemukan.'),
+                      ),
+                    )
+                  else
+                    ..._controller.filteredUlasan.map((item) {
+                      final user = item['user'] as Map<String, dynamic>?;
+                      final destinasi =
+                          item['destinasi'] as Map<String, dynamic>?;
 
-                  // Kartu Ulasan 2: Clara Sinta
-                  _buildReviewCard(
-                    avatarUrl: 'https://i.pravatar.cc/100?img=47',
-                    name: 'Clara Sinta',
-                    badgeText: 'Member Wisata',
-                    isVerified: false,
-                    timeAgo: '1 Jam lalu',
-                    rating: '4.0',
-                    locationName: 'Gunung Gamalama, Ternate',
-                    locationIcon: Icons.terrain_outlined,
-                    comment:
-                        '“Gunung Gamalama menawarkan pengalaman wisata alam yang menarik dengan panorama khas Pulau Ternate dan jalur pendakian yang menantang. Selain keindahan alamnya, Gamalama juga memiliki nilai sejarah dan budaya yang membuatnya menjadi salah satu destinasi yang ikonik di Ternate.”',
-                  ),
+                      final namaUser = user?['nama']?.toString() ?? 'Pengguna';
+
+                      final fotoUser = user?['foto_profil']?.toString() ?? '';
+
+                      final namaDestinasi =
+                          destinasi?['nama_destinasi']?.toString() ??
+                          'Destinasi tidak diketahui';
+
+                      final rating = (item['rating'] as num?)?.toDouble() ?? 0;
+
+                      final komentar = item['komentar']?.toString() ?? '';
+
+                      final tanggal = item['tanggal_ditambah']?.toString();
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+
+                        child: _buildReviewCard(
+                          statusUlasan: item['status'] == true,
+                          avatarUrl: fotoUser,
+                          name: namaUser,
+                          badgeText: 'Pengguna TernateSpot',
+                          isVerified: false,
+                          timeAgo: _formatTanggal(tanggal),
+                          rating: rating.toStringAsFixed(1),
+                          locationName: namaDestinasi,
+                          locationIcon: Icons.location_on_outlined,
+                          comment: komentar,
+                          idUlasan: (item['id_ulasan'] as num).toInt(),
+                        ),
+                      );
+                    }),
 
                   const SizedBox(height: 20),
                 ],
@@ -348,6 +359,54 @@ class _ReviewPageState extends State<ReviewPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Widget tab filter status ulasan.
+  Widget _buildStatusTab({
+    required String label,
+    required int count,
+    required bool? status,
+  }) {
+    final selected = _controller.selectedStatus == status;
+
+    return InkWell(
+      onTap: () {
+        _controller.filterByStatus(status);
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF1D61E7) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? const Color(0xFF1D61E7) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : const Color(0xFF4A5568),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: selected ? Colors.white : const Color(0xFF718096),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -363,6 +422,8 @@ class _ReviewPageState extends State<ReviewPage> {
     required String locationName,
     required IconData locationIcon,
     required String comment,
+    required int idUlasan,
+    required bool statusUlasan,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -371,7 +432,7 @@ class _ReviewPageState extends State<ReviewPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: .02),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -388,7 +449,13 @@ class _ReviewPageState extends State<ReviewPage> {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundImage: NetworkImage(avatarUrl),
+                    backgroundColor: const Color(0xFFEBF3FE),
+                    backgroundImage: avatarUrl.isNotEmpty
+                        ? NetworkImage(avatarUrl)
+                        : null,
+                    child: avatarUrl.isEmpty
+                        ? const Icon(Icons.person, color: Color(0xFF1D61E7))
+                        : null,
                   ),
                   if (isVerified)
                     Positioned(
@@ -499,11 +566,7 @@ class _ReviewPageState extends State<ReviewPage> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  locationIcon,
-                  size: 13,
-                  color: const Color(0xFF1D61E7),
-                ),
+                Icon(locationIcon, size: 13, color: const Color(0xFF1D61E7)),
                 const SizedBox(width: 4),
                 Text(
                   locationName,
@@ -533,83 +596,110 @@ class _ReviewPageState extends State<ReviewPage> {
 
           const SizedBox(height: 14),
 
-          // Tombol Aksi (Laporkan, Setujui Ulasan, Hapus)
+          // Tombol aksi moderasi dan hapus.
           Row(
             children: [
               Expanded(
-                flex: 4,
-                child: Container(
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEBF3FE),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: TextButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.flag_outlined,
-                      size: 15,
-                      color: Color(0xFF4A5568),
-                    ),
-                    label: const Text(
-                      'Laporkan',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF4A5568),
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 5,
-                child: Container(
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1D61E7),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                child: SizedBox(
+                  height: 42,
                   child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 15,
-                      color: Colors.white,
+                    onPressed: () async {
+                      final statusBaru = !statusUlasan;
+
+                      final berhasil = await _controller.updateStatusUlasan(
+                        idUlasan: idUlasan,
+                        status: statusBaru,
+                      );
+
+                      if (!mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            berhasil
+                                ? statusBaru
+                                      ? 'Ulasan berhasil ditampilkan.'
+                                      : 'Ulasan berhasil disembunyikan.'
+                                : 'Gagal mengubah status ulasan.',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: Icon(
+                      statusUlasan
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      size: 17,
                     ),
-                    label: const Text(
-                      'Setujui Ulasan',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        fontFamily: 'Poppins',
-                      ),
+                    label: Text(
+                      statusUlasan ? 'Sembunyikan' : 'Tampilkan',
+                      overflow: TextOverflow.ellipsis,
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
+                      backgroundColor: statusUlasan
+                          ? const Color(0xFF1D61E7)
+                          : const Color(0xFF16A36A),
+                      foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                width: 38,
-                height: 38,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF5F5),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final konfirmasi = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Hapus Ulasan?'),
+                        content: const Text(
+                          'Ulasan akan dihapus secara permanen.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Batal'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text(
+                              'Hapus',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (konfirmasi != true || !mounted) return;
+
+                    final berhasil = await _controller.deleteUlasan(idUlasan);
+
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          berhasil
+                              ? 'Ulasan berhasil dihapus.'
+                              : 'Gagal menghapus ulasan.',
+                        ),
+                      ),
+                    );
+                  },
                   icon: const Icon(
                     Icons.delete_outline_rounded,
-                    size: 18,
+                    size: 19,
                     color: Color(0xFFE53E3E),
                   ),
                   padding: EdgeInsets.zero,
