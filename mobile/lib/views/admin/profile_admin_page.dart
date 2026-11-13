@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:ternatespot/views/auth/login_page.dart';
 
-const Color warnaLatar = Color(0xFFF5F7FC);
-const Color warnaBiru = Color(0xFF246BFD);
-const Color warnaTeks = Color(0xFF1D2939);
-const Color warnaAbu = Color(0xFF667085);
-const Color warnaGaris = Color(0xFFE5EAF2);
+const Color warnaLatar = Color(0xFFF3F6FC);
+const Color warnaBiruUtama = Color(0xFF155EEF);
+const Color warnaBiruGelap = Color(0xFF002B80);
+const Color warnaTeksUtama = Color(0xFF101828);
+const Color warnaTeksAbu = Color(0xFF667085);
+const Color warnaGaris = Color(0xFFEAECF0);
 
 class ProfileAdminPage extends StatefulWidget {
   const ProfileAdminPage({super.key});
@@ -16,651 +17,564 @@ class ProfileAdminPage extends StatefulWidget {
 }
 
 class _ProfileAdminPageState extends State<ProfileAdminPage> {
-  Map<String, dynamic>? _dataAdmin;
-  bool _isLoadingProfil = true;
-  int menuAktif = 4;
+  String namaAdmin = 'Admin';
+  String roleAdmin = 'Super Administrator';
+  String emailAdmin = 'admin@ternatespot.com';
+  String idAdmin = 'ADM-TERNATE-001';
 
-  void tampilkanPesan(String pesan) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfilAdmin();
-  }
-
-  Future<void> _loadProfilAdmin() async {
-    try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-      debugPrint('AUTH USER ID: $userId');
-
-      if (userId == null) {
-        throw Exception('Pengguna belum login');
-      }
-
-      final data = await supabase
-          .from('user')
-          .select('id_user, nama, email, foto_profil, role')
-          .eq('id_user', userId)
-          .maybeSingle();
-      debugPrint('DATA PROFIL ADMIN: $data');
-      if (!mounted) return;
-
-      setState(() {
-        _dataAdmin = data;
-        _isLoadingProfil = false;
-      });
-    } catch (e) {
-      debugPrint('Gagal mengambil profil admin: $e');
-
-      if (!mounted) return;
-
-      setState(() {
-        _isLoadingProfil = false;
-      });
-    }
-  }
-
-  Future<void> _editProfilAdmin() async {
-    final namaController = TextEditingController(
-      text: _dataAdmin?['nama']?.toString() ?? '',
+  void _tampilkanPesan(String pesan) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(pesan),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
     );
+  }
 
-    XFile? fotoTerpilih;
-    bool sedangMenyimpan = false;
-
-    await showDialog(
+  void _konfirmasiLogout() {
+    showDialog(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Edit Profil Admin'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: namaController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nama Admin',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    OutlinedButton.icon(
-                      onPressed: sedangMenyimpan
-                          ? null
-                          : () async {
-                              final picker = ImagePicker();
-
-                              final image = await picker.pickImage(
-                                source: ImageSource.gallery,
-                                imageQuality: 80,
-                              );
-
-                              if (image != null) {
-                                setDialogState(() {
-                                  fotoTerpilih = image;
-                                });
-                              }
-                            },
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('Pilih Foto Profil'),
-                    ),
-                    if (fotoTerpilih != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          fotoTerpilih!.name,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                  ],
-                ),
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Keluar dari Akun?',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+        ),
+        content: const Text(
+          'Sesi administrator Anda akan diakhiri. Anda perlu masuk kembali untuk mengelola TernateSpot.',
+          style: TextStyle(fontSize: 13.5, color: warnaTeksAbu),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal', style: TextStyle(color: warnaTeksAbu)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD92D20),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              actions: [
-                TextButton(
-                  onPressed: sedangMenyimpan
-                      ? null
-                      : () => Navigator.pop(dialogContext),
-                  child: const Text('Batal'),
-                ),
-                ElevatedButton(
-                  onPressed: sedangMenyimpan
-                      ? null
-                      : () async {
-                          final nama = namaController.text.trim();
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await Supabase.instance.client.auth.signOut();
 
-                          if (nama.isEmpty) {
-                            tampilkanPesan('Nama tidak boleh kosong.');
-                            return;
-                          }
-
-                          setDialogState(() {
-                            sedangMenyimpan = true;
-                          });
-
-                          try {
-                            final supabase = Supabase.instance.client;
-
-                            final userId = supabase.auth.currentUser?.id;
-
-                            if (userId == null) {
-                              throw Exception('Akun belum login.');
-                            }
-
-                            final updateData = <String, dynamic>{'nama': nama};
-
-                            // Upload foto jika admin memilih foto baru.
-                            if (fotoTerpilih != null) {
-                              final extension = fotoTerpilih!.name
-                                  .split('.')
-                                  .last
-                                  .toLowerCase();
-
-                              if (![
-                                'jpg',
-                                'jpeg',
-                                'png',
-                                'webp',
-                              ].contains(extension)) {
-                                throw Exception(
-                                  'Format foto harus JPG, PNG, atau WEBP.',
-                                );
-                              }
-
-                              final filePath =
-                                  '$userId/avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
-
-                              final bytes = await fotoTerpilih!.readAsBytes();
-
-                              final mimeType = {
-                                'jpg': 'image/jpeg',
-                                'jpeg': 'image/jpeg',
-                                'png': 'image/png',
-                                'webp': 'image/webp',
-                              }[extension]!;
-
-                              await supabase.storage
-                                  .from('foto-profil')
-                                  .uploadBinary(
-                                    filePath,
-                                    bytes,
-                                    fileOptions: FileOptions(
-                                      contentType: mimeType,
-                                    ),
-                                  );
-
-                              final fotoUrl = supabase.storage
-                                  .from('foto-profil')
-                                  .getPublicUrl(filePath);
-
-                              updateData['foto_profil'] = fotoUrl;
-                            }
-
-                            await supabase
-                                .from('user')
-                                .update(updateData)
-                                .eq('id_user', userId);
-
-                            await _loadProfilAdmin();
-                            if (!dialogContext.mounted) return;
-
-                            Navigator.pop(dialogContext);
-
-                            if (!mounted) return;
-
-                            tampilkanPesan('Profil berhasil diperbarui.');
-
-                            tampilkanPesan('Profil berhasil diperbarui.');
-                          } catch (e) {
-                            debugPrint('Gagal update profil: $e');
-
-                            setDialogState(() {
-                              sedangMenyimpan = false;
-                            });
-
-                            tampilkanPesan('Gagal memperbarui profil: $e');
-                          }
-                        },
-                  child: sedangMenyimpan
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Simpan'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+              if (!mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (route) => false,
+              );
+            },
+            child: const Text('Keluar'),
+          ),
+        ],
+      ),
     );
-
-    namaController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: warnaLatar,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // 1. HEADER LENGKUNG + FLOATING PROFILE CARD
+            _buildHeaderDanKartuProfil(),
 
-      // Header logo aplikasi sudah dihapus.
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Profil Admin',
-                style: TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.bold,
-                  color: warnaTeks,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                'Kelola informasi dan pengaturan akun administrator.',
-                style: TextStyle(fontSize: 12, color: warnaAbu),
-              ),
-              const SizedBox(height: 18),
+            // 2. KONTEN UTAMA
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // BARIS RINGKASAN MINI (TANPA UPTIME)
+                  _buildRingkasanMini(),
+                  const SizedBox(height: 22),
 
-              // Kartu profil admin sesuai desain gambar.
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1760D2), Color(0xFF0645A5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  // LABEL SECTION
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 10),
+                    child: Text(
+                      'PENGATURAN & INFORMASI',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: warnaTeksAbu,
+                        letterSpacing: 0.9,
+                      ),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Status dan tombol edit.
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.20),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.circle,
-                                color: Color(0xFF78F0B0),
-                                size: 7,
-                              ),
-                              SizedBox(width: 5),
-                              Text(
-                                'AKTIF / ON DUTY',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          onTap: _editProfilAdmin,
-                          borderRadius: BorderRadius.circular(30),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.20),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
 
-                    // Foto dan identitas administrator.
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white70,
-                              width: 1.5,
-                            ),
-                          ),
-
-                          child: ClipOval(
-                            child: Builder(
-                              builder: (context) {
-                                final foto = _dataAdmin?['foto']
-                                    ?.toString()
-                                    .trim();
-
-                                if (foto == null || foto.isEmpty) {
-                                  return Container(
-                                    color: Colors.white24,
-                                    child: const Icon(
-                                      Icons.person,
-                                      color: Colors.white,
-                                      size: 30,
-                                    ),
-                                  );
-                                }
-
-                                return Image.network(
-                                  foto,
-                                  width: 48,
-                                  height: 48,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.white24,
-                                      child: const Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                        size: 30,
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _isLoadingProfil
-                                    ? 'Memuat...'
-                                    : (_dataAdmin?['nama']?.toString() ??
-                                          'Admin'),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Super Administrator',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 10,
-                                ),
-                              ),
-                              SizedBox(height: 3),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Email administrator.
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(
-                            Icons.alternate_email,
-                            color: Colors.white,
-                            size: 13,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _isLoadingProfil
-                              ? 'Memuat email...'
-                              : (_dataAdmin?['email']?.toString() ?? '-'),
-                          style: TextStyle(color: Colors.white, fontSize: 10),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              const Text(
-                'PENGATURAN & INFORMASI',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.0,
-                  color: warnaAbu,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Semua menu dikelompokkan dalam satu kartu.
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: warnaGaris),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.025),
-                      blurRadius: 12,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    KartuMenuAdmin(
-                      ikon: Icons.lock_outline_rounded,
-                      judul: 'Keamanan & Password',
-                      deskripsi: 'Kelola keamanan akun',
-                      onTap: () {
-                        tampilkanPesan('Menu Keamanan & Password dipilih.');
-                      },
-                    ),
-
-                    const Divider(height: 1, color: warnaGaris),
-
-                    KartuMenuAdmin(
-                      ikon: Icons.history_rounded,
-                      judul: 'Riwayat Aktivitas',
-                      deskripsi: 'Lihat aktivitas administrator',
-                      onTap: () {
-                        tampilkanPesan('Menu Riwayat Aktivitas dipilih.');
-                      },
-                    ),
-
-                    const Divider(height: 1, color: warnaGaris),
-
-                    KartuMenuAdmin(
-                      ikon: Icons.info_outline_rounded,
-                      judul: 'Tentang TernateSpot',
-                      deskripsi: 'Informasi dan versi aplikasi',
-                      onTap: () {
-                        tampilkanPesan('Menu Tentang TernateSpot dipilih.');
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Tombol logout terpisah.
-              Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: () {
-                    tampilkanPesan('Konfirmasi logout akan dihubungkan.');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
+                  // GRUP MENU UTAMA DENGAN STATUS BADGE
+                  Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFF3DADA)),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: warnaGaris),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF101828).withOpacity(0.04),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFEEEE),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.logout_rounded,
-                            color: Color(0xFFDC4545),
-                            size: 21,
-                          ),
+                        _buildItemMenu(
+                          icon: Icons.lock_outline_rounded,
+                          iconColor: warnaBiruUtama,
+                          iconBg: const Color(0xFFEFF4FF),
+                          title: 'Keamanan & Password',
+                          subtitle: 'Proteksi akun & autentikasi',
+                          badgeText: '2FA Aktif',
+                          badgeBg: const Color(0xFFECFDF3),
+                          badgeColor: const Color(0xFF067647),
+                          onTap: () => _tampilkanPesan('Membuka Keamanan & Password'),
                         ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Keluar dari Akun',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFFDC4545),
-                                ),
-                              ),
-                              SizedBox(height: 3),
-                              Text(
-                                'Akhiri sesi administrator',
-                                style: TextStyle(fontSize: 11, color: warnaAbu),
-                              ),
-                            ],
-                          ),
+                        const Divider(height: 1, color: warnaGaris, indent: 66, endIndent: 16),
+                        _buildItemMenu(
+                          icon: Icons.history_rounded,
+                          iconColor: const Color(0xFF6938EF),
+                          iconBg: const Color(0xFFF4F3FF),
+                          title: 'Riwayat Aktivitas',
+                          subtitle: 'Log perubahan & moderasi',
+                          badgeText: 'Baru',
+                          badgeBg: const Color(0xFFEFF4FF),
+                          badgeColor: warnaBiruUtama,
+                          onTap: () => _tampilkanPesan('Membuka Riwayat Aktivitas'),
                         ),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFFDC4545),
-                          size: 20,
+                        const Divider(height: 1, color: warnaGaris, indent: 66, endIndent: 16),
+                        _buildItemMenu(
+                          icon: Icons.info_outline_rounded,
+                          iconColor: const Color(0xFF0E9384),
+                          iconBg: const Color(0xFFF0FDF9),
+                          title: 'Tentang TernateSpot',
+                          subtitle: 'Informasi sistem & pengembang',
+                          badgeText: 'v1.0.0',
+                          badgeBg: const Color(0xFFF2F4F7),
+                          badgeColor: warnaTeksAbu,
+                          onTap: () => _tampilkanPesan('TernateSpot Admin Portal v1.0.0'),
                         ),
                       ],
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+
+                  // TOMBOL KELUAR DARI AKUN
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFFEE4E2)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFD92D20).withOpacity(0.05),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: _buildItemMenu(
+                      icon: Icons.logout_rounded,
+                      iconColor: const Color(0xFFD92D20),
+                      iconBg: const Color(0xFFFEF3F2),
+                      title: 'Keluar dari Akun',
+                      titleColor: const Color(0xFFD92D20),
+                      subtitle: 'Akhiri sesi administrator saat ini',
+                      chevronColor: const Color(0xFFD92D20).withOpacity(0.6),
+                      onTap: _konfirmasiLogout,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+
+                  // FOOTER ID ADMIN
+                  Center(
+                    child: Text(
+                      'TernateSpot Administrator • ID: $idAdmin',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF98A2B3),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 20),
-
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
-class KartuMenuAdmin extends StatelessWidget {
-  final IconData ikon;
-  final String judul;
-  final String deskripsi;
-  final VoidCallback onTap;
-
-  const KartuMenuAdmin({
-    super.key,
-    required this.ikon,
-    required this.judul,
-    required this.deskripsi,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 13),
-          child: Row(
+  Widget _buildHeaderDanKartuProfil() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Latar Biru Lengkung di Bagian Atas
+        Container(
+          height: 215,
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF1E68F6),
+                warnaBiruGelap,
+              ],
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(30),
+              bottomRight: Radius.circular(30),
+            ),
+          ),
+          child: Stack(
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF1FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(ikon, color: warnaBiru, size: 21),
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      judul,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: warnaTeks,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      deskripsi,
-                      style: const TextStyle(fontSize: 11, color: warnaAbu),
-                    ),
-                  ],  
+              Positioned(
+                right: -30,
+                top: -20,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.07),
+                  ),
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Color(0xFF98A2B3),
-                size: 21,
+              Positioned(
+                left: -40,
+                bottom: 10,
+                child: Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                ),
               ),
             ],
           ),
+        ),
+
+        // Isi Header + Kartu Putih Melayang
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Profil Admin',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Pusat kendali akun administrator',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.white.withOpacity(0.82),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Kartu Profil Putih Melayang
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: warnaGaris),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF002B80).withOpacity(0.10),
+                        blurRadius: 22,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Avatar dengan Ring Gradien
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF2E90FA), warnaBiruUtama],
+                              ),
+                            ),
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFFEFF4FF),
+                              ),
+                              child: const Icon(
+                                Icons.person_rounded,
+                                color: warnaBiruUtama,
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          // Info Nama, Role, dan Email
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      namaAdmin,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: warnaTeksUtama,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    const Icon(
+                                      Icons.verified_rounded,
+                                      color: warnaBiruUtama,
+                                      size: 17,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  roleAdmin,
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: warnaBiruUtama,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  emailAdmin,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: warnaTeksAbu,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Tombol Edit Profil di dalam kartu putih
+                          Material(
+                            color: const Color(0xFFEFF4FF),
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => _tampilkanPesan('Edit Profil Admin'),
+                              child: const Padding(
+                                padding: EdgeInsets.all(9),
+                                child: Icon(
+                                  Icons.edit_outlined,
+                                  color: warnaBiruUtama,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      const Divider(height: 1, color: warnaGaris),
+                      const SizedBox(height: 12),
+
+                      // Baris Status Akun di Bawah Kartu Profil
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF3),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF12B76A),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'AKTIF / ON DUTY',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF067647),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Text(
+                            'Akses Penuh • Level 1',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: warnaTeksAbu,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRingkasanMini() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: warnaGaris),
+      ),
+      child: Row(
+        children: [
+          _buildKolomStat('24', 'Destinasi', warnaBiruUtama),
+          Container(width: 1, height: 28, color: warnaGaris),
+          _buildKolomStat('142', 'Ulasan', const Color(0xFF6938EF)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKolomStat(String nilai, String label, Color warnaNilai) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            nilai,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: warnaNilai,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: warnaTeksAbu,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemMenu({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String title,
+    Color titleColor = warnaTeksUtama,
+    required String subtitle,
+    String? badgeText,
+    Color? badgeBg,
+    Color? badgeColor,
+    Color chevronColor = const Color(0xFF98A2B3),
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: titleColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: warnaTeksAbu,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (badgeText != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: badgeColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Icon(Icons.chevron_right_rounded, color: chevronColor, size: 20),
+          ],
         ),
       ),
     );
