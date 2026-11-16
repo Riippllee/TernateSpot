@@ -1,8 +1,13 @@
+
 import 'package:flutter/material.dart';
-import 'package:ternatespot/views/auth/login_page.dart';
 
 class SplashPage extends StatelessWidget {
-  const SplashPage({super.key});
+  final VoidCallback onStart;
+
+  const SplashPage({
+    super.key,
+    required this.onStart,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +37,9 @@ class SplashPage extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.15),
+                    Colors.black.withValues(alpha: 0.15),
                     Colors.transparent,
-                    Colors.black.withOpacity(0.35),
+                    Colors.black.withValues(alpha: 0.35),
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
@@ -45,7 +50,9 @@ class SplashPage extends StatelessWidget {
           // 4. Konten Utama
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+              ),
               child: Column(
                 children: [
                   const Spacer(flex: 2),
@@ -59,7 +66,7 @@ class SplashPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 15,
                           offset: const Offset(0, 5),
                         ),
@@ -87,11 +94,15 @@ class SplashPage extends StatelessWidget {
                       children: [
                         TextSpan(
                           text: 'Ternate',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
                         ),
                         TextSpan(
                           text: 'Spot',
-                          style: TextStyle(color: Color(0xFFB3CDE0)),
+                          style: TextStyle(
+                            color: Color(0xFFB3CDE0),
+                          ),
                         ),
                       ],
                     ),
@@ -106,7 +117,7 @@ class SplashPage extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
+                      color: Colors.white.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -136,21 +147,21 @@ class SplashPage extends StatelessWidget {
 
                   const Spacer(flex: 3),
 
-                  // Tombol "Mulai Jelajah"
+                  // Tombol Mulai Jelajah
                   InkWell(
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));// Aksi navigasi ke halaman berikutnya
-                    },
+                    onTap: onStart,
                     borderRadius: BorderRadius.circular(30),
                     child: Container(
                       height: 56,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -190,11 +201,11 @@ class SplashPage extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Footer Teks Versi (Sudah Diperbaiki)
+                  // Footer Versi
                   Text(
                     'v1.0.0. " Penjata Meluku Utara',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 11,
                     ),
                   ),
@@ -210,7 +221,10 @@ class SplashPage extends StatelessWidget {
   }
 }
 
-// Custom Painter untuk Logo
+// ==========================================
+// CUSTOM PAINTER LOGO
+// ==========================================
+
 class LogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -225,6 +239,7 @@ class LogoPainter extends CustomPainter {
       ..moveTo(size.width * 0.15, size.height * 0.7)
       ..lineTo(size.width * 0.5, size.height * 0.25)
       ..lineTo(size.width * 0.85, size.height * 0.7);
+
     canvas.drawPath(pathGunung, paintStroke);
 
     final pathLaut = Path()
@@ -241,11 +256,13 @@ class LogoPainter extends CustomPainter {
         size.width * 0.9,
         size.height * 0.8,
       );
+
     canvas.drawPath(pathLaut, paintStroke);
 
     final paintMatahari = Paint()
       ..color = const Color(0xFFF59E0B)
       ..style = PaintingStyle.fill;
+
     canvas.drawCircle(
       Offset(size.width * 0.72, size.height * 0.32),
       4.5,
@@ -256,6 +273,10 @@ class LogoPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+// ==========================================
+// REALISTIC ISLAND PAINTER
+// ==========================================
 
 class RealisticIslandPainter extends CustomPainter {
   const RealisticIslandPainter();
