@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ternatespot/views/auth/daftar_page.dart';
 import 'package:ternatespot/views/auth/forgot_password_page.dart';
 
+import 'beranda_page.dart';
 import '../../controllers/auth_controller.dart';
 
 class LoginPage extends StatefulWidget {
