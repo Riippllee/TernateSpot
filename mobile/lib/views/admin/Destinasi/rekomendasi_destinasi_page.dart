@@ -365,20 +365,6 @@ class _RekomendasiDestinasiPageState extends State<RekomendasiDestinasiPage> {
 
             const SizedBox(height: 12),
 
-            // Category Horizontal Chips
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildChip('Semua', true),
-                  _buildChip('Populer', false),
-                  _buildChip('Bahari', false),
-                  _buildChip('Budaya', false),
-                  _buildChip('Gunung', false),
-                ],
-              ),
-            ),
-
             const SizedBox(height: 16),
 
             // Katalog destinasi dari Supabase
