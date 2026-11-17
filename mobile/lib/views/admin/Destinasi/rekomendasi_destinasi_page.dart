@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../controllers/rekomendasi_controller.dart';
@@ -328,46 +329,6 @@ class _RekomendasiDestinasiPageState extends State<RekomendasiDestinasiPage> {
                   rekomendasi.status,
                 );
               },
-            ),
-
-            const SizedBox(height: 16),
-
-            // Banner Notification SnackBar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0052CC),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Danau Toba berhasil dipasang ke Slo',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'URUNGKAN',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const Icon(Icons.close, color: Colors.white, size: 16),
-                ],
-              ),
             ),
 
             const SizedBox(height: 20),

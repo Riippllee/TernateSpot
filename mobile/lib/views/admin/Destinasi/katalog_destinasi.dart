@@ -15,15 +15,6 @@ class KatalogDestinasiPage extends StatefulWidget {
 
 class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
   final DestinasiController _controller = DestinasiController();
-  int _selectedCategoryIndex = 0;
-  int _currentBottomNavIndex = 1;
-
-  final List<String> _categories = [
-    'Semua',
-    'Pantai',
-    'Danau & Air',
-    'Sejarah & Benteng',
-  ];
 
   String getNamaKategori(int idKategori) {
     for (final kategori in _controller.listKategori) {
@@ -31,7 +22,6 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
         return kategori.namaKategori;
       }
     }
-
     return 'Kategori tidak diketahui';
   }
 
@@ -44,9 +34,7 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
   }
 
   void _refreshPage() {
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   @override
@@ -56,7 +44,6 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
     super.dispose();
   }
 
-  //fungsi hapus destinasi
   Future<void> _hapusDestinasi(DestinasiModel destinasi) async {
     final konfirmasi = await showDialog<bool>(
       context: context,
@@ -70,15 +57,11 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext, false);
-            },
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Batal'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext, true);
-            },
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -152,7 +135,11 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0, top: 10, bottom: 10),
+            padding: const EdgeInsets.only(
+              right: 16,
+              top: 10,
+              bottom: 10,
+            ),
             child: ElevatedButton.icon(
               onPressed: () async {
                 final berhasil = await Navigator.push<bool>(
@@ -188,7 +175,7 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // Banner Atur Rekomendasi Beranda
@@ -242,12 +229,14 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
                         children: [
                           Row(
                             children: [
-                              const Text(
-                                'Atur Rekomendasi Beranda',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                              const Flexible(
+                                child: Text(
+                                  'Atur Rekomendasi Beranda',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -305,7 +294,10 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
             TextField(
               decoration: InputDecoration(
                 hintText: 'Cari nama destinasi, kecamatan...',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 13,
+                ),
                 prefixIcon: Icon(
                   Icons.search,
                   color: Colors.grey.shade400,
@@ -327,57 +319,6 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
 
             const SizedBox(height: 16),
 
-            // Kategori Chips
-            SizedBox(
-              height: 36,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _categories.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final isSelected = _selectedCategoryIndex == index;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedCategoryIndex = index;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFF0066FF)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? const Color(0xFF0066FF)
-                              : Colors.grey.shade200,
-                        ),
-                      ),
-                      child: Text(
-                        _categories[index],
-                        style: TextStyle(
-                          color: isSelected
-                              ? Colors.white
-                              : Colors.grey.shade700,
-                          fontSize: 12,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
             // Daftar Card Destinasi
             if (_controller.isLoadingDestinasi)
               const Center(child: CircularProgressIndicator()),
@@ -390,12 +331,15 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
+
             if (!_controller.isLoadingDestinasi &&
                 _controller.errorMessage == null &&
                 _controller.listDestinasi.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(20),
-                child: Center(child: Text('Belum ada destinasi di database.')),
+                child: Center(
+                  child: Text('Belum ada destinasi di database.'),
+                ),
               ),
 
             if (!_controller.isLoadingDestinasi &&
@@ -419,7 +363,10 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
 
             // PAGINATION BAR
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -428,7 +375,11 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.chevron_left, color: Colors.grey, size: 18),
+                  const Icon(
+                    Icons.chevron_left,
+                    color: Colors.grey,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Container(
                     width: 24,
@@ -449,31 +400,25 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    '2',
-                    style: TextStyle(color: Colors.grey, fontSize: 11),
-                  ),
+                  const Text('2', style: TextStyle(color: Colors.grey, fontSize: 11)),
                   const SizedBox(width: 12),
-                  const Text(
-                    '3',
-                    style: TextStyle(color: Colors.grey, fontSize: 11),
-                  ),
+                  const Text('3', style: TextStyle(color: Colors.grey, fontSize: 11)),
                   const SizedBox(width: 12),
-                  const Text(
-                    '...',
-                    style: TextStyle(color: Colors.grey, fontSize: 11),
-                  ),
+                  const Text('...', style: TextStyle(color: Colors.grey, fontSize: 11)),
                   const SizedBox(width: 12),
-                  const Text(
-                    '35',
-                    style: TextStyle(color: Colors.grey, fontSize: 11),
-                  ),
+                  const Text('35', style: TextStyle(color: Colors.grey, fontSize: 11)),
                   const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: Colors.grey,
+                    size: 18,
+                  ),
                 ],
               ),
             ),
+
             const SizedBox(height: 6),
+
             RichText(
               text: const TextSpan(
                 style: TextStyle(fontSize: 10, color: Colors.grey),
@@ -548,11 +493,8 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
                       width: 95,
                       height: 80,
                       fit: BoxFit.cover,
-
-                      // Tampilan selama gambar dimuat
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
-
                         return Container(
                           width: 95,
                           height: 80,
@@ -565,15 +507,13 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
                           ),
                         );
                       },
-
-                      // Tampilan jika gambar gagal dimuat
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           width: 95,
                           height: 80,
                           color: Colors.grey.shade200,
                           alignment: Alignment.center,
-                          child: Icon(
+                          child: const Icon(
                             Icons.image_not_supported_outlined,
                             size: 28,
                             color: Colors.grey,
@@ -728,14 +668,21 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
           const SizedBox(height: 12),
 
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 8,
+            ),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                const Icon(
+                  Icons.star_rounded,
+                  color: Colors.amber,
+                  size: 16,
+                ),
                 const SizedBox(width: 6),
                 const Text(
                   'Rating: ',
