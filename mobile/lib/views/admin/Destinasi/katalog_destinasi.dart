@@ -15,15 +15,6 @@ class KatalogDestinasiPage extends StatefulWidget {
 
 class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
   final DestinasiController _controller = DestinasiController();
-  int _selectedCategoryIndex = 0;
-  int _currentBottomNavIndex = 1;
-
-  final List<String> _categories = [
-    'Semua',
-    'Pantai',
-    'Danau & Air',
-    'Sejarah & Benteng',
-  ];
 
   String getNamaKategori(int idKategori) {
     for (final kategori in _controller.listKategori) {
@@ -322,57 +313,6 @@ class _KatalogDestinasiPageState extends State<KatalogDestinasiPage> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey.shade200),
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Kategori Chips
-            SizedBox(
-              height: 36,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _categories.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final isSelected = _selectedCategoryIndex == index;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedCategoryIndex = index;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFF0066FF)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? const Color(0xFF0066FF)
-                              : Colors.grey.shade200,
-                        ),
-                      ),
-                      child: Text(
-                        _categories[index],
-                        style: TextStyle(
-                          color: isSelected
-                              ? Colors.white
-                              : Colors.grey.shade700,
-                          fontSize: 12,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  );
-                },
               ),
             ),
 
