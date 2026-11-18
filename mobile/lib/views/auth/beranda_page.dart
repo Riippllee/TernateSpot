@@ -1,5 +1,13 @@
-
 import 'package:flutter/material.dart';
+
+import '../../controllers/destinasi_user_controller.dart';
+import '../destinasi/detail_destinasi_page.dart';
+import '../destinasi/lokasi_destinasi_page.dart';
+import 'profile_user_page.dart';
+
+// =====================================================
+// BERANDA TERNATESPOT
+// =====================================================
 
 class BerandaPage extends StatefulWidget {
   const BerandaPage({super.key});
@@ -9,160 +17,290 @@ class BerandaPage extends StatefulWidget {
 }
 
 class _BerandaPageState extends State<BerandaPage> {
-  final TextEditingController searchController = TextEditingController();
+  late final DestinasiUserController _destinasiController;
 
-  String searchQuery = '';
+  final TextEditingController searchController =
+      TextEditingController();
+
   String selectedCategory = 'Semua';
 
-  final Set<String> favorites = {};
+  int selectedBottomIndex = 0;
 
-  // ==========================================
+  // =====================================================
+  // FAVORIT SEMENTARA
+  // Tidak membutuhkan login.
+  // =====================================================
+
+  final Set<int> favorites = {};
+
+  // =====================================================
   // WARNA APLIKASI
-  // ==========================================
+  // =====================================================
 
   static const Color primaryBlue = Color(0xFF0875ED);
   static const Color backgroundColor = Color(0xFFF7F8FD);
   static const Color textColor = Color(0xFF17233C);
   static const Color secondaryText = Color(0xFF78869A);
 
-  // ==========================================
-  // DATA DESTINASI
-  // ==========================================
+  // =====================================================
+  // INIT STATE
+  // =====================================================
 
-  final List<Map<String, dynamic>> destinations = [
-    {
-      'name': 'Benteng Kalamata',
-      'location': 'Ternate Selatan',
-      'category': 'Sejarah',
-      'rating': '4.7',
-      'image':
-          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=700',
-    },
-    {
-      'name': 'Danau Tolire',
-      'location': 'Ternate Utara',
-      'category': 'Alam',
-      'rating': '4.8',
-      'image':
-          'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=700',
-    },
-    {
-      'name': 'Pantai Sulamadaha',
-      'location': 'Ternate Barat',
-      'category': 'Pantai',
-      'rating': '4.9',
-      'image':
-          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=700',
-    },
-    {
-      'name': 'Gunung Gamalama',
-      'location': 'Ternate Tengah',
-      'category': 'Alam',
-      'rating': '4.8',
-      'image':
-          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=700',
-    },
-    {
-      'name': 'Benteng Oranje',
-      'location': 'Ternate Tengah',
-      'category': 'Sejarah',
-      'rating': '4.6',
-      'image':
-          'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=700',
-    },
-    {
-      'name': 'Pantai Jikomalamo',
-      'location': 'Ternate Utara',
-      'category': 'Pantai',
-      'rating': '4.8',
-      'image':
-          'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=700',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
 
-  // ==========================================
-  // FILTER PENCARIAN DAN KATEGORI
-  // ==========================================
+    _destinasiController = DestinasiUserController();
 
-  List<Map<String, dynamic>> get filteredDestinations {
-    return destinations.where((item) {
-      final name = item['name'].toString().toLowerCase();
-      final location = item['location'].toString().toLowerCase();
+    _destinasiController.addListener(_refreshPage);
 
-      final matchesSearch =
-          name.contains(searchQuery.toLowerCase()) ||
-          location.contains(searchQuery.toLowerCase());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
 
-      final matchesCategory =
-          selectedCategory == 'Semua' ||
-          item['category'] == selectedCategory;
-
-      return matchesSearch && matchesCategory;
-    }).toList();
+      _destinasiController.loadData();
+    });
   }
 
-  // ==========================================
+  // =====================================================
+  // REFRESH HALAMAN SAAT DATA BERUBAH
+  // =====================================================
+
+  void _refreshPage() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  // =====================================================
   // DISPOSE
-  // ==========================================
+  // =====================================================
 
   @override
   void dispose() {
     searchController.dispose();
+
+    _destinasiController.removeListener(_refreshPage);
+    _destinasiController.dispose();
+
     super.dispose();
   }
 
-  // ==========================================
-  // FAVORIT
-  // ==========================================
+  // =====================================================
+  // NORMALISASI KATEGORI
+  // =====================================================
 
-  void toggleFavorite(String name) {
-    setState(() {
-      if (favorites.contains(name)) {
-        favorites.remove(name);
-      } else {
-        favorites.add(name);
-      }
-    });
+  String _normalizeCategory(String namaKategori) {
+    final lower = namaKategori.trim().toLowerCase();
+
+    if (lower.contains('pantai')) {
+      return 'Pantai';
+    }
+
+    if (lower.contains('alam') ||
+        lower.contains('danau') ||
+        lower.contains('air terjun') ||
+        lower.contains('air') ||
+        lower.contains('gunung')) {
+      return 'Alam';
+    }
+
+    if (lower.contains('sejarah') ||
+        lower.contains('benteng')) {
+      return 'Sejarah';
+    }
+
+    return namaKategori.trim();
   }
 
-  // ==========================================
+  // =====================================================
+  // DATA DESTINASI
+  // =====================================================
+
+  List<Map<String, dynamic>> get destinations {
+    return _destinasiController.listDestinasi.map((item) {
+      return {
+        'id': item.idDestinasi,
+        'name': item.namaDestinasi,
+        'location': item.alamat,
+        'category': _normalizeCategory(
+          _destinasiController.getNamaKategori(
+            item.idKategori,
+          ),
+        ),
+        'image': item.fotoUtama,
+      };
+    }).toList();
+  }
+
+  // =====================================================
+  // DATA KATEGORI
+  // =====================================================
+
+  List<String> get categories {
+    final categoryNames = _destinasiController.listKategori
+        .map((kategori) {
+          return _normalizeCategory(
+            kategori.namaKategori,
+          );
+        })
+        .where((nama) {
+          return nama.trim().isNotEmpty && nama != 'Semua';
+        })
+        .toSet()
+        .toList();
+
+    categoryNames.sort();
+
+    return ['Semua', ...categoryNames];
+  }
+
+  // =====================================================
+  // FILTER DESTINASI BERANDA
+  // =====================================================
+
+  List<Map<String, dynamic>> get filteredDestinations {
+    return destinations.where((item) {
+      final category = item['category'].toString();
+
+      final matchesCategory =
+          selectedCategory == 'Semua' ||
+          category == selectedCategory;
+
+      return matchesCategory;
+    }).toList();
+  }
+
+  // =====================================================
+  // DESTINASI FAVORIT
+  // =====================================================
+
+  List<Map<String, dynamic>> get favoriteDestinations {
+    return destinations.where((item) {
+      final id = (item['id'] as num).toInt();
+
+      return favorites.contains(id);
+    }).toList();
+  }
+
+  // =====================================================
+  // TAMBAH / HAPUS FAVORIT
+  // Tidak membutuhkan login.
+  // =====================================================
+
+  void toggleFavorite(int id) {
+    setState(() {
+      if (favorites.contains(id)) {
+        favorites.remove(id);
+      } else {
+        favorites.add(id);
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          favorites.contains(id)
+              ? 'Destinasi ditambahkan ke favorit.'
+              : 'Destinasi dihapus dari favorit.',
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  // =====================================================
+  // NAVIGASI DETAIL DESTINASI
+  // Tidak membutuhkan login.
+  // =====================================================
+
+  Future<void> openDetail(int id) async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) {
+          return DetailDestinasiPage(
+            destinasiId: id,
+            controller: _destinasiController,
+          );
+        },
+      ),
+    );
+
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  // =====================================================
+  // NAVIGASI PENCARIAN
+  // =====================================================
+
+  Future<void> openSearchPage() async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) {
+          return PencarianDestinasiPage(
+            controller: _destinasiController,
+            favorites: favorites,
+            onToggleFavorite: toggleFavorite,
+          );
+        },
+      ),
+    );
+
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  // =====================================================
+  // NAVIGASI PROFIL
+  // =====================================================
+
+  Future<void> openProfile() async {
+  final hasil = await Navigator.push<int>(
+    context,
+    MaterialPageRoute<int>(
+      builder: (context) => const ProfileUserPage(),
+        ),
+      );
+
+      if (!mounted || hasil == null) {
+        return;
+      }
+
+      if (hasil < 0 || hasil > 2) {
+        return;
+      }
+
+      setState(() {
+        selectedBottomIndex = hasil;
+      });
+    }
+
+  // =====================================================
   // MAIN BUILD
-  // ==========================================
+  // =====================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
+
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
 
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildGreeting(),
-
-                    _buildSearch(),
-
-                    const SizedBox(height: 12),
-
-                    _buildBanner(),
-
-                    const SizedBox(height: 14),
-
-                    _buildCategories(),
-
-                    const SizedBox(height: 22),
-
-                    _buildRecommendations(),
-
-                    const SizedBox(height: 12),
-                  ],
-                ),
-              ),
+              child: selectedBottomIndex == 1
+                  ? LokasiDestinasiPage(
+                      controller: _destinasiController,
+                    )
+                  : selectedBottomIndex == 2
+                      ? _buildFavoritesPage()
+                      : _buildHomePage(),
             ),
           ],
         ),
@@ -172,15 +310,16 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // ==========================================
+  // =====================================================
   // HEADER
-  // ==========================================
+  // =====================================================
 
   Widget _buildHeader() {
     return Container(
       height: 58,
       padding: const EdgeInsets.symmetric(horizontal: 17),
       color: Colors.white,
+
       child: Row(
         children: [
           SizedBox(
@@ -196,6 +335,7 @@ class _BerandaPageState extends State<BerandaPage> {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
+
             children: [
               RichText(
                 text: const TextSpan(
@@ -234,38 +374,16 @@ class _BerandaPageState extends State<BerandaPage> {
 
           const Spacer(),
 
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_none,
-                size: 24,
-                color: Color(0xFF26364D),
+          IconButton(
+            onPressed: openProfile,
+            icon: const CircleAvatar(
+              radius: 15,
+              backgroundColor: Color(0xFFE5EFFD),
+              child: Icon(
+                Icons.person,
+                size: 19,
+                color: primaryBlue,
               ),
-
-              Positioned(
-                right: 1,
-                top: 1,
-                child: Container(
-                  height: 6,
-                  width: 6,
-                  decoration: const BoxDecoration(
-                    color: primaryBlue,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(width: 15),
-
-          const CircleAvatar(
-            radius: 14,
-            backgroundColor: Color(0xFFE5EFFD),
-            child: Icon(
-              Icons.person,
-              size: 18,
-              color: primaryBlue,
             ),
           ),
         ],
@@ -273,13 +391,53 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // ==========================================
+  // =====================================================
+  // HALAMAN UTAMA
+  // =====================================================
+
+  Widget _buildHomePage() {
+    return RefreshIndicator(
+      onRefresh: _destinasiController.refreshData,
+      color: primaryBlue,
+
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+            _buildGreeting(),
+
+            _buildSearch(),
+
+            const SizedBox(height: 12),
+
+            _buildBanner(),
+
+            const SizedBox(height: 18),
+
+            _buildCategories(),
+
+            const SizedBox(height: 22),
+
+            _buildRecommendations(),
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =====================================================
   // GREETING
-  // ==========================================
+  // =====================================================
 
   Widget _buildGreeting() {
     return const Padding(
       padding: EdgeInsets.fromLTRB(18, 14, 18, 11),
+
       child: Text(
         'Mau jelajah ke mana hari ini?',
         style: TextStyle(
@@ -291,75 +449,56 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // ==========================================
-  // SEARCH
-  // ==========================================
+  // =====================================================
+  // SEARCH BERANDA
+  // =====================================================
 
   Widget _buildSearch() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
+
       child: Container(
-        height: 44,
+        height: 46,
+
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.025),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(
+            color: const Color(0xFFE7ECF3),
+          ),
         ),
 
         child: TextField(
           controller: searchController,
+          readOnly: true,
+          showCursor: false,
 
-          onChanged: (value) {
-            setState(() {
-              searchQuery = value;
-            });
-          },
+          onTap: openSearchPage,
 
-          style: const TextStyle(
-            fontSize: 12,
-            color: textColor,
-          ),
-
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: 'Cari destinasi di Ternate...',
 
-            hintStyle: const TextStyle(
+            hintStyle: TextStyle(
               fontSize: 12,
               color: secondaryText,
             ),
 
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.search,
-              size: 19,
+              size: 20,
               color: secondaryText,
             ),
 
-            suffixIcon: searchQuery.isNotEmpty
-                ? IconButton(
-                    onPressed: () {
-                      searchController.clear();
-
-                      setState(() {
-                        searchQuery = '';
-                      });
-                    },
-                    icon: const Icon(
-                      Icons.close,
-                      size: 17,
-                    ),
-                  )
-                : null,
+            suffixIcon: Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: secondaryText,
+            ),
 
             border: InputBorder.none,
 
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 12,
+            contentPadding: EdgeInsets.symmetric(
+              vertical: 13,
             ),
           ),
         ),
@@ -367,35 +506,44 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // ==========================================
+  // =====================================================
   // BANNER
-  // ==========================================
+  // =====================================================
 
   Widget _buildBanner() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
 
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(14),
 
         child: AspectRatio(
-          aspectRatio: 2.1,
+          aspectRatio: 2.15,
 
           child: Stack(
             fit: StackFit.expand,
+
             children: [
               Image.network(
-                'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1000',
+                'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200',
 
                 fit: BoxFit.cover,
 
-                errorBuilder: (_, __, ___) {
+                errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    color: const Color(0xFF718C9B),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xFF0B65B5),
+                          Color(0xFF55A6C8),
+                        ],
+                      ),
+                    ),
+
                     child: const Icon(
-                      Icons.landscape,
+                      Icons.landscape_outlined,
                       color: Colors.white,
-                      size: 45,
+                      size: 52,
                     ),
                   );
                 },
@@ -406,93 +554,85 @@ class _BerandaPageState extends State<BerandaPage> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
+
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.75),
+                      Colors.black.withValues(alpha: 0.72),
                     ],
                   ),
                 ),
               ),
 
               Positioned(
-                left: 12,
-                bottom: 12,
+                left: 14,
+                right: 12,
+                bottom: 13,
 
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+
                   children: [
                     const Text(
-                      'Keindahan Alam Ternate\nMenanti Kamu!',
+                      'Jelajahi Keindahan Ternate',
+
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
 
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        height: 1.25,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 4),
 
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          selectedCategory = 'Alam';
-                        });
-                      },
+                    const Text(
+                      'Temukan destinasi menarik di sekitar Kota Ternate.',
 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryBlue,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
 
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 13,
-                          vertical: 7,
-                        ),
-
-                        minimumSize: Size.zero,
-
-                        tapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
                       ),
+                    ),
 
-                      child: const Text(
-                        'Jelajahi Sekarang  ›',
-                        style: TextStyle(
-                          fontSize: 10,
+                    const SizedBox(height: 8),
+
+                    SizedBox(
+                      height: 30,
+
+                      child: ElevatedButton(
+                        onPressed: openSearchPage,
+
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: primaryBlue,
+                          elevation: 0,
+
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                          ),
+
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+
+                        child: const Text(
+                          'Jelajahi Sekarang',
+
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              Positioned(
-                bottom: 10,
-                right: 13,
-
-                child: Row(
-                  children: List.generate(3, (index) {
-                    return Container(
-                      margin: const EdgeInsets.only(left: 4),
-
-                      height: 5,
-                      width: index == 0 ? 13 : 5,
-
-                      decoration: BoxDecoration(
-                        color: index == 0
-                            ? primaryBlue
-                            : Colors.white70,
-
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    );
-                  }),
                 ),
               ),
             ],
@@ -502,9 +642,9 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // ==========================================
-  // KATEGORI WISATA
-  // ==========================================
+  // =====================================================
+  // KATEGORI
+  // =====================================================
 
   Widget _buildCategories() {
     return Padding(
@@ -512,6 +652,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+
         children: [
           const Text(
             'Kategori Wisata',
@@ -529,27 +670,12 @@ class _BerandaPageState extends State<BerandaPage> {
             scrollDirection: Axis.horizontal,
 
             child: Row(
-              children: [
-                _categoryButton(
-                  'Semua',
-                  Icons.grid_view_rounded,
-                ),
-
-                _categoryButton(
-                  'Pantai',
-                  Icons.beach_access_outlined,
-                ),
-
-                _categoryButton(
-                  'Alam',
-                  Icons.landscape_outlined,
-                ),
-
-                _categoryButton(
-                  'Sejarah',
-                  Icons.museum_outlined,
-                ),
-              ],
+              children: categories.map((category) {
+                return _categoryButton(
+                  category,
+                  _getCategoryIcon(category),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -557,15 +683,38 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // ==========================================
-  // TOMBOL KATEGORI
-  // ==========================================
+  // =====================================================
+  // ICON KATEGORI
+  // =====================================================
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Semua':
+        return Icons.grid_view_rounded;
+
+      case 'Pantai':
+        return Icons.beach_access_outlined;
+
+      case 'Alam':
+        return Icons.landscape_outlined;
+
+      case 'Sejarah':
+        return Icons.museum_outlined;
+
+      default:
+        return Icons.place_outlined;
+    }
+  }
+
+  // =====================================================
+  // BUTTON KATEGORI
+  // =====================================================
 
   Widget _categoryButton(
     String category,
     IconData icon,
   ) {
-    final selected = selectedCategory == category;
+    final isSelected = selectedCategory == category;
 
     return GestureDetector(
       onTap: () {
@@ -574,8 +723,10 @@ class _BerandaPageState extends State<BerandaPage> {
         });
       },
 
-      child: Container(
-        margin: const EdgeInsets.only(right: 7),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+
+        margin: const EdgeInsets.only(right: 8),
 
         padding: const EdgeInsets.symmetric(
           horizontal: 14,
@@ -583,25 +734,17 @@ class _BerandaPageState extends State<BerandaPage> {
         ),
 
         decoration: BoxDecoration(
-          color: selected ? primaryBlue : Colors.white,
+          color: isSelected
+              ? primaryBlue
+              : Colors.white,
 
           borderRadius: BorderRadius.circular(22),
 
           border: Border.all(
-            color: selected
+            color: isSelected
                 ? primaryBlue
                 : const Color(0xFFE5E9F1),
           ),
-
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: primaryBlue.withOpacity(0.13),
-                    blurRadius: 7,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
         ),
 
         child: Row(
@@ -610,12 +753,10 @@ class _BerandaPageState extends State<BerandaPage> {
           children: [
             Icon(
               icon,
-
-              size: 13,
-
-              color: selected
+              size: 14,
+              color: isSelected
                   ? Colors.white
-                  : const Color(0xFF64748B),
+                  : secondaryText,
             ),
 
             const SizedBox(width: 5),
@@ -624,13 +765,11 @@ class _BerandaPageState extends State<BerandaPage> {
               category,
 
               style: TextStyle(
-                fontSize: 12,
-
-                color: selected
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isSelected
                     ? Colors.white
                     : textColor,
-
-                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -639,11 +778,77 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // ==========================================
-  // REKOMENDASI PILIHAN
-  // ==========================================
+  // =====================================================
+  // REKOMENDASI DESTINASI
+  // =====================================================
 
   Widget _buildRecommendations() {
+    if (_destinasiController.isLoading &&
+        destinations.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 35),
+
+        child: Center(
+          child: CircularProgressIndicator(
+            color: primaryBlue,
+          ),
+        ),
+      );
+    }
+
+    if (_destinasiController.errorMessage != null &&
+        destinations.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+
+        child: Center(
+          child: Column(
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                size: 42,
+                color: secondaryText,
+              ),
+
+              const SizedBox(height: 10),
+
+              const Text(
+                'Destinasi belum dapat dimuat.',
+
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                _destinasiController.errorMessage!,
+
+                textAlign: TextAlign.center,
+
+                style: const TextStyle(
+                  color: secondaryText,
+                  fontSize: 11,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              ElevatedButton(
+                onPressed: _destinasiController.refreshData,
+
+                child: const Text(
+                  'Coba Lagi',
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final results = filteredDestinations;
 
     return Column(
@@ -651,7 +856,9 @@ class _BerandaPageState extends State<BerandaPage> {
 
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 18,
+          ),
 
           child: Row(
             children: [
@@ -660,28 +867,22 @@ class _BerandaPageState extends State<BerandaPage> {
                   'Rekomendasi Pilihan',
 
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
                 ),
               ),
 
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedCategory = 'Semua';
-                    searchQuery = '';
-                    searchController.clear();
-                  });
-                },
+              TextButton(
+                onPressed: openSearchPage,
 
                 child: const Text(
-                  'Lihat Semua ›',
+                  'Lihat Semua',
 
                   style: TextStyle(
-                    fontSize: 11,
                     color: primaryBlue,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -691,47 +892,41 @@ class _BerandaPageState extends State<BerandaPage> {
         ),
 
         const Padding(
-          padding: EdgeInsets.fromLTRB(18, 4, 18, 13),
+          padding: EdgeInsets.fromLTRB(
+            18,
+            0,
+            18,
+            12,
+          ),
 
           child: Text(
-            'Jejak sejarah, danau misteri, dan mahkota\nGamalama',
+            'Temukan tempat menarik untuk dikunjungi.',
 
             style: TextStyle(
               fontSize: 11,
-              color: Color(0xFF78869A),
-              height: 1.4,
+              color: secondaryText,
             ),
           ),
         ),
 
         if (results.isEmpty)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(30),
+          const Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 28,
+            ),
 
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 40,
-                    color: secondaryText,
-                  ),
+            child: Center(
+              child: Text(
+                'Belum ada destinasi untuk kategori ini.',
 
-                  SizedBox(height: 8),
-
-                  Text(
-                    'Destinasi tidak ditemukan',
-
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: secondaryText,
-                    ),
-                  ),
-                ],
+                style: TextStyle(
+                  fontSize: 12,
+                  color: secondaryText,
+                ),
               ),
             ),
           )
-
         else
           SizedBox(
             height: 267,
@@ -756,19 +951,21 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // ==========================================
+  // =====================================================
   // KARTU DESTINASI
-  // ==========================================
+  // =====================================================
 
   Widget _destinationCard(
     Map<String, dynamic> item,
   ) {
-    final name = item['name'] as String;
-    final category = item['category'] as String;
+    final id = (item['id'] as num).toInt();
 
-    final isFavorite = favorites.contains(name);
+    final name = item['name'].toString();
+    final category = item['category'].toString();
+    final location = item['location'].toString();
+    final imageUrl = (item['image'] ?? '').toString();
 
-    // WARNA LABEL KATEGORI
+    final isFavorite = favorites.contains(id);
 
     Color tagBackground;
     Color tagText;
@@ -789,221 +986,314 @@ class _BerandaPageState extends State<BerandaPage> {
         tagText = const Color(0xFF168567);
     }
 
-    return Container(
-      width: 201,
+    return GestureDetector(
+      onTap: () {
+        openDetail(id);
+      },
 
-      margin: const EdgeInsets.symmetric(
-        horizontal: 5,
-      ),
+      child: Container(
+        width: 201,
 
-      decoration: BoxDecoration(
-        color: Colors.white,
+        margin: const EdgeInsets.symmetric(
+          horizontal: 5,
+        ),
 
-        borderRadius: BorderRadius.circular(13),
+        decoration: BoxDecoration(
+          color: Colors.white,
 
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.035),
-            blurRadius: 7,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+          borderRadius: BorderRadius.circular(13),
 
-      clipBehavior: Clip.antiAlias,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: 0.035,
+              ),
+              blurRadius: 7,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        clipBehavior: Clip.antiAlias,
 
-        children: [
-          // FOTO DESTINASI
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
 
-          Expanded(
-            child: Stack(
-              fit: StackFit.expand,
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
 
-              children: [
-                Image.network(
-                  item['image'],
+                children: [
+                  if (imageUrl.isNotEmpty)
+                    Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
 
-                  fit: BoxFit.cover,
+                      errorBuilder: (
+                        context,
+                        error,
+                        stackTrace,
+                      ) {
+                        return _placeholderImage();
+                      },
+                    )
+                  else
+                    _placeholderImage(),
 
-                  errorBuilder: (_, __, ___) {
-                    return Container(
-                      color: const Color(0xFFE0E7EE),
+                  Positioned(
+                    top: 7,
+                    right: 7,
 
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        color: secondaryText,
+                    child: Material(
+                      color: Colors.transparent,
+
+                      child: InkWell(
+                        customBorder:
+                            const CircleBorder(),
+
+                        onTap: () {
+                          toggleFavorite(id);
+                        },
+
+                        child: CircleAvatar(
+                          radius: 14,
+                          backgroundColor:
+                              Colors.white,
+
+                          child: Icon(
+                            isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+
+                            size: 16,
+
+                            color: isFavorite
+                                ? Colors.red
+                                : secondaryText,
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-                // RATING
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                10,
+                8,
+                10,
+                10,
+              ),
 
-                Positioned(
-                  top: 7,
-                  left: 7,
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
 
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
+                children: [
+                  Text(
+                    name,
+
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 13,
+                        color: Color(0xFF287C92),
+                      ),
+
+                      const SizedBox(width: 3),
+
+                      Expanded(
+                        child: Text(
+                          location,
+
+                          maxLines: 1,
+                          overflow:
+                              TextOverflow.ellipsis,
+
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: secondaryText,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 9),
+
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(
+                      horizontal: 8,
                       vertical: 4,
                     ),
 
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
+                      color: tagBackground,
+                      borderRadius:
+                          BorderRadius.circular(12),
                     ),
 
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.star,
-                          size: 12,
-                          color: Color(0xFFFFB300),
-                        ),
+                    child: Text(
+                      category == 'Alam'
+                          ? 'Wisata Alam'
+                          : category,
 
-                        const SizedBox(width: 3),
-
-                        Text(
-                          item['rating'],
-
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // FAVORIT
-
-                Positioned(
-                  top: 7,
-                  right: 7,
-
-                  child: GestureDetector(
-                    onTap: () => toggleFavorite(name),
-
-                    child: CircleAvatar(
-                      radius: 14,
-                      backgroundColor: Colors.white,
-
-                      child: Icon(
-                        isFavorite
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-
-                        size: 16,
-
-                        color: isFavorite
-                            ? Colors.red
-                            : secondaryText,
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: tagText,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-
-          // INFORMASI DESTINASI
-
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              10,
-              8,
-              10,
-              10,
-            ),
-
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-
-              children: [
-                Text(
-                  name,
-
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
-                ),
-
-                const SizedBox(height: 5),
-
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 13,
-                      color: Color(0xFF287C92),
-                    ),
-
-                    const SizedBox(width: 3),
-
-                    Expanded(
-                      child: Text(
-                        item['location'],
-
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: secondaryText,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 9),
-
-                // LABEL KATEGORI
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-
-                  decoration: BoxDecoration(
-                    color: tagBackground,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-
-                  child: Text(
-                    category == 'Alam'
-                        ? 'Wisata Alam'
-                        : category,
-
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: tagText,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // ==========================================
+  // =====================================================
+  // PLACEHOLDER FOTO
+  // =====================================================
+
+  Widget _placeholderImage() {
+    return Container(
+      color: const Color(0xFFE0E7EE),
+
+      alignment: Alignment.center,
+
+      child: const Icon(
+        Icons.image_not_supported_outlined,
+        color: secondaryText,
+        size: 30,
+      ),
+    );
+  }
+
+  // =====================================================
+  // HALAMAN FAVORIT
+  // =====================================================
+
+  Widget _buildFavoritesPage() {
+    final favoriteItems = favoriteDestinations;
+
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(
+            18,
+            20,
+            18,
+            15,
+          ),
+
+          child: Text(
+            'Destinasi Favorit',
+
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+        ),
+
+        Expanded(
+          child: favoriteItems.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+
+                    children: [
+                      Icon(
+                        Icons.favorite_border,
+                        size: 55,
+                        color: secondaryText,
+                      ),
+
+                      SizedBox(height: 12),
+
+                      Text(
+                        'Belum ada destinasi favorit',
+
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+
+                      SizedBox(height: 5),
+
+                      Text(
+                        'Klik ikon hati pada destinasi yang kamu sukai.',
+
+                        textAlign: TextAlign.center,
+
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: secondaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : GridView.builder(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 5,
+                  ),
+
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.78,
+                  ),
+
+                  itemCount: favoriteItems.length,
+
+                  itemBuilder: (
+                    context,
+                    index,
+                  ) {
+                    return _destinationCard(
+                      favoriteItems[index],
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  // =====================================================
   // BOTTOM NAVIGATION
-  // ==========================================
+  // =====================================================
 
   Widget _buildBottomNavigation() {
     final items = [
@@ -1043,62 +1333,76 @@ class _BerandaPageState extends State<BerandaPage> {
           height: 57,
 
           child: Row(
-            children: List.generate(
-              items.length,
-              (index) {
-                final active = index == 0;
+            children:
+                List.generate(items.length, (index) {
+              final active =
+                  selectedBottomIndex == index;
 
-                return Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      if (index != 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Halaman ${items[index]['label']} belum dihubungkan.',
-                            ),
-                          ),
-                        );
-                      }
-                    },
+              IconData icon =
+                  items[index]['icon'] as IconData;
 
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              if (index == 2 && active) {
+                icon = Icons.favorite;
+              }
 
-                      children: [
-                        Icon(
-                          items[index]['icon'] as IconData,
+              return Expanded(
+                child: InkWell(
+                  onTap: () {
+                    // =================================
+                    // PROFIL
+                    // =================================
 
-                          size: 22,
+                    if (index == 3) {
+                      openProfile();
+                      return;
+                    }
+
+                    // =================================
+                    // TAB LAIN
+                    // =================================
+
+                    setState(() {
+                      selectedBottomIndex = index;
+                    });
+                  },
+
+                  child: Column(
+                    mainAxisAlignment:
+                        MainAxisAlignment.center,
+
+                    children: [
+                      Icon(
+                        icon,
+                        size: 22,
+
+                        color: active
+                            ? primaryBlue
+                            : secondaryText,
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        items[index]['label']
+                            as String,
+
+                        style: TextStyle(
+                          fontSize: 10,
 
                           color: active
                               ? primaryBlue
                               : secondaryText,
+
+                          fontWeight: active
+                              ? FontWeight.w600
+                              : FontWeight.normal,
                         ),
-
-                        const SizedBox(height: 4),
-
-                        Text(
-                          items[index]['label'] as String,
-
-                          style: TextStyle(
-                            fontSize: 10,
-
-                            color: active
-                                ? primaryBlue
-                                : secondaryText,
-
-                            fontWeight: active
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            }),
           ),
         ),
       ),
@@ -1106,13 +1410,16 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 }
 
-// ==========================================
+// =====================================================
 // LOGO TERNATESPOT
-// ==========================================
+// =====================================================
 
 class TernateLogoPainter extends CustomPainter {
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(
+    Canvas canvas,
+    Size size,
+  ) {
     final bluePaint = Paint()
       ..color = const Color(0xFF0875ED)
       ..style = PaintingStyle.stroke
@@ -1126,20 +1433,34 @@ class TernateLogoPainter extends CustomPainter {
 
     final path = Path();
 
-    // Bentuk gunung dan ombak logo
-
     path.moveTo(2, 28);
     path.lineTo(20, 7);
-    path.quadraticBezierTo(22, 4, 25, 8);
+    path.quadraticBezierTo(
+      22,
+      4,
+      25,
+      8,
+    );
     path.lineTo(39, 25);
 
     path.moveTo(2, 32);
-    path.quadraticBezierTo(13, 24, 22, 29);
-    path.quadraticBezierTo(30, 35, 41, 29);
+    path.quadraticBezierTo(
+      13,
+      24,
+      22,
+      29,
+    );
+    path.quadraticBezierTo(
+      30,
+      35,
+      41,
+      29,
+    );
 
-    canvas.drawPath(path, bluePaint);
-
-    // Matahari berwarna oranye
+    canvas.drawPath(
+      path,
+      bluePaint,
+    );
 
     canvas.drawCircle(
       const Offset(34, 7),
@@ -1153,5 +1474,1008 @@ class TernateLogoPainter extends CustomPainter {
     covariant TernateLogoPainter oldDelegate,
   ) {
     return false;
+  }
+}
+
+// =====================================================
+// HALAMAN PENCARIAN DESTINASI
+// =====================================================
+
+class PencarianDestinasiPage
+    extends StatefulWidget {
+  final DestinasiUserController controller;
+
+  final Set<int> favorites;
+
+  final void Function(int id)
+      onToggleFavorite;
+
+  const PencarianDestinasiPage({
+    super.key,
+    required this.controller,
+    required this.favorites,
+    required this.onToggleFavorite,
+  });
+
+  @override
+  State<PencarianDestinasiPage> createState() =>
+      _PencarianDestinasiPageState();
+}
+
+class _PencarianDestinasiPageState
+    extends State<PencarianDestinasiPage> {
+  final TextEditingController
+      _searchController =
+      TextEditingController();
+
+  String _selectedCategory = 'Semua';
+
+  static const Color primaryBlue =
+      Color(0xFF0875ED);
+
+  static const Color backgroundColor =
+      Color(0xFFF7F8FD);
+
+  static const Color textColor =
+      Color(0xFF17233C);
+
+  static const Color secondaryText =
+      Color(0xFF78869A);
+
+  // =====================================================
+  // INIT
+  // =====================================================
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.controller.addListener(
+      _refreshPage,
+    );
+  }
+
+  // =====================================================
+  // REFRESH
+  // =====================================================
+
+  void _refreshPage() {
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  // =====================================================
+  // DISPOSE
+  // =====================================================
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(
+      _refreshPage,
+    );
+
+    _searchController.dispose();
+
+    super.dispose();
+  }
+
+  // =====================================================
+  // NORMALISASI KATEGORI
+  // =====================================================
+
+  String _normalizeCategory(
+    String namaKategori,
+  ) {
+    final lower =
+        namaKategori.trim().toLowerCase();
+
+    if (lower.contains('pantai')) {
+      return 'Pantai';
+    }
+
+    if (lower.contains('alam') ||
+        lower.contains('danau') ||
+        lower.contains('air terjun') ||
+        lower.contains('air') ||
+        lower.contains('gunung')) {
+      return 'Alam';
+    }
+
+    if (lower.contains('sejarah') ||
+        lower.contains('benteng')) {
+      return 'Sejarah';
+    }
+
+    return namaKategori.trim();
+  }
+
+  // =====================================================
+  // DATA DESTINASI
+  // =====================================================
+
+  List<Map<String, dynamic>>
+      get _destinations {
+    return widget.controller.listDestinasi
+        .map((item) {
+      return {
+        'id': item.idDestinasi,
+        'name': item.namaDestinasi,
+        'location': item.alamat,
+        'category': _normalizeCategory(
+          widget.controller.getNamaKategori(
+            item.idKategori,
+          ),
+        ),
+        'image': item.fotoUtama,
+      };
+    }).toList();
+  }
+
+  // =====================================================
+  // DATA KATEGORI
+  // =====================================================
+
+  List<String> get _categories {
+    final categoryNames = widget
+        .controller.listKategori
+        .map((kategori) {
+      return _normalizeCategory(
+        kategori.namaKategori,
+      );
+    })
+        .where((nama) {
+      return nama.trim().isNotEmpty &&
+          nama != 'Semua';
+    })
+        .toSet()
+        .toList();
+
+    categoryNames.sort();
+
+    return [
+      'Semua',
+      ...categoryNames,
+    ];
+  }
+
+  // =====================================================
+  // LOGIKA PENCARIAN
+  //
+  // Pencarian dilakukan pada:
+  // 1. Nama destinasi
+  // 2. Lokasi/alamat
+  // 3. Kategori
+  //
+  // Jika user mengetik beberapa kata,
+  // setiap kata harus ditemukan pada data
+  // destinasi tersebut.
+  // =====================================================
+
+  List<Map<String, dynamic>>
+      get _filteredDestinations {
+    final query = _searchController.text
+        .trim()
+        .toLowerCase();
+
+    final keywords = query
+        .split(RegExp(r'\s+'))
+        .where(
+          (word) => word.trim().isNotEmpty,
+        )
+        .toList();
+
+    return _destinations.where((item) {
+      final name = item['name']
+          .toString()
+          .trim()
+          .toLowerCase();
+
+      final location = item['location']
+          .toString()
+          .trim()
+          .toLowerCase();
+
+      final category = item['category']
+          .toString()
+          .trim()
+          .toLowerCase();
+
+      final searchableText =
+          '$name $location $category';
+
+      final matchesSearch =
+          keywords.isEmpty ||
+          keywords.every((word) {
+            return searchableText.contains(
+              word,
+            );
+          });
+
+      final matchesCategory =
+          _selectedCategory == 'Semua' ||
+          item['category'] ==
+              _selectedCategory;
+
+      return matchesSearch &&
+          matchesCategory;
+    }).toList();
+  }
+
+  // =====================================================
+  // ICON KATEGORI
+  // =====================================================
+
+  IconData _categoryIcon(
+    String category,
+  ) {
+    switch (category) {
+      case 'Semua':
+        return Icons.grid_view_rounded;
+
+      case 'Pantai':
+        return Icons.beach_access_outlined;
+
+      case 'Alam':
+        return Icons.landscape_outlined;
+
+      case 'Sejarah':
+        return Icons.museum_outlined;
+
+      default:
+        return Icons.place_outlined;
+    }
+  }
+
+  // =====================================================
+  // FILTER KATEGORI
+  // =====================================================
+
+  Widget _buildCategoryChip(
+    String category,
+  ) {
+    final isSelected =
+        _selectedCategory == category;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = category;
+        });
+      },
+
+      child: AnimatedContainer(
+        duration:
+            const Duration(milliseconds: 180),
+
+        padding:
+            const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 9,
+        ),
+
+        decoration: BoxDecoration(
+          color: isSelected
+              ? primaryBlue
+              : Colors.white,
+
+          borderRadius:
+              BorderRadius.circular(22),
+
+          border: Border.all(
+            color: isSelected
+                ? primaryBlue
+                : const Color(0xFFE5E9F1),
+          ),
+        ),
+
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+
+          children: [
+            Icon(
+              _categoryIcon(category),
+              size: 14,
+              color: isSelected
+                  ? Colors.white
+                  : secondaryText,
+            ),
+
+            const SizedBox(width: 5),
+
+            Text(
+              category,
+
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isSelected
+                    ? Colors.white
+                    : textColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =====================================================
+  // DETAIL DESTINASI
+  // =====================================================
+
+  Future<void> _openDetail(
+    int id,
+  ) async {
+    await Navigator.push<void>(
+      context,
+
+      MaterialPageRoute<void>(
+        builder: (context) {
+          return DetailDestinasiPage(
+            destinasiId: id,
+            controller: widget.controller,
+          );
+        },
+      ),
+    );
+
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  // =====================================================
+  // KARTU HASIL PENCARIAN
+  // =====================================================
+
+  Widget _buildDestinationCard(
+    Map<String, dynamic> item,
+  ) {
+    final id =
+        (item['id'] as num).toInt();
+
+    final name =
+        item['name'].toString();
+
+    final location =
+        item['location'].toString();
+
+    final category =
+        item['category'].toString();
+
+    final image =
+        (item['image'] ?? '').toString();
+
+    final isFavorite =
+        widget.favorites.contains(id);
+
+    return Container(
+      margin:
+          const EdgeInsets.only(bottom: 12),
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(14),
+
+        border: Border.all(
+          color: const Color(0xFFEDF0F5),
+        ),
+
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: 0.025,
+            ),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+
+      child: InkWell(
+        borderRadius:
+            BorderRadius.circular(14),
+
+        onTap: () {
+          _openDetail(id);
+        },
+
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius:
+                    BorderRadius.circular(10),
+
+                child: _buildDestinationImage(
+                  image,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+
+                  children: [
+                    Text(
+                      name,
+
+                      maxLines: 2,
+                      overflow:
+                          TextOverflow.ellipsis,
+
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight:
+                            FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: primaryBlue,
+                        ),
+
+                        const SizedBox(width: 4),
+
+                        Expanded(
+                          child: Text(
+                            location,
+
+                            maxLines: 2,
+                            overflow:
+                                TextOverflow.ellipsis,
+
+                            style:
+                                const TextStyle(
+                              fontSize: 11,
+                              color:
+                                  secondaryText,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Container(
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 9,
+                        vertical: 5,
+                      ),
+
+                      decoration:
+                          BoxDecoration(
+                        color:
+                            const Color(
+                          0xFFEAF3FF,
+                        ),
+                        borderRadius:
+                            BorderRadius.circular(
+                          15,
+                        ),
+                      ),
+
+                      child: Text(
+                        category,
+
+                        style:
+                            const TextStyle(
+                          fontSize: 10,
+                          color: primaryBlue,
+                          fontWeight:
+                              FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              IconButton(
+                tooltip: 'Favorit',
+
+                onPressed: () {
+                  widget.onToggleFavorite(
+                    id,
+                  );
+
+                  setState(() {});
+                },
+
+                icon: Icon(
+                  isFavorite
+                      ? Icons.favorite
+                      : Icons.favorite_border,
+
+                  color: isFavorite
+                      ? Colors.red
+                      : secondaryText,
+
+                  size: 21,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =====================================================
+  // FOTO DESTINASI
+  // =====================================================
+
+  Widget _buildDestinationImage(
+    String imageUrl,
+  ) {
+    if (imageUrl.trim().isEmpty) {
+      return Container(
+        width: 105,
+        height: 112,
+
+        color:
+            const Color(0xFFE5EAF0),
+
+        child: const Icon(
+          Icons.image_not_supported_outlined,
+          color: secondaryText,
+          size: 30,
+        ),
+      );
+    }
+
+    return Image.network(
+      imageUrl,
+
+      width: 105,
+      height: 112,
+
+      fit: BoxFit.cover,
+
+      errorBuilder: (
+        context,
+        error,
+        stackTrace,
+      ) {
+        return Container(
+          width: 105,
+          height: 112,
+
+          color:
+              const Color(0xFFE5EAF0),
+
+          child: const Icon(
+            Icons.image_not_supported_outlined,
+            color: secondaryText,
+            size: 30,
+          ),
+        );
+      },
+    );
+  }
+
+  // =====================================================
+  // HASIL PENCARIAN
+  // =====================================================
+
+  Widget _buildResults() {
+    if (widget.controller.isLoading &&
+        widget.controller.listDestinasi.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: primaryBlue,
+        ),
+      );
+    }
+
+    if (widget.controller.errorMessage != null &&
+        widget.controller.listDestinasi.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+
+          child: Column(
+            mainAxisSize:
+                MainAxisSize.min,
+
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                size: 45,
+                color: secondaryText,
+              ),
+
+              const SizedBox(height: 12),
+
+              const Text(
+                'Destinasi belum dapat dimuat.',
+
+                style: TextStyle(
+                  fontWeight:
+                      FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Text(
+                widget.controller
+                    .errorMessage!,
+
+                textAlign:
+                    TextAlign.center,
+
+                style:
+                    const TextStyle(
+                  fontSize: 11,
+                  color:
+                      secondaryText,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              ElevatedButton(
+                onPressed:
+                    widget.controller
+                        .refreshData,
+
+                child:
+                    const Text(
+                  'Coba Lagi',
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final results =
+        _filteredDestinations;
+
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+      children: [
+        Padding(
+          padding:
+              const EdgeInsets.fromLTRB(
+            18,
+            18,
+            18,
+            12,
+          ),
+
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Hasil Pencarian',
+
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight:
+                        FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+              ),
+
+              Text(
+                '${results.length} destinasi ditemukan',
+
+                style:
+                    const TextStyle(
+                  fontSize: 11,
+                  color: secondaryText,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: results.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize:
+                        MainAxisSize.min,
+
+                    children: [
+                      const Icon(
+                        Icons.search_off,
+                        size: 48,
+                        color:
+                            secondaryText,
+                      ),
+
+                      const SizedBox(
+                        height: 12,
+                      ),
+
+                      Text(
+                        _searchController
+                                .text
+                                .trim()
+                                .isNotEmpty
+                            ? 'Destinasi tidak ditemukan.'
+                            : 'Belum ada destinasi tersedia.',
+
+                        style:
+                            const TextStyle(
+                          fontSize: 13,
+                          color:
+                              secondaryText,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        height: 5,
+                      ),
+
+                      const Text(
+                        'Coba kata kunci atau kategori lainnya.',
+
+                        style:
+                            TextStyle(
+                          fontSize: 11,
+                          color:
+                              secondaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding:
+                      const EdgeInsets
+                          .fromLTRB(
+                    18,
+                    0,
+                    18,
+                    20,
+                  ),
+
+                  itemCount:
+                      results.length,
+
+                  itemBuilder:
+                      (context, index) {
+                    return _buildDestinationCard(
+                      results[index],
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  // =====================================================
+  // BUILD PENCARIAN
+  // =====================================================
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return Scaffold(
+      backgroundColor:
+          backgroundColor,
+
+      appBar: AppBar(
+        backgroundColor:
+            Colors.white,
+
+        foregroundColor:
+            textColor,
+
+        elevation: 0,
+
+        surfaceTintColor:
+            Colors.white,
+
+        title: const Text(
+          'Cari Destinasi',
+
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight:
+                FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+      ),
+
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.fromLTRB(
+                18,
+                14,
+                18,
+                12,
+              ),
+
+              child: TextField(
+                controller:
+                    _searchController,
+
+                autofocus: true,
+
+                onChanged: (value) {
+                  setState(() {});
+                },
+
+                textInputAction:
+                    TextInputAction.search,
+
+                decoration:
+                    InputDecoration(
+                  hintText:
+                      'Cari nama destinasi atau lokasi...',
+
+                  hintStyle:
+                      const TextStyle(
+                    fontSize: 12,
+                    color:
+                        secondaryText,
+                  ),
+
+                  prefixIcon:
+                      const Icon(
+                    Icons.search,
+                    color:
+                        primaryBlue,
+                    size: 20,
+                  ),
+
+                  suffixIcon:
+                      _searchController
+                              .text
+                              .isNotEmpty
+                          ? IconButton(
+                              onPressed: () {
+                                _searchController
+                                    .clear();
+
+                                setState(
+                                  () {},
+                                );
+                              },
+
+                              icon:
+                                  const Icon(
+                                Icons.close,
+                                size: 18,
+                              ),
+                            )
+                          : null,
+
+                  filled: true,
+
+                  fillColor:
+                      Colors.white,
+
+                  contentPadding:
+                      const EdgeInsets
+                          .symmetric(
+                    vertical: 13,
+                  ),
+
+                  border:
+                      OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius
+                            .circular(
+                      25,
+                    ),
+
+                    borderSide:
+                        const BorderSide(
+                      color: Color(
+                        0xFFE5E9F1,
+                      ),
+                    ),
+                  ),
+
+                  enabledBorder:
+                      OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius
+                            .circular(
+                      25,
+                    ),
+
+                    borderSide:
+                        const BorderSide(
+                      color: Color(
+                        0xFFE5E9F1,
+                      ),
+                    ),
+                  ),
+
+                  focusedBorder:
+                      OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius
+                            .circular(
+                      25,
+                    ),
+
+                    borderSide:
+                        const BorderSide(
+                      color:
+                          primaryBlue,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(
+              height: 43,
+
+              child:
+                  ListView.separated(
+                padding:
+                    const EdgeInsets
+                        .symmetric(
+                  horizontal: 18,
+                ),
+
+                scrollDirection:
+                    Axis.horizontal,
+
+                itemCount:
+                    _categories.length,
+
+                separatorBuilder:
+                    (context, index) {
+                  return const SizedBox(
+                    width: 8,
+                  );
+                },
+
+                itemBuilder:
+                    (context, index) {
+                  return _buildCategoryChip(
+                    _categories[index],
+                  );
+                },
+              ),
+            ),
+
+            Expanded(
+              child:
+                  _buildResults(),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
