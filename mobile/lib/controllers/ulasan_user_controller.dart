@@ -3,14 +3,14 @@ import 'package:flutter/foundation.dart';
 import '../models/ulasan_user_model.dart';
 import '../services/ulasan_user_service.dart';
 
-// =====================================================
-// ULASAN USER CONTROLLER
-// =====================================================
-
 class UlasanUserController extends ChangeNotifier {
   final UlasanUserService _service = UlasanUserService();
 
+  // Daftar ulasan berdasarkan destinasi.
   List<UlasanUserModel> listUlasan = [];
+
+  // Daftar seluruh ulasan milik pengguna.
+  List<UlasanUserModel> listUlasanSaya = [];
 
   RingkasanRating? ringkasanRating;
 
@@ -23,10 +23,6 @@ class UlasanUserController extends ChangeNotifier {
 
   bool _isDisposed = false;
 
-  // =====================================================
-  // NOTIFIKASI PERUBAHAN DATA
-  // =====================================================
-
   void _notify() {
     if (!_isDisposed) {
       notifyListeners();
@@ -34,7 +30,7 @@ class UlasanUserController extends ChangeNotifier {
   }
 
   // =====================================================
-  // MEMUAT DATA ULASAN
+  // MEMUAT ULASAN BERDASARKAN DESTINASI
   // =====================================================
 
   Future<void> loadData(int idDestinasi) async {
@@ -69,12 +65,42 @@ class UlasanUserController extends ChangeNotifier {
     }
   }
 
-  // =====================================================
-  // MEMUAT ULANG DATA
-  // =====================================================
-
   Future<void> refreshData(int idDestinasi) async {
     await loadData(idDestinasi);
+  }
+
+  // =====================================================
+  // MEMUAT SELURUH ULASAN PENGGUNA
+  // =====================================================
+
+  Future<void> loadUlasanSaya() async {
+    if (_isDisposed) return;
+
+    isLoading = true;
+    errorMessage = null;
+
+    _notify();
+
+    try {
+      final hasil = await _service.getUlasanSayaList();
+
+      if (_isDisposed) return;
+
+      listUlasanSaya = hasil;
+    } catch (e) {
+      if (_isDisposed) return;
+
+      errorMessage = _pesanError(e);
+    } finally {
+      if (!_isDisposed) {
+        isLoading = false;
+        _notify();
+      }
+    }
+  }
+
+  Future<void> refreshUlasanSaya() async {
+    await loadUlasanSaya();
   }
 
   // =====================================================
@@ -215,17 +241,9 @@ class UlasanUserController extends ChangeNotifier {
     return ringkasanRating?.jumlahUlasan ?? 0;
   }
 
-  // =====================================================
-  // JUMLAH RATING BERDASARKAN BINTANG
-  // =====================================================
-
   int jumlahRating(int bintang) {
     return ringkasanRating?.distribusiRating[bintang] ?? 0;
   }
-
-  // =====================================================
-  // PERSENTASE RATING
-  // =====================================================
 
   double persentaseRating(int bintang) {
     if (jumlahUlasan == 0) {
@@ -244,10 +262,6 @@ class UlasanUserController extends ChangeNotifier {
     _notify();
   }
 
-  // =====================================================
-  // MENGOLAH PESAN ERROR
-  // =====================================================
-
   String _pesanError(Object error) {
     final pesan = error.toString();
 
@@ -257,10 +271,6 @@ class UlasanUserController extends ChangeNotifier {
 
     return pesan;
   }
-
-  // =====================================================
-  // DISPOSE
-  // =====================================================
 
   @override
   void dispose() {

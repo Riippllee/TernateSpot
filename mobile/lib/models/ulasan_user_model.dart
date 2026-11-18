@@ -1,4 +1,3 @@
-
 class UlasanUserModel {
   final int idUlasan;
   final String idUser;
@@ -10,6 +9,7 @@ class UlasanUserModel {
   final DateTime? tanggalPerubahan;
   final String nama;
   final String? fotoProfil;
+  final String namaDestinasi;
 
   UlasanUserModel({
     required this.idUlasan,
@@ -22,9 +22,9 @@ class UlasanUserModel {
     this.tanggalPerubahan,
     this.nama = 'Pengguna',
     this.fotoProfil,
+    this.namaDestinasi = 'Destinasi',
   });
 
-  // Alias nama untuk kebutuhan halaman detail
   String get namaPengguna => nama;
 
   factory UlasanUserModel.fromJson(Map<String, dynamic> json) {
@@ -32,22 +32,31 @@ class UlasanUserModel {
         ? Map<String, dynamic>.from(json['profil'])
         : <String, dynamic>{};
 
+    final destinasi = json['destinasi'] is Map
+        ? Map<String, dynamic>.from(json['destinasi'])
+        : <String, dynamic>{};
+
+    final idDestinasi = (json['id_destinasi'] as num).toInt();
+
     return UlasanUserModel(
       idUlasan: (json['id_ulasan'] as num).toInt(),
       idUser: json['id_user']?.toString() ?? '',
-      idDestinasi: (json['id_destinasi'] as num).toInt(),
+      idDestinasi: idDestinasi,
       rating: (json['rating'] as num).toInt(),
       komentar: json['komentar']?.toString() ?? '',
       status: json['status'] ?? true,
-      tanggalDitambah: DateTime.tryParse(
-            json['tanggal_ditambah']?.toString() ?? '',
-          ) ??
+      tanggalDitambah:
+          DateTime.tryParse(json['tanggal_ditambah']?.toString() ?? '') ??
           DateTime.now(),
       tanggalPerubahan: json['tanggal_perubahan'] != null
           ? DateTime.tryParse(json['tanggal_perubahan'].toString())
           : null,
       nama: profil['nama']?.toString() ?? 'Pengguna',
       fotoProfil: profil['foto_profil']?.toString(),
+      namaDestinasi:
+          destinasi['nama_destinasi']?.toString() ??
+          json['nama_destinasi']?.toString() ??
+          'Destinasi #$idDestinasi',
     );
   }
 
@@ -61,10 +70,8 @@ class UlasanUserModel {
       'status': status,
       'tanggal_ditambah': tanggalDitambah.toIso8601String(),
       'tanggal_perubahan': tanggalPerubahan?.toIso8601String(),
-      'profil': {
-        'nama': nama,
-        'foto_profil': fotoProfil,
-      },
+      'profil': {'nama': nama, 'foto_profil': fotoProfil},
+      'destinasi': {'nama_destinasi': namaDestinasi},
     };
   }
 
@@ -79,6 +86,7 @@ class UlasanUserModel {
     DateTime? tanggalPerubahan,
     String? nama,
     String? fotoProfil,
+    String? namaDestinasi,
   }) {
     return UlasanUserModel(
       idUlasan: idUlasan ?? this.idUlasan,
@@ -91,6 +99,7 @@ class UlasanUserModel {
       tanggalPerubahan: tanggalPerubahan ?? this.tanggalPerubahan,
       nama: nama ?? this.nama,
       fotoProfil: fotoProfil ?? this.fotoProfil,
+      namaDestinasi: namaDestinasi ?? this.namaDestinasi,
     );
   }
 }

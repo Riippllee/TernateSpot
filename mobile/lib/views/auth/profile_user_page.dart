@@ -1,8 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../controllers/profile_controller.dart';
+import 'favorit_user_page.dart';
+import 'ulasan_saya_page.dart';
 
 class ProfileUserPage extends StatefulWidget {
   const ProfileUserPage({super.key});
@@ -32,6 +33,14 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
   bool _isLoading = true;
   bool _isProcessing = false;
 
+  // Statistik pengguna
+  int jumlahDestinasi = 0;
+  int jumlahFavorit = 0;
+  int jumlahUlasan = 0;
+
+  bool _isLoadingStatistik = true;
+  bool _statistikGagal = false;
+
   // Profil berada di index 3
   int menuAktif = 3;
 
@@ -59,11 +68,11 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
   // =========================================================
 
   Future<void> loadProfile() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final data = await _controller.loadProfile();
@@ -78,27 +87,27 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
           fotoProfil = null;
           status = true;
         });
-        return;
+      } else {
+        setState(() {
+          nama = data['nama']?.toString().trim().isNotEmpty == true
+              ? data['nama'].toString()
+              : 'Pengguna';
+
+          email = data['email']?.toString().trim().isNotEmpty == true
+              ? data['email'].toString()
+              : '-';
+
+          role = data['role']?.toString() ?? 'user';
+
+          final foto = data['foto_profil']?.toString();
+
+          fotoProfil = foto != null && foto.trim().isNotEmpty
+              ? foto.trim()
+              : null;
+
+          status = _parseStatus(data['status']);
+        });
       }
-
-      setState(() {
-        nama = data['nama']?.toString().trim().isNotEmpty == true
-            ? data['nama'].toString()
-            : 'Pengguna';
-
-        email = data['email']?.toString().trim().isNotEmpty == true
-            ? data['email'].toString()
-            : '-';
-
-        role = data['role']?.toString() ?? 'user';
-
-        final foto = data['foto_profil']?.toString();
-
-        fotoProfil =
-            foto != null && foto.trim().isNotEmpty ? foto.trim() : null;
-
-        status = _parseStatus(data['status']);
-      });
     } catch (e) {
       if (!mounted) return;
 
@@ -118,6 +127,72 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
         });
       }
     }
+
+    if (mounted) {
+      await loadStatistik();
+    }
+  }
+
+  // =========================================================
+  // LOAD STATISTIK PENGGUNA
+  // =========================================================
+
+  Future<void> loadStatistik() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingStatistik = true;
+      _statistikGagal = false;
+    });
+
+    try {
+      final data = await _controller.loadStatistics();
+
+      if (!mounted) return;
+
+      if (data == null) {
+        setState(() {
+          _statistikGagal = true;
+        });
+        return;
+      }
+
+      setState(() {
+        jumlahDestinasi = data['destinasi'] ?? 0;
+        jumlahFavorit = data['favorit'] ?? 0;
+        jumlahUlasan = data['ulasan'] ?? 0;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _statistikGagal = true;
+      });
+
+      pesan('Gagal memuat statistik pengguna.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingStatistik = false;
+        });
+      }
+    }
+  }
+
+  // =========================================================
+  // FORMAT NILAI STATISTIK
+  // =========================================================
+
+  String nilaiStatistik(int jumlah) {
+    if (_isLoadingStatistik) {
+      return '...';
+    }
+
+    if (_statistikGagal) {
+      return '-';
+    }
+
+    return jumlah.toString();
   }
 
   // =========================================================
@@ -130,10 +205,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
 
     final text = value?.toString().toLowerCase().trim();
 
-    return text == 'true' ||
-        text == '1' ||
-        text == 'aktif' ||
-        text == 'active';
+    return text == 'true' || text == '1' || text == 'aktif' || text == 'active';
   }
 
   // =========================================================
@@ -249,9 +321,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
     });
 
     try {
-      final berhasil = await _controller.updateProfile(
-        nama: namaBaru,
-      );
+      final berhasil = await _controller.updateProfile(nama: namaBaru);
 
       if (!mounted) return;
 
@@ -328,14 +398,30 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
   // MENU AKUN
   // =========================================================
 
-  void bukaMenu(String menu) {
+  Future<void> bukaMenu(String menu) async {
     switch (menu) {
       case 'favorit':
-        pesan('Fitur favorit akan dihubungkan pada tahap berikutnya.');
+        await Navigator.push<void>(
+          context,
+          MaterialPageRoute<void>(
+            builder: (context) => const FavoritUserPage(),
+          ),
+        );
+
+        if (mounted) {
+          await loadStatistik();
+        }
         break;
 
       case 'ulasan':
-        pesan('Fitur ulasan akan dihubungkan pada tahap berikutnya.');
+        await Navigator.push<void>(
+          context,
+          MaterialPageRoute<void>(builder: (context) => const UlasanSayaPage()),
+        );
+
+        if (mounted) {
+          await loadStatistik();
+        }
         break;
 
       case 'riwayat':
@@ -343,7 +429,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
         break;
 
       case 'pengaturan':
-        editProfil();
+        await editProfil();
         break;
 
       case 'notifikasi':
@@ -351,7 +437,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
         break;
 
       case 'tentang':
-        bukaTentang();
+        await bukaTentang();
         break;
     }
   }
@@ -430,17 +516,11 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
     });
 
     try {
-      // 1. Logout dari Supabase.
       await _controller.logout();
 
       if (!mounted) return;
 
-      // 2. Kembali ke halaman root aplikasi.
-      // AuthWrapper akan menerima event signedOut
-      // dan otomatis menampilkan LoginPage.
-      Navigator.of(context).popUntil(
-        (route) => route.isFirst,
-      );
+      Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
 
@@ -464,7 +544,6 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
   // 3 = Profil
   //
   // Profil mengembalikan index ke BerandaPage.
-  // Tidak membuat halaman baru.
   //
   // =========================================================
 
@@ -491,8 +570,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
       return null;
     }
 
-    if (foto.startsWith('http://') ||
-        foto.startsWith('https://')) {
+    if (foto.startsWith('http://') || foto.startsWith('https://')) {
       return NetworkImage(foto);
     }
 
@@ -591,11 +669,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
                   onTap: _isProcessing ? null : editProfil,
                   child: const Padding(
                     padding: EdgeInsets.all(12),
-                    child: Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(Icons.edit, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -605,7 +679,6 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
           const SizedBox(height: 14),
 
           // FOTO PROFIL
-
           GestureDetector(
             onTap: _isProcessing ? null : pilihFotoProfil,
             child: Stack(
@@ -617,10 +690,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 3,
-                    ),
+                    border: Border.all(color: Colors.white, width: 3),
                   ),
                   child: ClipOval(
                     child: _profileImage != null
@@ -629,11 +699,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
                             width: 88,
                             height: 88,
                             fit: BoxFit.cover,
-                            errorBuilder: (
-                              context,
-                              error,
-                              stackTrace,
-                            ) {
+                            errorBuilder: (context, error, stackTrace) {
                               return const Icon(
                                 Icons.person,
                                 size: 48,
@@ -641,11 +707,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
                               );
                             },
                           )
-                        : const Icon(
-                            Icons.person,
-                            size: 48,
-                            color: warnaAbu,
-                          ),
+                        : const Icon(Icons.person, size: 48, color: warnaAbu),
                   ),
                 ),
                 Positioned(
@@ -657,10 +719,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
-                      border: Border.all(
-                        color: warnaBiru,
-                        width: 2,
-                      ),
+                      border: Border.all(color: warnaBiru, width: 2),
                     ),
                     child: const Icon(
                       Icons.camera_alt,
@@ -676,7 +735,6 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
           const SizedBox(height: 12),
 
           // NAMA
-
           _isLoading
               ? const SizedBox(
                   width: 90,
@@ -701,12 +759,8 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
           const SizedBox(height: 8),
 
           // ROLE
-
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 7,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(20),
@@ -726,14 +780,10 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
           const SizedBox(height: 8),
 
           // EMAIL
-
           Text(
             email,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
 
           const SizedBox(height: 8),
@@ -741,10 +791,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
           const Text(
             'Ketuk foto untuk mengganti foto profil',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 10,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 10),
           ),
         ],
       ),
@@ -760,10 +807,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
       offset: const Offset(0, -18),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 18),
-        padding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 10,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(17),
@@ -777,55 +821,51 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
         ),
         child: Row(
           children: [
+            // DESTINASI
+
             Expanded(
               child: _buildStatisticItem(
                 icon: Icons.public,
                 iconColor: warnaBiru,
-                value: '-',
+                value: nilaiStatistik(jumlahDestinasi),
                 label: 'Destinasi',
                 onTap: () {
                   bukaDialogStatistik(
-                    judul: 'Destinasi',
-                    isi: 'Data destinasi pengguna belum tersedia.',
+                    judul: 'Destinasi Wisata',
+                    isi: _statistikGagal
+                        ? 'Statistik destinasi gagal dimuat.'
+                        : 'Saat ini terdapat $jumlahDestinasi destinasi wisata aktif di TernateSpot.',
                   );
                 },
               ),
             ),
-            Container(
-              width: 1,
-              height: 38,
-              color: const Color(0xFFE2E6EE),
-            ),
+
+            Container(width: 1, height: 38, color: const Color(0xFFE2E6EE)),
+
+            // FAVORIT
             Expanded(
               child: _buildStatisticItem(
                 icon: Icons.favorite,
                 iconColor: Colors.red,
-                value: '-',
+                value: nilaiStatistik(jumlahFavorit),
                 label: 'Favorit',
                 onTap: () {
-                  bukaDialogStatistik(
-                    judul: 'Favorit',
-                    isi: 'Data destinasi favorit belum dihubungkan.',
-                  );
+                  bukaMenu('favorit');
                 },
               ),
             ),
-            Container(
-              width: 1,
-              height: 38,
-              color: const Color(0xFFE2E6EE),
-            ),
+
+            Container(width: 1, height: 38, color: const Color(0xFFE2E6EE)),
+
+            // ULASAN
             Expanded(
               child: _buildStatisticItem(
                 icon: Icons.rate_review,
                 iconColor: const Color(0xFF18A879),
-                value: '-',
+                value: nilaiStatistik(jumlahUlasan),
                 label: 'Ulasan',
                 onTap: () {
-                  bukaDialogStatistik(
-                    judul: 'Ulasan',
-                    isi: 'Data ulasan pengguna belum dihubungkan.',
-                  );
+                  bukaMenu('ulasan');
                 },
               ),
             ),
@@ -834,6 +874,10 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
       ),
     );
   }
+
+  // =========================================================
+  // ITEM STATISTIK
+  // =========================================================
 
   Widget _buildStatisticItem({
     required IconData icon,
@@ -846,20 +890,13 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: 4,
-          horizontal: 5,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 5),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  color: iconColor,
-                  size: 18,
-                ),
+                Icon(icon, color: iconColor, size: 18),
                 const SizedBox(width: 5),
                 Text(
                   value,
@@ -872,13 +909,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: warnaAbu,
-                fontSize: 11,
-              ),
-            ),
+            Text(label, style: const TextStyle(color: warnaAbu, fontSize: 11)),
           ],
         ),
       ),
@@ -1057,10 +1088,7 @@ class MenuProfilUser extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 16,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             color: Colors.white,
@@ -1081,11 +1109,7 @@ class MenuProfilUser extends StatelessWidget {
                   color: warnaIkon,
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: Icon(
-                  ikon,
-                  color: warnaSimbol,
-                  size: 29,
-                ),
+                child: Icon(ikon, color: warnaSimbol, size: 29),
               ),
 
               const SizedBox(width: 18),

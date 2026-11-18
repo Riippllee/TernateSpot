@@ -49,16 +49,18 @@ class UlasanUserService {
   }
 
   // =====================================================
-  // MENGAMBIL PROFIL PENGULAS DARI VIEW PUBLIK
+  // MENGAMBIL PROFIL DAN DESTINASI
   // =====================================================
 
   Future<List<UlasanUserModel>> _buatModelDenganProfil(
-    List<Map<String, dynamic>> rows,
-  ) async {
+    List<Map<String, dynamic>> rows, {
+    bool includeDestinasi = false,
+  }) async {
     if (rows.isEmpty) {
       return [];
     }
 
+    // Mengumpulkan ID pengguna.
     final userIds = rows
         .map((item) => item['id_user']?.toString())
         .where((id) => id != null && id.isNotEmpty)
@@ -68,10 +70,9 @@ class UlasanUserService {
 
     final Map<String, Map<String, dynamic>> profilByUserId = {};
 
+    // Mengambil nama dan foto profil dari view publik.
     if (userIds.isNotEmpty) {
       try {
-        // Mengambil profil dari View yang hanya
-        // menyediakan informasi publik pengulas.
         final response = await _supabase
             .from('profil_pengulas')
             .select('id_user, nama, foto_profil')
@@ -79,7 +80,6 @@ class UlasanUserService {
 
         for (final item in response) {
           final profil = Map<String, dynamic>.from(item);
-
           final userId = profil['id_user']?.toString();
 
           if (userId != null) {
@@ -87,20 +87,79 @@ class UlasanUserService {
           }
         }
       } catch (e) {
-        // Ulasan tetap ditampilkan meskipun profil
-        // tidak berhasil diambil.
         profilByUserId.clear();
+      }
+    }
+
+    // Mengambil nama destinasi jika dibutuhkan.
+    final Map<String, Map<String, dynamic>> destinasiById = {};
+
+    if (includeDestinasi) {
+      final destinasiIds = rows
+          .map((item) => item['id_destinasi'])
+          .whereType<num>()
+          .map((id) => id.toInt())
+          .toSet()
+          .toList();
+
+      if (destinasiIds.isNotEmpty) {
+        try {
+          final response = await _supabase
+              .from('destinasi')
+              .select('id_destinasi, nama_destinasi')
+              .inFilter('id_destinasi', destinasiIds);
+
+          for (final item in response) {
+            final destinasi = Map<String, dynamic>.from(item);
+            final id = destinasi['id_destinasi'].toString();
+
+            destinasiById[id] = destinasi;
+          }
+        } catch (e) {
+          destinasiById.clear();
+        }
       }
     }
 
     return rows.map((item) {
       final userId = item['id_user']?.toString() ?? '';
+      final idDestinasi = item['id_destinasi']?.toString() ?? '';
 
       return UlasanUserModel.fromJson({
         ...item,
         'profil': profilByUserId[userId],
+        'destinasi': destinasiById[idDestinasi],
       });
     }).toList();
+  }
+
+  // =====================================================
+  // MENGAMBIL SEMUA ULASAN MILIK PENGGUNA
+  // =====================================================
+
+  Future<List<UlasanUserModel>> getUlasanSayaList() async {
+    final user = _supabase.auth.currentUser;
+
+    if (user == null) {
+      throw Exception('Silakan login terlebih dahulu.');
+    }
+
+    final response = await _supabase
+        .from('ulasan')
+        .select(
+          'id_ulasan, id_user, id_destinasi, rating, '
+          'komentar, status, tanggal_ditambah, '
+          'tanggal_perubahan',
+        )
+        .eq('id_user', user.id)
+        .eq('status', true)
+        .order('tanggal_ditambah', ascending: false);
+
+    final rows = response
+        .map<Map<String, dynamic>>((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+    return _buatModelDenganProfil(rows, includeDestinasi: true);
   }
 
   // =====================================================
@@ -140,7 +199,7 @@ class UlasanUserService {
   }
 
   // =====================================================
-  // MENGAMBIL ULASAN MILIK PENGGUNA
+  // MENGAMBIL ULASAN PENGGUNA PADA SATU DESTINASI
   // =====================================================
 
   Future<UlasanUserModel?> getUlasanSaya(int idDestinasi) async {
@@ -190,7 +249,6 @@ class UlasanUserService {
     _validasiRating(rating);
     _validasiKomentar(komentar);
 
-    // Mencegah ulasan aktif ganda.
     final existing = await _supabase
         .from('ulasan')
         .select('id_ulasan')

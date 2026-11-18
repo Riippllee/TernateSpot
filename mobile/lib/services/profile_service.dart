@@ -1,4 +1,3 @@
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -10,7 +9,7 @@ class ProfileService {
     return _supabase.auth.currentUser?.id;
   }
 
-  // Memastikan profil pengguna tersedia di tabel user.
+  // Memastikan profil pengguna tersedia.
   Future<Map<String, dynamic>?> ensureUserProfile() async {
     try {
       final authUser = _supabase.auth.currentUser;
@@ -28,14 +27,12 @@ class ProfileService {
         return null;
       }
 
-      // Periksa apakah profil sudah ada.
       final existingProfile = await getUserProfile(userId);
 
       if (existingProfile != null) {
         return existingProfile;
       }
 
-      // Ambil nama dari metadata Google.
       final metadata = authUser.userMetadata ?? {};
 
       final String nama =
@@ -44,7 +41,6 @@ class ProfileService {
           metadata['nama']?.toString() ??
           email.split('@').first;
 
-      // Buat profil baru untuk pengguna.
       final newProfile = await _supabase
           .from('user')
           .insert({
@@ -67,9 +63,7 @@ class ProfileService {
   }
 
   // Mengambil profil berdasarkan UID.
-  Future<Map<String, dynamic>?> getUserProfile(
-    String userId,
-  ) async {
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
       final data = await _supabase
           .from('user')
@@ -84,7 +78,44 @@ class ProfileService {
     }
   }
 
-  // Memperbarui profil pengguna.
+  // =====================================================
+  // STATISTIK PENGGUNA
+  // =====================================================
+
+  Future<Map<String, int>> getProfileStatistics() async {
+    final userId = getCurrentUserId();
+
+    if (userId == null) {
+      throw Exception('Pengguna belum login.');
+    }
+
+    // 1. Menghitung seluruh destinasi yang aktif.
+    final destinasiRows = await _supabase
+        .from('destinasi')
+        .select('id_destinasi')
+        .eq('status', true);
+
+    // 2. Menghitung favorit milik pengguna.
+    final favoritRows = await _supabase
+        .from('favorit')
+        .select('id_destinasi')
+        .eq('id_user', userId);
+
+    // 3. Menghitung ulasan aktif milik pengguna.
+    final ulasanRows = await _supabase
+        .from('ulasan')
+        .select('id_ulasan')
+        .eq('id_user', userId)
+        .eq('status', true);
+
+    return {
+      'destinasi': destinasiRows.length,
+      'favorit': favoritRows.length,
+      'ulasan': ulasanRows.length,
+    };
+  }
+
+  // Memperbarui data profil.
   Future<Map<String, dynamic>?> updateProfile(
     String userId, {
     String? nama,
@@ -130,10 +161,7 @@ class ProfileService {
   }
 
   // Upload foto profil.
-  Future<String?> uploadProfilePicture(
-    String userId,
-    XFile imageFile,
-  ) async {
+  Future<String?> uploadProfilePicture(String userId, XFile imageFile) async {
     try {
       final fileName =
           '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
