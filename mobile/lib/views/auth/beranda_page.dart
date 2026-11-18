@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../controllers/destinasi_user_controller.dart';
+import '../../controllers/profile_controller.dart';
 import '../destinasi/detail_destinasi_page.dart';
 import '../destinasi/lokasi_destinasi_page.dart';
 import 'profile_user_page.dart';
@@ -19,8 +20,13 @@ class BerandaPage extends StatefulWidget {
 class _BerandaPageState extends State<BerandaPage> {
   late final DestinasiUserController _destinasiController;
 
-  final TextEditingController searchController =
-      TextEditingController();
+  // Mengambil data profil milik akun yang sedang login.
+  final ProfileController _profileController = ProfileController();
+
+  // URL foto profil dari kolom foto_profil pada tabel pengguna.
+  String? _fotoProfil;
+
+  final TextEditingController searchController = TextEditingController();
 
   String selectedCategory = 'Semua';
 
@@ -54,6 +60,9 @@ class _BerandaPageState extends State<BerandaPage> {
 
     _destinasiController.addListener(_refreshPage);
 
+    // Muat foto profil akun yang sedang login.
+    _loadFotoProfil();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
@@ -69,6 +78,36 @@ class _BerandaPageState extends State<BerandaPage> {
     if (!mounted) return;
 
     setState(() {});
+  }
+
+  // =====================================================
+  // MEMUAT FOTO PROFIL PENGGUNA YANG SEDANG LOGIN
+  // =====================================================
+
+  Future<void> _loadFotoProfil() async {
+    try {
+      final data = await _profileController.loadProfile();
+
+      if (!mounted) return;
+
+      final foto = data?['foto_profil']?.toString().trim();
+      final fotoValid =
+          foto != null &&
+          foto.isNotEmpty &&
+          (foto.startsWith('https://') || foto.startsWith('http://'));
+
+      setState(() {
+        _fotoProfil = fotoValid ? foto : null;
+      });
+    } catch (error) {
+      debugPrint('Gagal memuat foto profil: $error');
+
+      if (!mounted) return;
+
+      setState(() {
+        _fotoProfil = null;
+      });
+    }
   }
 
   // =====================================================
@@ -104,8 +143,7 @@ class _BerandaPageState extends State<BerandaPage> {
       return 'Alam';
     }
 
-    if (lower.contains('sejarah') ||
-        lower.contains('benteng')) {
+    if (lower.contains('sejarah') || lower.contains('benteng')) {
       return 'Sejarah';
     }
 
@@ -123,9 +161,7 @@ class _BerandaPageState extends State<BerandaPage> {
         'name': item.namaDestinasi,
         'location': item.alamat,
         'category': _normalizeCategory(
-          _destinasiController.getNamaKategori(
-            item.idKategori,
-          ),
+          _destinasiController.getNamaKategori(item.idKategori),
         ),
         'image': item.fotoUtama,
       };
@@ -139,9 +175,7 @@ class _BerandaPageState extends State<BerandaPage> {
   List<String> get categories {
     final categoryNames = _destinasiController.listKategori
         .map((kategori) {
-          return _normalizeCategory(
-            kategori.namaKategori,
-          );
+          return _normalizeCategory(kategori.namaKategori);
         })
         .where((nama) {
           return nama.trim().isNotEmpty && nama != 'Semua';
@@ -163,8 +197,7 @@ class _BerandaPageState extends State<BerandaPage> {
       final category = item['category'].toString();
 
       final matchesCategory =
-          selectedCategory == 'Semua' ||
-          category == selectedCategory;
+          selectedCategory == 'Semua' || category == selectedCategory;
 
       return matchesCategory;
     }).toList();
@@ -259,25 +292,24 @@ class _BerandaPageState extends State<BerandaPage> {
   // =====================================================
 
   Future<void> openProfile() async {
-  final hasil = await Navigator.push<int>(
-    context,
-    MaterialPageRoute<int>(
-      builder: (context) => const ProfileUserPage(),
-        ),
-      );
+    final hasil = await Navigator.push<int>(
+      context,
+      MaterialPageRoute<int>(builder: (context) => const ProfileUserPage()),
+    );
 
-      if (!mounted || hasil == null) {
-        return;
-      }
+    if (!mounted) return;
 
-      if (hasil < 0 || hasil > 2) {
-        return;
-      }
+    // Perbarui avatar jika foto diganti dari halaman profil.
+    await _loadFotoProfil();
 
-      setState(() {
-        selectedBottomIndex = hasil;
-      });
-    }
+    if (!mounted || hasil == null) return;
+
+    if (hasil < 0 || hasil > 2) return;
+
+    setState(() {
+      selectedBottomIndex = hasil;
+    });
+  }
 
   // =====================================================
   // MAIN BUILD
@@ -295,12 +327,10 @@ class _BerandaPageState extends State<BerandaPage> {
 
             Expanded(
               child: selectedBottomIndex == 1
-                  ? LokasiDestinasiPage(
-                      controller: _destinasiController,
-                    )
+                  ? LokasiDestinasiPage(controller: _destinasiController)
                   : selectedBottomIndex == 2
-                      ? _buildFavoritesPage()
-                      : _buildHomePage(),
+                  ? _buildFavoritesPage()
+                  : _buildHomePage(),
             ),
           ],
         ),
@@ -325,9 +355,7 @@ class _BerandaPageState extends State<BerandaPage> {
           SizedBox(
             width: 44,
             height: 37,
-            child: CustomPaint(
-              painter: TernateLogoPainter(),
-            ),
+            child: CustomPaint(painter: TernateLogoPainter()),
           ),
 
           const SizedBox(width: 5),
@@ -375,14 +403,27 @@ class _BerandaPageState extends State<BerandaPage> {
           const Spacer(),
 
           IconButton(
+            tooltip: 'Profil',
             onPressed: openProfile,
-            icon: const CircleAvatar(
-              radius: 15,
-              backgroundColor: Color(0xFFE5EFFD),
-              child: Icon(
-                Icons.person,
-                size: 19,
-                color: primaryBlue,
+            icon: CircleAvatar(
+              radius: 17,
+              backgroundColor: const Color(0xFFE5EFFD),
+              child: ClipOval(
+                child: _fotoProfil != null
+                    ? Image.network(
+                        _fotoProfil!,
+                        width: 34,
+                        height: 34,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person,
+                            size: 19,
+                            color: primaryBlue,
+                          );
+                        },
+                      )
+                    : const Icon(Icons.person, size: 19, color: primaryBlue),
               ),
             ),
           ),
@@ -463,9 +504,7 @@ class _BerandaPageState extends State<BerandaPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(
-            color: const Color(0xFFE7ECF3),
-          ),
+          border: Border.all(color: const Color(0xFFE7ECF3)),
         ),
 
         child: TextField(
@@ -478,16 +517,9 @@ class _BerandaPageState extends State<BerandaPage> {
           decoration: const InputDecoration(
             hintText: 'Cari destinasi di Ternate...',
 
-            hintStyle: TextStyle(
-              fontSize: 12,
-              color: secondaryText,
-            ),
+            hintStyle: TextStyle(fontSize: 12, color: secondaryText),
 
-            prefixIcon: Icon(
-              Icons.search,
-              size: 20,
-              color: secondaryText,
-            ),
+            prefixIcon: Icon(Icons.search, size: 20, color: secondaryText),
 
             suffixIcon: Icon(
               Icons.arrow_forward_ios_rounded,
@@ -497,9 +529,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
             border: InputBorder.none,
 
-            contentPadding: EdgeInsets.symmetric(
-              vertical: 13,
-            ),
+            contentPadding: EdgeInsets.symmetric(vertical: 13),
           ),
         ),
       ),
@@ -533,10 +563,7 @@ class _BerandaPageState extends State<BerandaPage> {
                   return Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Color(0xFF0B65B5),
-                          Color(0xFF55A6C8),
-                        ],
+                        colors: [Color(0xFF0B65B5), Color(0xFF55A6C8)],
                       ),
                     ),
 
@@ -594,10 +621,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
 
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 10),
                     ),
 
                     const SizedBox(height: 8),
@@ -613,9 +637,7 @@ class _BerandaPageState extends State<BerandaPage> {
                           foregroundColor: primaryBlue,
                           elevation: 0,
 
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
 
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
@@ -671,10 +693,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
             child: Row(
               children: categories.map((category) {
-                return _categoryButton(
-                  category,
-                  _getCategoryIcon(category),
-                );
+                return _categoryButton(category, _getCategoryIcon(category));
               }).toList(),
             ),
           ),
@@ -710,10 +729,7 @@ class _BerandaPageState extends State<BerandaPage> {
   // BUTTON KATEGORI
   // =====================================================
 
-  Widget _categoryButton(
-    String category,
-    IconData icon,
-  ) {
+  Widget _categoryButton(String category, IconData icon) {
     final isSelected = selectedCategory == category;
 
     return GestureDetector(
@@ -728,22 +744,15 @@ class _BerandaPageState extends State<BerandaPage> {
 
         margin: const EdgeInsets.only(right: 8),
 
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 9,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
 
         decoration: BoxDecoration(
-          color: isSelected
-              ? primaryBlue
-              : Colors.white,
+          color: isSelected ? primaryBlue : Colors.white,
 
           borderRadius: BorderRadius.circular(22),
 
           border: Border.all(
-            color: isSelected
-                ? primaryBlue
-                : const Color(0xFFE5E9F1),
+            color: isSelected ? primaryBlue : const Color(0xFFE5E9F1),
           ),
         ),
 
@@ -754,9 +763,7 @@ class _BerandaPageState extends State<BerandaPage> {
             Icon(
               icon,
               size: 14,
-              color: isSelected
-                  ? Colors.white
-                  : secondaryText,
+              color: isSelected ? Colors.white : secondaryText,
             ),
 
             const SizedBox(width: 5),
@@ -767,9 +774,7 @@ class _BerandaPageState extends State<BerandaPage> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? Colors.white
-                    : textColor,
+                color: isSelected ? Colors.white : textColor,
               ),
             ),
           ],
@@ -783,21 +788,15 @@ class _BerandaPageState extends State<BerandaPage> {
   // =====================================================
 
   Widget _buildRecommendations() {
-    if (_destinasiController.isLoading &&
-        destinations.isEmpty) {
+    if (_destinasiController.isLoading && destinations.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 35),
 
-        child: Center(
-          child: CircularProgressIndicator(
-            color: primaryBlue,
-          ),
-        ),
+        child: Center(child: CircularProgressIndicator(color: primaryBlue)),
       );
     }
 
-    if (_destinasiController.errorMessage != null &&
-        destinations.isEmpty) {
+    if (_destinasiController.errorMessage != null && destinations.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(20),
 
@@ -815,10 +814,7 @@ class _BerandaPageState extends State<BerandaPage> {
               const Text(
                 'Destinasi belum dapat dimuat.',
 
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
               ),
 
               const SizedBox(height: 6),
@@ -828,10 +824,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
                 textAlign: TextAlign.center,
 
-                style: const TextStyle(
-                  color: secondaryText,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: secondaryText, fontSize: 11),
               ),
 
               const SizedBox(height: 10),
@@ -839,9 +832,7 @@ class _BerandaPageState extends State<BerandaPage> {
               ElevatedButton(
                 onPressed: _destinasiController.refreshData,
 
-                child: const Text(
-                  'Coba Lagi',
-                ),
+                child: const Text('Coba Lagi'),
               ),
             ],
           ),
@@ -856,9 +847,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18),
 
           child: Row(
             children: [
@@ -892,38 +881,24 @@ class _BerandaPageState extends State<BerandaPage> {
         ),
 
         const Padding(
-          padding: EdgeInsets.fromLTRB(
-            18,
-            0,
-            18,
-            12,
-          ),
+          padding: EdgeInsets.fromLTRB(18, 0, 18, 12),
 
           child: Text(
             'Temukan tempat menarik untuk dikunjungi.',
 
-            style: TextStyle(
-              fontSize: 11,
-              color: secondaryText,
-            ),
+            style: TextStyle(fontSize: 11, color: secondaryText),
           ),
         ),
 
         if (results.isEmpty)
           const Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 28,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 28),
 
             child: Center(
               child: Text(
                 'Belum ada destinasi untuk kategori ini.',
 
-                style: TextStyle(
-                  fontSize: 12,
-                  color: secondaryText,
-                ),
+                style: TextStyle(fontSize: 12, color: secondaryText),
               ),
             ),
           )
@@ -932,18 +907,14 @@ class _BerandaPageState extends State<BerandaPage> {
             height: 267,
 
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
 
               scrollDirection: Axis.horizontal,
 
               itemCount: results.length,
 
               itemBuilder: (context, index) {
-                return _destinationCard(
-                  results[index],
-                );
+                return _destinationCard(results[index]);
               },
             ),
           ),
@@ -955,9 +926,7 @@ class _BerandaPageState extends State<BerandaPage> {
   // KARTU DESTINASI
   // =====================================================
 
-  Widget _destinationCard(
-    Map<String, dynamic> item,
-  ) {
+  Widget _destinationCard(Map<String, dynamic> item) {
     final id = (item['id'] as num).toInt();
 
     final name = item['name'].toString();
@@ -994,9 +963,7 @@ class _BerandaPageState extends State<BerandaPage> {
       child: Container(
         width: 201,
 
-        margin: const EdgeInsets.symmetric(
-          horizontal: 5,
-        ),
+        margin: const EdgeInsets.symmetric(horizontal: 5),
 
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1005,9 +972,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: 0.035,
-              ),
+              color: Colors.black.withValues(alpha: 0.035),
               blurRadius: 7,
               offset: const Offset(0, 2),
             ),
@@ -1030,11 +995,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       imageUrl,
                       fit: BoxFit.cover,
 
-                      errorBuilder: (
-                        context,
-                        error,
-                        stackTrace,
-                      ) {
+                      errorBuilder: (context, error, stackTrace) {
                         return _placeholderImage();
                       },
                     )
@@ -1049,8 +1010,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       color: Colors.transparent,
 
                       child: InkWell(
-                        customBorder:
-                            const CircleBorder(),
+                        customBorder: const CircleBorder(),
 
                         onTap: () {
                           toggleFavorite(id);
@@ -1058,19 +1018,14 @@ class _BerandaPageState extends State<BerandaPage> {
 
                         child: CircleAvatar(
                           radius: 14,
-                          backgroundColor:
-                              Colors.white,
+                          backgroundColor: Colors.white,
 
                           child: Icon(
-                            isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
 
                             size: 16,
 
-                            color: isFavorite
-                                ? Colors.red
-                                : secondaryText,
+                            color: isFavorite ? Colors.red : secondaryText,
                           ),
                         ),
                       ),
@@ -1081,16 +1036,10 @@ class _BerandaPageState extends State<BerandaPage> {
             ),
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                10,
-                8,
-                10,
-                10,
-              ),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
 
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
                   Text(
@@ -1123,8 +1072,7 @@ class _BerandaPageState extends State<BerandaPage> {
                           location,
 
                           maxLines: 1,
-                          overflow:
-                              TextOverflow.ellipsis,
+                          overflow: TextOverflow.ellipsis,
 
                           style: const TextStyle(
                             fontSize: 11,
@@ -1138,22 +1086,18 @@ class _BerandaPageState extends State<BerandaPage> {
                   const SizedBox(height: 9),
 
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
 
                     decoration: BoxDecoration(
                       color: tagBackground,
-                      borderRadius:
-                          BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
                     child: Text(
-                      category == 'Alam'
-                          ? 'Wisata Alam'
-                          : category,
+                      category == 'Alam' ? 'Wisata Alam' : category,
 
                       style: TextStyle(
                         fontSize: 9,
@@ -1197,17 +1141,11 @@ class _BerandaPageState extends State<BerandaPage> {
     final favoriteItems = favoriteDestinations;
 
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
 
       children: [
         const Padding(
-          padding: EdgeInsets.fromLTRB(
-            18,
-            20,
-            18,
-            15,
-          ),
+          padding: EdgeInsets.fromLTRB(18, 20, 18, 15),
 
           child: Text(
             'Destinasi Favorit',
@@ -1252,23 +1190,18 @@ class _BerandaPageState extends State<BerandaPage> {
 
                         textAlign: TextAlign.center,
 
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: secondaryText,
-                        ),
+                        style: TextStyle(fontSize: 11, color: secondaryText),
                       ),
                     ],
                   ),
                 )
               : GridView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 5,
                   ),
 
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
@@ -1277,13 +1210,8 @@ class _BerandaPageState extends State<BerandaPage> {
 
                   itemCount: favoriteItems.length,
 
-                  itemBuilder: (
-                    context,
-                    index,
-                  ) {
-                    return _destinationCard(
-                      favoriteItems[index],
-                    );
+                  itemBuilder: (context, index) {
+                    return _destinationCard(favoriteItems[index]);
                   },
                 ),
         ),
@@ -1297,33 +1225,17 @@ class _BerandaPageState extends State<BerandaPage> {
 
   Widget _buildBottomNavigation() {
     final items = [
-      {
-        'icon': Icons.home_outlined,
-        'label': 'Beranda',
-      },
-      {
-        'icon': Icons.location_on_outlined,
-        'label': 'Lokasi',
-      },
-      {
-        'icon': Icons.favorite_border,
-        'label': 'Favorit',
-      },
-      {
-        'icon': Icons.person_outline,
-        'label': 'Profil',
-      },
+      {'icon': Icons.home_outlined, 'label': 'Beranda'},
+      {'icon': Icons.location_on_outlined, 'label': 'Lokasi'},
+      {'icon': Icons.favorite_border, 'label': 'Favorit'},
+      {'icon': Icons.person_outline, 'label': 'Profil'},
     ];
 
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
 
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFFEEEEEE),
-          ),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
       ),
 
       child: SafeArea(
@@ -1333,13 +1245,10 @@ class _BerandaPageState extends State<BerandaPage> {
           height: 57,
 
           child: Row(
-            children:
-                List.generate(items.length, (index) {
-              final active =
-                  selectedBottomIndex == index;
+            children: List.generate(items.length, (index) {
+              final active = selectedBottomIndex == index;
 
-              IconData icon =
-                  items[index]['icon'] as IconData;
+              IconData icon = items[index]['icon'] as IconData;
 
               if (index == 2 && active) {
                 icon = Icons.favorite;
@@ -1367,31 +1276,25 @@ class _BerandaPageState extends State<BerandaPage> {
                   },
 
                   child: Column(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
 
                     children: [
                       Icon(
                         icon,
                         size: 22,
 
-                        color: active
-                            ? primaryBlue
-                            : secondaryText,
+                        color: active ? primaryBlue : secondaryText,
                       ),
 
                       const SizedBox(height: 4),
 
                       Text(
-                        items[index]['label']
-                            as String,
+                        items[index]['label'] as String,
 
                         style: TextStyle(
                           fontSize: 10,
 
-                          color: active
-                              ? primaryBlue
-                              : secondaryText,
+                          color: active ? primaryBlue : secondaryText,
 
                           fontWeight: active
                               ? FontWeight.w600
@@ -1416,10 +1319,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
 class TernateLogoPainter extends CustomPainter {
   @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
+  void paint(Canvas canvas, Size size) {
     final bluePaint = Paint()
       ..color = const Color(0xFF0875ED)
       ..style = PaintingStyle.stroke
@@ -1435,44 +1335,20 @@ class TernateLogoPainter extends CustomPainter {
 
     path.moveTo(2, 28);
     path.lineTo(20, 7);
-    path.quadraticBezierTo(
-      22,
-      4,
-      25,
-      8,
-    );
+    path.quadraticBezierTo(22, 4, 25, 8);
     path.lineTo(39, 25);
 
     path.moveTo(2, 32);
-    path.quadraticBezierTo(
-      13,
-      24,
-      22,
-      29,
-    );
-    path.quadraticBezierTo(
-      30,
-      35,
-      41,
-      29,
-    );
+    path.quadraticBezierTo(13, 24, 22, 29);
+    path.quadraticBezierTo(30, 35, 41, 29);
 
-    canvas.drawPath(
-      path,
-      bluePaint,
-    );
+    canvas.drawPath(path, bluePaint);
 
-    canvas.drawCircle(
-      const Offset(34, 7),
-      4.5,
-      orangePaint,
-    );
+    canvas.drawCircle(const Offset(34, 7), 4.5, orangePaint);
   }
 
   @override
-  bool shouldRepaint(
-    covariant TernateLogoPainter oldDelegate,
-  ) {
+  bool shouldRepaint(covariant TernateLogoPainter oldDelegate) {
     return false;
   }
 }
@@ -1481,14 +1357,12 @@ class TernateLogoPainter extends CustomPainter {
 // HALAMAN PENCARIAN DESTINASI
 // =====================================================
 
-class PencarianDestinasiPage
-    extends StatefulWidget {
+class PencarianDestinasiPage extends StatefulWidget {
   final DestinasiUserController controller;
 
   final Set<int> favorites;
 
-  final void Function(int id)
-      onToggleFavorite;
+  final void Function(int id) onToggleFavorite;
 
   const PencarianDestinasiPage({
     super.key,
@@ -1498,29 +1372,21 @@ class PencarianDestinasiPage
   });
 
   @override
-  State<PencarianDestinasiPage> createState() =>
-      _PencarianDestinasiPageState();
+  State<PencarianDestinasiPage> createState() => _PencarianDestinasiPageState();
 }
 
-class _PencarianDestinasiPageState
-    extends State<PencarianDestinasiPage> {
-  final TextEditingController
-      _searchController =
-      TextEditingController();
+class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
+  final TextEditingController _searchController = TextEditingController();
 
   String _selectedCategory = 'Semua';
 
-  static const Color primaryBlue =
-      Color(0xFF0875ED);
+  static const Color primaryBlue = Color(0xFF0875ED);
 
-  static const Color backgroundColor =
-      Color(0xFFF7F8FD);
+  static const Color backgroundColor = Color(0xFFF7F8FD);
 
-  static const Color textColor =
-      Color(0xFF17233C);
+  static const Color textColor = Color(0xFF17233C);
 
-  static const Color secondaryText =
-      Color(0xFF78869A);
+  static const Color secondaryText = Color(0xFF78869A);
 
   // =====================================================
   // INIT
@@ -1530,9 +1396,7 @@ class _PencarianDestinasiPageState
   void initState() {
     super.initState();
 
-    widget.controller.addListener(
-      _refreshPage,
-    );
+    widget.controller.addListener(_refreshPage);
   }
 
   // =====================================================
@@ -1551,9 +1415,7 @@ class _PencarianDestinasiPageState
 
   @override
   void dispose() {
-    widget.controller.removeListener(
-      _refreshPage,
-    );
+    widget.controller.removeListener(_refreshPage);
 
     _searchController.dispose();
 
@@ -1564,11 +1426,8 @@ class _PencarianDestinasiPageState
   // NORMALISASI KATEGORI
   // =====================================================
 
-  String _normalizeCategory(
-    String namaKategori,
-  ) {
-    final lower =
-        namaKategori.trim().toLowerCase();
+  String _normalizeCategory(String namaKategori) {
+    final lower = namaKategori.trim().toLowerCase();
 
     if (lower.contains('pantai')) {
       return 'Pantai';
@@ -1582,8 +1441,7 @@ class _PencarianDestinasiPageState
       return 'Alam';
     }
 
-    if (lower.contains('sejarah') ||
-        lower.contains('benteng')) {
+    if (lower.contains('sejarah') || lower.contains('benteng')) {
       return 'Sejarah';
     }
 
@@ -1594,18 +1452,14 @@ class _PencarianDestinasiPageState
   // DATA DESTINASI
   // =====================================================
 
-  List<Map<String, dynamic>>
-      get _destinations {
-    return widget.controller.listDestinasi
-        .map((item) {
+  List<Map<String, dynamic>> get _destinations {
+    return widget.controller.listDestinasi.map((item) {
       return {
         'id': item.idDestinasi,
         'name': item.namaDestinasi,
         'location': item.alamat,
         'category': _normalizeCategory(
-          widget.controller.getNamaKategori(
-            item.idKategori,
-          ),
+          widget.controller.getNamaKategori(item.idKategori),
         ),
         'image': item.fotoUtama,
       };
@@ -1617,26 +1471,19 @@ class _PencarianDestinasiPageState
   // =====================================================
 
   List<String> get _categories {
-    final categoryNames = widget
-        .controller.listKategori
+    final categoryNames = widget.controller.listKategori
         .map((kategori) {
-      return _normalizeCategory(
-        kategori.namaKategori,
-      );
-    })
+          return _normalizeCategory(kategori.namaKategori);
+        })
         .where((nama) {
-      return nama.trim().isNotEmpty &&
-          nama != 'Semua';
-    })
+          return nama.trim().isNotEmpty && nama != 'Semua';
+        })
         .toSet()
         .toList();
 
     categoryNames.sort();
 
-    return [
-      'Semua',
-      ...categoryNames,
-    ];
+    return ['Semua', ...categoryNames];
   }
 
   // =====================================================
@@ -1652,53 +1499,33 @@ class _PencarianDestinasiPageState
   // destinasi tersebut.
   // =====================================================
 
-  List<Map<String, dynamic>>
-      get _filteredDestinations {
-    final query = _searchController.text
-        .trim()
-        .toLowerCase();
+  List<Map<String, dynamic>> get _filteredDestinations {
+    final query = _searchController.text.trim().toLowerCase();
 
     final keywords = query
         .split(RegExp(r'\s+'))
-        .where(
-          (word) => word.trim().isNotEmpty,
-        )
+        .where((word) => word.trim().isNotEmpty)
         .toList();
 
     return _destinations.where((item) {
-      final name = item['name']
-          .toString()
-          .trim()
-          .toLowerCase();
+      final name = item['name'].toString().trim().toLowerCase();
 
-      final location = item['location']
-          .toString()
-          .trim()
-          .toLowerCase();
+      final location = item['location'].toString().trim().toLowerCase();
 
-      final category = item['category']
-          .toString()
-          .trim()
-          .toLowerCase();
+      final category = item['category'].toString().trim().toLowerCase();
 
-      final searchableText =
-          '$name $location $category';
+      final searchableText = '$name $location $category';
 
       final matchesSearch =
           keywords.isEmpty ||
           keywords.every((word) {
-            return searchableText.contains(
-              word,
-            );
+            return searchableText.contains(word);
           });
 
       final matchesCategory =
-          _selectedCategory == 'Semua' ||
-          item['category'] ==
-              _selectedCategory;
+          _selectedCategory == 'Semua' || item['category'] == _selectedCategory;
 
-      return matchesSearch &&
-          matchesCategory;
+      return matchesSearch && matchesCategory;
     }).toList();
   }
 
@@ -1706,9 +1533,7 @@ class _PencarianDestinasiPageState
   // ICON KATEGORI
   // =====================================================
 
-  IconData _categoryIcon(
-    String category,
-  ) {
+  IconData _categoryIcon(String category) {
     switch (category) {
       case 'Semua':
         return Icons.grid_view_rounded;
@@ -1731,11 +1556,8 @@ class _PencarianDestinasiPageState
   // FILTER KATEGORI
   // =====================================================
 
-  Widget _buildCategoryChip(
-    String category,
-  ) {
-    final isSelected =
-        _selectedCategory == category;
+  Widget _buildCategoryChip(String category) {
+    final isSelected = _selectedCategory == category;
 
     return GestureDetector(
       onTap: () {
@@ -1745,27 +1567,17 @@ class _PencarianDestinasiPageState
       },
 
       child: AnimatedContainer(
-        duration:
-            const Duration(milliseconds: 180),
+        duration: const Duration(milliseconds: 180),
 
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 9,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
 
         decoration: BoxDecoration(
-          color: isSelected
-              ? primaryBlue
-              : Colors.white,
+          color: isSelected ? primaryBlue : Colors.white,
 
-          borderRadius:
-              BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(22),
 
           border: Border.all(
-            color: isSelected
-                ? primaryBlue
-                : const Color(0xFFE5E9F1),
+            color: isSelected ? primaryBlue : const Color(0xFFE5E9F1),
           ),
         ),
 
@@ -1776,9 +1588,7 @@ class _PencarianDestinasiPageState
             Icon(
               _categoryIcon(category),
               size: 14,
-              color: isSelected
-                  ? Colors.white
-                  : secondaryText,
+              color: isSelected ? Colors.white : secondaryText,
             ),
 
             const SizedBox(width: 5),
@@ -1789,9 +1599,7 @@ class _PencarianDestinasiPageState
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? Colors.white
-                    : textColor,
+                color: isSelected ? Colors.white : textColor,
               ),
             ),
           ],
@@ -1804,9 +1612,7 @@ class _PencarianDestinasiPageState
   // DETAIL DESTINASI
   // =====================================================
 
-  Future<void> _openDetail(
-    int id,
-  ) async {
+  Future<void> _openDetail(int id) async {
     await Navigator.push<void>(
       context,
 
@@ -1829,46 +1635,32 @@ class _PencarianDestinasiPageState
   // KARTU HASIL PENCARIAN
   // =====================================================
 
-  Widget _buildDestinationCard(
-    Map<String, dynamic> item,
-  ) {
-    final id =
-        (item['id'] as num).toInt();
+  Widget _buildDestinationCard(Map<String, dynamic> item) {
+    final id = (item['id'] as num).toInt();
 
-    final name =
-        item['name'].toString();
+    final name = item['name'].toString();
 
-    final location =
-        item['location'].toString();
+    final location = item['location'].toString();
 
-    final category =
-        item['category'].toString();
+    final category = item['category'].toString();
 
-    final image =
-        (item['image'] ?? '').toString();
+    final image = (item['image'] ?? '').toString();
 
-    final isFavorite =
-        widget.favorites.contains(id);
+    final isFavorite = widget.favorites.contains(id);
 
     return Container(
-      margin:
-          const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
 
       decoration: BoxDecoration(
         color: Colors.white,
 
-        borderRadius:
-            BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14),
 
-        border: Border.all(
-          color: const Color(0xFFEDF0F5),
-        ),
+        border: Border.all(color: const Color(0xFFEDF0F5)),
 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
-              alpha: 0.025,
-            ),
+            color: Colors.black.withValues(alpha: 0.025),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -1876,8 +1668,7 @@ class _PencarianDestinasiPageState
       ),
 
       child: InkWell(
-        borderRadius:
-            BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14),
 
         onTap: () {
           _openDetail(id);
@@ -1889,33 +1680,27 @@ class _PencarianDestinasiPageState
           child: Row(
             children: [
               ClipRRect(
-                borderRadius:
-                    BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(10),
 
-                child: _buildDestinationImage(
-                  image,
-                ),
+                child: _buildDestinationImage(image),
               ),
 
               const SizedBox(width: 12),
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
                     Text(
                       name,
 
                       maxLines: 2,
-                      overflow:
-                          TextOverflow.ellipsis,
+                      overflow: TextOverflow.ellipsis,
 
                       style: const TextStyle(
                         fontSize: 14,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
                     ),
@@ -1937,14 +1722,11 @@ class _PencarianDestinasiPageState
                             location,
 
                             maxLines: 2,
-                            overflow:
-                                TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis,
 
-                            style:
-                                const TextStyle(
+                            style: const TextStyle(
                               fontSize: 11,
-                              color:
-                                  secondaryText,
+                              color: secondaryText,
                             ),
                           ),
                         ),
@@ -1954,34 +1736,23 @@ class _PencarianDestinasiPageState
                     const SizedBox(height: 10),
 
                     Container(
-                      padding:
-                          const EdgeInsets
-                              .symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 9,
                         vertical: 5,
                       ),
 
-                      decoration:
-                          BoxDecoration(
-                        color:
-                            const Color(
-                          0xFFEAF3FF,
-                        ),
-                        borderRadius:
-                            BorderRadius.circular(
-                          15,
-                        ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF3FF),
+                        borderRadius: BorderRadius.circular(15),
                       ),
 
                       child: Text(
                         category,
 
-                        style:
-                            const TextStyle(
+                        style: const TextStyle(
                           fontSize: 10,
                           color: primaryBlue,
-                          fontWeight:
-                              FontWeight.w600,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -1993,21 +1764,15 @@ class _PencarianDestinasiPageState
                 tooltip: 'Favorit',
 
                 onPressed: () {
-                  widget.onToggleFavorite(
-                    id,
-                  );
+                  widget.onToggleFavorite(id);
 
                   setState(() {});
                 },
 
                 icon: Icon(
-                  isFavorite
-                      ? Icons.favorite
-                      : Icons.favorite_border,
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
 
-                  color: isFavorite
-                      ? Colors.red
-                      : secondaryText,
+                  color: isFavorite ? Colors.red : secondaryText,
 
                   size: 21,
                 ),
@@ -2023,16 +1788,13 @@ class _PencarianDestinasiPageState
   // FOTO DESTINASI
   // =====================================================
 
-  Widget _buildDestinationImage(
-    String imageUrl,
-  ) {
+  Widget _buildDestinationImage(String imageUrl) {
     if (imageUrl.trim().isEmpty) {
       return Container(
         width: 105,
         height: 112,
 
-        color:
-            const Color(0xFFE5EAF0),
+        color: const Color(0xFFE5EAF0),
 
         child: const Icon(
           Icons.image_not_supported_outlined,
@@ -2050,17 +1812,12 @@ class _PencarianDestinasiPageState
 
       fit: BoxFit.cover,
 
-      errorBuilder: (
-        context,
-        error,
-        stackTrace,
-      ) {
+      errorBuilder: (context, error, stackTrace) {
         return Container(
           width: 105,
           height: 112,
 
-          color:
-              const Color(0xFFE5EAF0),
+          color: const Color(0xFFE5EAF0),
 
           child: const Icon(
             Icons.image_not_supported_outlined,
@@ -2079,11 +1836,7 @@ class _PencarianDestinasiPageState
   Widget _buildResults() {
     if (widget.controller.isLoading &&
         widget.controller.listDestinasi.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: primaryBlue,
-        ),
-      );
+      return const Center(child: CircularProgressIndicator(color: primaryBlue));
     }
 
     if (widget.controller.errorMessage != null &&
@@ -2093,8 +1846,7 @@ class _PencarianDestinasiPageState
           padding: const EdgeInsets.all(24),
 
           child: Column(
-            mainAxisSize:
-                MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
 
             children: [
               const Icon(
@@ -2108,41 +1860,25 @@ class _PencarianDestinasiPageState
               const Text(
                 'Destinasi belum dapat dimuat.',
 
-                style: TextStyle(
-                  fontWeight:
-                      FontWeight.w600,
-                  color: textColor,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, color: textColor),
               ),
 
               const SizedBox(height: 10),
 
               Text(
-                widget.controller
-                    .errorMessage!,
+                widget.controller.errorMessage!,
 
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
 
-                style:
-                    const TextStyle(
-                  fontSize: 11,
-                  color:
-                      secondaryText,
-                ),
+                style: const TextStyle(fontSize: 11, color: secondaryText),
               ),
 
               const SizedBox(height: 12),
 
               ElevatedButton(
-                onPressed:
-                    widget.controller
-                        .refreshData,
+                onPressed: widget.controller.refreshData,
 
-                child:
-                    const Text(
-                  'Coba Lagi',
-                ),
+                child: const Text('Coba Lagi'),
               ),
             ],
           ),
@@ -2150,22 +1886,14 @@ class _PencarianDestinasiPageState
       );
     }
 
-    final results =
-        _filteredDestinations;
+    final results = _filteredDestinations;
 
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
 
       children: [
         Padding(
-          padding:
-              const EdgeInsets.fromLTRB(
-            18,
-            18,
-            18,
-            12,
-          ),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
 
           child: Row(
             children: [
@@ -2175,8 +1903,7 @@ class _PencarianDestinasiPageState
 
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight:
-                        FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
                 ),
@@ -2185,11 +1912,7 @@ class _PencarianDestinasiPageState
               Text(
                 '${results.length} destinasi ditemukan',
 
-                style:
-                    const TextStyle(
-                  fontSize: 11,
-                  color: secondaryText,
-                ),
+                style: const TextStyle(fontSize: 11, color: secondaryText),
               ),
             ],
           ),
@@ -2199,72 +1922,45 @@ class _PencarianDestinasiPageState
           child: results.isEmpty
               ? Center(
                   child: Column(
-                    mainAxisSize:
-                        MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min,
 
                     children: [
                       const Icon(
                         Icons.search_off,
                         size: 48,
-                        color:
-                            secondaryText,
+                        color: secondaryText,
                       ),
 
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      const SizedBox(height: 12),
 
                       Text(
-                        _searchController
-                                .text
-                                .trim()
-                                .isNotEmpty
+                        _searchController.text.trim().isNotEmpty
                             ? 'Destinasi tidak ditemukan.'
                             : 'Belum ada destinasi tersedia.',
 
-                        style:
-                            const TextStyle(
+                        style: const TextStyle(
                           fontSize: 13,
-                          color:
-                              secondaryText,
+                          color: secondaryText,
                         ),
                       ),
 
-                      const SizedBox(
-                        height: 5,
-                      ),
+                      const SizedBox(height: 5),
 
                       const Text(
                         'Coba kata kunci atau kategori lainnya.',
 
-                        style:
-                            TextStyle(
-                          fontSize: 11,
-                          color:
-                              secondaryText,
-                        ),
+                        style: TextStyle(fontSize: 11, color: secondaryText),
                       ),
                     ],
                   ),
                 )
               : ListView.builder(
-                  padding:
-                      const EdgeInsets
-                          .fromLTRB(
-                    18,
-                    0,
-                    18,
-                    20,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 20),
 
-                  itemCount:
-                      results.length,
+                  itemCount: results.length,
 
-                  itemBuilder:
-                      (context, index) {
-                    return _buildDestinationCard(
-                      results[index],
-                    );
+                  itemBuilder: (context, index) {
+                    return _buildDestinationCard(results[index]);
                   },
                 ),
         ),
@@ -2277,32 +1973,25 @@ class _PencarianDestinasiPageState
   // =====================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          backgroundColor,
+      backgroundColor: backgroundColor,
 
       appBar: AppBar(
-        backgroundColor:
-            Colors.white,
+        backgroundColor: Colors.white,
 
-        foregroundColor:
-            textColor,
+        foregroundColor: textColor,
 
         elevation: 0,
 
-        surfaceTintColor:
-            Colors.white,
+        surfaceTintColor: Colors.white,
 
         title: const Text(
           'Cari Destinasi',
 
           style: TextStyle(
             fontSize: 17,
-            fontWeight:
-                FontWeight.bold,
+            fontWeight: FontWeight.bold,
             color: textColor,
           ),
         ),
@@ -2312,17 +2001,10 @@ class _PencarianDestinasiPageState
         child: Column(
           children: [
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                18,
-                14,
-                18,
-                12,
-              ),
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
 
               child: TextField(
-                controller:
-                    _searchController,
+                controller: _searchController,
 
                 autofocus: true,
 
@@ -2330,107 +2012,56 @@ class _PencarianDestinasiPageState
                   setState(() {});
                 },
 
-                textInputAction:
-                    TextInputAction.search,
+                textInputAction: TextInputAction.search,
 
-                decoration:
-                    InputDecoration(
-                  hintText:
-                      'Cari nama destinasi atau lokasi...',
+                decoration: InputDecoration(
+                  hintText: 'Cari nama destinasi atau lokasi...',
 
-                  hintStyle:
-                      const TextStyle(
+                  hintStyle: const TextStyle(
                     fontSize: 12,
-                    color:
-                        secondaryText,
+                    color: secondaryText,
                   ),
 
-                  prefixIcon:
-                      const Icon(
+                  prefixIcon: const Icon(
                     Icons.search,
-                    color:
-                        primaryBlue,
+                    color: primaryBlue,
                     size: 20,
                   ),
 
-                  suffixIcon:
-                      _searchController
-                              .text
-                              .isNotEmpty
-                          ? IconButton(
-                              onPressed: () {
-                                _searchController
-                                    .clear();
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          onPressed: () {
+                            _searchController.clear();
 
-                                setState(
-                                  () {},
-                                );
-                              },
+                            setState(() {});
+                          },
 
-                              icon:
-                                  const Icon(
-                                Icons.close,
-                                size: 18,
-                              ),
-                            )
-                          : null,
+                          icon: const Icon(Icons.close, size: 18),
+                        )
+                      : null,
 
                   filled: true,
 
-                  fillColor:
-                      Colors.white,
+                  fillColor: Colors.white,
 
-                  contentPadding:
-                      const EdgeInsets
-                          .symmetric(
-                    vertical: 13,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
+
+                    borderSide: const BorderSide(color: Color(0xFFE5E9F1)),
                   ),
 
-                  border:
-                      OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius
-                            .circular(
-                      25,
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
 
-                    borderSide:
-                        const BorderSide(
-                      color: Color(
-                        0xFFE5E9F1,
-                      ),
-                    ),
+                    borderSide: const BorderSide(color: Color(0xFFE5E9F1)),
                   ),
 
-                  enabledBorder:
-                      OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius
-                            .circular(
-                      25,
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
 
-                    borderSide:
-                        const BorderSide(
-                      color: Color(
-                        0xFFE5E9F1,
-                      ),
-                    ),
-                  ),
-
-                  focusedBorder:
-                      OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius
-                            .circular(
-                      25,
-                    ),
-
-                    borderSide:
-                        const BorderSide(
-                      color:
-                          primaryBlue,
-                    ),
+                    borderSide: const BorderSide(color: primaryBlue),
                   ),
                 ),
               ),
@@ -2439,40 +2070,24 @@ class _PencarianDestinasiPageState
             SizedBox(
               height: 43,
 
-              child:
-                  ListView.separated(
-                padding:
-                    const EdgeInsets
-                        .symmetric(
-                  horizontal: 18,
-                ),
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
 
-                scrollDirection:
-                    Axis.horizontal,
+                scrollDirection: Axis.horizontal,
 
-                itemCount:
-                    _categories.length,
+                itemCount: _categories.length,
 
-                separatorBuilder:
-                    (context, index) {
-                  return const SizedBox(
-                    width: 8,
-                  );
+                separatorBuilder: (context, index) {
+                  return const SizedBox(width: 8);
                 },
 
-                itemBuilder:
-                    (context, index) {
-                  return _buildCategoryChip(
-                    _categories[index],
-                  );
+                itemBuilder: (context, index) {
+                  return _buildCategoryChip(_categories[index]);
                 },
               ),
             ),
 
-            Expanded(
-              child:
-                  _buildResults(),
-            ),
+            Expanded(child: _buildResults()),
           ],
         ),
       ),
