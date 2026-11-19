@@ -154,7 +154,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // ==========================================
-  // WIDGET LOGO
+  // WIDGET LOGO TERNATESPOT
+  // Disesuaikan dengan logo BerandaPage
   // ==========================================
 
   Widget _buildLogo() {
@@ -162,30 +163,48 @@ class _LoginPageState extends State<LoginPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.landscape_rounded,
-            color: Color(0xFF0066FF),
-            size: 28,
+          SizedBox(
+            width: 44,
+            height: 37,
+            child: CustomPaint(painter: TernateLogoPainter()),
           ),
-          const SizedBox(width: 8),
+
+          const SizedBox(width: 5),
+
           Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'ternateSpot',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0066FF),
+            children: [
+              RichText(
+                text: const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'ternate',
+                      style: TextStyle(
+                        color: Color(0xFF26364D),
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Spot',
+                      style: TextStyle(
+                        color: Color(0xFF0875ED),
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
+
+              const Text(
                 'WISATA KOTA TERNATE',
                 style: TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                  letterSpacing: 1.0,
+                  fontSize: 6.5,
+                  color: Color(0xFF78869A),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
@@ -664,5 +683,46 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+}
+
+// =====================================================
+// LOGO TERNATESPOT
+// Disalin dari TernateLogoPainter pada beranda_page.dart
+// =====================================================
+
+class TernateLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bluePaint = Paint()
+      ..color = const Color(0xFF0875ED)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final orangePaint = Paint()
+      ..color = const Color(0xFFFFA500)
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+
+    path.moveTo(2, 28);
+    path.lineTo(20, 7);
+    path.quadraticBezierTo(22, 4, 25, 8);
+    path.lineTo(39, 25);
+
+    path.moveTo(2, 32);
+    path.quadraticBezierTo(13, 24, 22, 29);
+    path.quadraticBezierTo(30, 35, 41, 29);
+
+    canvas.drawPath(path, bluePaint);
+
+    canvas.drawCircle(const Offset(34, 7), 4.5, orangePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant TernateLogoPainter oldDelegate) {
+    return false;
   }
 }
