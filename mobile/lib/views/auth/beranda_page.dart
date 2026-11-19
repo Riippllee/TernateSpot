@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../controllers/destinasi_user_controller.dart';
 import '../../controllers/profile_controller.dart';
@@ -20,10 +22,10 @@ class BerandaPage extends StatefulWidget {
 class _BerandaPageState extends State<BerandaPage> {
   late final DestinasiUserController _destinasiController;
 
-  // Mengambil data profil milik akun yang sedang login.
   final ProfileController _profileController = ProfileController();
 
-  // URL foto profil dari kolom foto_profil pada tabel pengguna.
+  final SupabaseClient _supabase = Supabase.instance.client;
+
   String? _fotoProfil;
 
   final TextEditingController searchController = TextEditingController();
@@ -33,11 +35,16 @@ class _BerandaPageState extends State<BerandaPage> {
   int selectedBottomIndex = 0;
 
   // =====================================================
-  // FAVORIT SEMENTARA
-  // Tidak membutuhkan login.
+  // FAVORIT DARI SUPABASE
   // =====================================================
 
   final Set<int> favorites = {};
+
+  final Set<int> _favoriteProcessingIds = {};
+
+  bool _isLoadingFavorites = true;
+
+  String? _favoriteLoadError;
 
   // =====================================================
   // WARNA APLIKASI
@@ -60,8 +67,8 @@ class _BerandaPageState extends State<BerandaPage> {
 
     _destinasiController.addListener(_refreshPage);
 
-    // Muat foto profil akun yang sedang login.
     _loadFotoProfil();
+    _loadFavorites();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -71,7 +78,7 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   // =====================================================
-  // REFRESH HALAMAN SAAT DATA BERUBAH
+  // REFRESH HALAMAN
   // =====================================================
 
   void _refreshPage() {
@@ -81,7 +88,7 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   // =====================================================
-  // MEMUAT FOTO PROFIL PENGGUNA YANG SEDANG LOGIN
+  // MEMUAT FOTO PROFIL
   // =====================================================
 
   Future<void> _loadFotoProfil() async {
@@ -91,6 +98,7 @@ class _BerandaPageState extends State<BerandaPage> {
       if (!mounted) return;
 
       final foto = data?['foto_profil']?.toString().trim();
+
       final fotoValid =
           foto != null &&
           foto.isNotEmpty &&
@@ -108,6 +116,106 @@ class _BerandaPageState extends State<BerandaPage> {
         _fotoProfil = null;
       });
     }
+  }
+
+  // =====================================================
+  // MEMUAT FAVORIT DARI SUPABASE
+  // =====================================================
+
+  Future<void> _loadFavorites() async {
+    if (!mounted) return;
+
+    final userId = _supabase.auth.currentUser?.id;
+
+    // Favorit hanya tersedia untuk pengguna yang sudah login.
+    if (userId == null) {
+      setState(() {
+        favorites.clear();
+        _favoriteLoadError = null;
+        _isLoadingFavorites = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingFavorites = true;
+      _favoriteLoadError = null;
+      favorites.clear();
+    });
+
+    try {
+      final favoriteRows = await _supabase
+          .from('favorit')
+          .select('id_destinasi')
+          .eq('id_user', userId);
+
+      final Set<int> loadedFavoriteIds = {};
+
+      for (final row in favoriteRows) {
+        final rawId = row['id_destinasi'];
+
+        if (rawId is num) {
+          loadedFavoriteIds.add(rawId.toInt());
+        } else {
+          final parsedId = int.tryParse(rawId?.toString() ?? '');
+
+          if (parsedId != null) {
+            loadedFavoriteIds.add(parsedId);
+          }
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        favorites
+          ..clear()
+          ..addAll(loadedFavoriteIds);
+
+        _favoriteLoadError = null;
+      });
+    } catch (error) {
+      debugPrint('Gagal memuat favorit: $error');
+
+      if (!mounted) return;
+
+      setState(() {
+        _favoriteLoadError = 'Gagal memuat daftar favorit.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingFavorites = false;
+        });
+      }
+    }
+  }
+
+  // =====================================================
+  // REFRESH DATA BERANDA
+  // =====================================================
+
+  Future<void> _refreshHomeData() async {
+    await _destinasiController.refreshData();
+    await _loadFavorites();
+  }
+
+  // =====================================================
+  // MENAMPILKAN PESAN FAVORIT
+  // =====================================================
+
+  void _showFavoriteMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   // =====================================================
@@ -216,34 +324,101 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   // =====================================================
-  // TAMBAH / HAPUS FAVORIT
-  // Tidak membutuhkan login.
+  // TAMBAH / HAPUS FAVORIT DI SUPABASE
   // =====================================================
 
-  void toggleFavorite(int id) {
-    setState(() {
-      if (favorites.contains(id)) {
-        favorites.remove(id);
-      } else {
-        favorites.add(id);
+  Future<void> toggleFavorite(int id) async {
+    final userId = _supabase.auth.currentUser?.id;
+
+    if (userId == null) {
+      _showFavoriteMessage(
+        'Silakan login terlebih dahulu untuk menyimpan destinasi favorit.',
+      );
+      return;
+    }
+
+    if (_isLoadingFavorites) {
+      _showFavoriteMessage(
+        'Daftar favorit sedang dimuat. Coba lagi sebentar.',
+      );
+      return;
+    }
+
+    if (_favoriteProcessingIds.contains(id)) return;
+
+    // Jika pemuatan sebelumnya gagal, coba muat ulang.
+    if (_favoriteLoadError != null) {
+      await _loadFavorites();
+
+      if (!mounted) return;
+
+      if (_favoriteLoadError != null) {
+        _showFavoriteMessage(
+          'Favorit belum dapat dimuat. Silakan coba lagi.',
+        );
+        return;
       }
+    }
+
+    final bool wasFavorite = favorites.contains(id);
+
+    setState(() {
+      _favoriteProcessingIds.add(id);
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          favorites.contains(id)
-              ? 'Destinasi ditambahkan ke favorit.'
-              : 'Destinasi dihapus dari favorit.',
-        ),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    try {
+      if (wasFavorite) {
+        // HAPUS FAVORIT
+        await _supabase
+            .from('favorit')
+            .delete()
+            .eq('id_user', userId)
+            .eq('id_destinasi', id);
+      } else {
+        // TAMBAH FAVORIT
+        await _supabase.from('favorit').insert({
+          'id_user': userId,
+          'id_destinasi': id,
+          'tanggal_ditambah': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        if (wasFavorite) {
+          favorites.remove(id);
+        } else {
+          favorites.add(id);
+        }
+      });
+
+      _showFavoriteMessage(
+        wasFavorite
+            ? 'Destinasi dihapus dari favorit.'
+            : 'Destinasi ditambahkan ke favorit.',
+      );
+    } catch (error) {
+      debugPrint('Gagal mengubah favorit: $error');
+
+      if (!mounted) return;
+
+      _showFavoriteMessage(
+        wasFavorite
+            ? 'Gagal menghapus destinasi dari favorit.'
+            : 'Gagal menambahkan destinasi ke favorit.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _favoriteProcessingIds.remove(id);
+        });
+      }
+    }
   }
 
   // =====================================================
   // NAVIGASI DETAIL DESTINASI
-  // Tidak membutuhkan login.
   // =====================================================
 
   Future<void> openDetail(int id) async {
@@ -269,6 +444,12 @@ class _BerandaPageState extends State<BerandaPage> {
   // =====================================================
 
   Future<void> openSearchPage() async {
+    if (_isLoadingFavorites) {
+      await _loadFavorites();
+    }
+
+    if (!mounted) return;
+
     await Navigator.push<void>(
       context,
       MaterialPageRoute<void>(
@@ -276,6 +457,7 @@ class _BerandaPageState extends State<BerandaPage> {
           return PencarianDestinasiPage(
             controller: _destinasiController,
             favorites: favorites,
+            processingFavoriteIds: _favoriteProcessingIds,
             onToggleFavorite: toggleFavorite,
           );
         },
@@ -294,13 +476,16 @@ class _BerandaPageState extends State<BerandaPage> {
   Future<void> openProfile() async {
     final hasil = await Navigator.push<int>(
       context,
-      MaterialPageRoute<int>(builder: (context) => const ProfileUserPage()),
+      MaterialPageRoute<int>(
+        builder: (context) => const ProfileUserPage(),
+      ),
     );
 
     if (!mounted) return;
 
-    // Perbarui avatar jika foto diganti dari halaman profil.
+    // Perbarui avatar dan favorit setelah kembali dari Profil.
     await _loadFotoProfil();
+    await _loadFavorites();
 
     if (!mounted || hasil == null) return;
 
@@ -327,10 +512,12 @@ class _BerandaPageState extends State<BerandaPage> {
 
             Expanded(
               child: selectedBottomIndex == 1
-                  ? LokasiDestinasiPage(controller: _destinasiController)
+                  ? LokasiDestinasiPage(
+                      controller: _destinasiController,
+                    )
                   : selectedBottomIndex == 2
-                  ? _buildFavoritesPage()
-                  : _buildHomePage(),
+                      ? _buildFavoritesPage()
+                      : _buildHomePage(),
             ),
           ],
         ),
@@ -355,7 +542,9 @@ class _BerandaPageState extends State<BerandaPage> {
           SizedBox(
             width: 44,
             height: 37,
-            child: CustomPaint(painter: TernateLogoPainter()),
+            child: CustomPaint(
+              painter: TernateLogoPainter(),
+            ),
           ),
 
           const SizedBox(width: 5),
@@ -423,7 +612,11 @@ class _BerandaPageState extends State<BerandaPage> {
                           );
                         },
                       )
-                    : const Icon(Icons.person, size: 19, color: primaryBlue),
+                    : const Icon(
+                        Icons.person,
+                        size: 19,
+                        color: primaryBlue,
+                      ),
               ),
             ),
           ),
@@ -438,7 +631,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
   Widget _buildHomePage() {
     return RefreshIndicator(
-      onRefresh: _destinasiController.refreshData,
+      onRefresh: _refreshHomeData,
       color: primaryBlue,
 
       child: SingleChildScrollView(
@@ -504,7 +697,9 @@ class _BerandaPageState extends State<BerandaPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: const Color(0xFFE7ECF3)),
+          border: Border.all(
+            color: const Color(0xFFE7ECF3),
+          ),
         ),
 
         child: TextField(
@@ -517,9 +712,16 @@ class _BerandaPageState extends State<BerandaPage> {
           decoration: const InputDecoration(
             hintText: 'Cari destinasi di Ternate...',
 
-            hintStyle: TextStyle(fontSize: 12, color: secondaryText),
+            hintStyle: TextStyle(
+              fontSize: 12,
+              color: secondaryText,
+            ),
 
-            prefixIcon: Icon(Icons.search, size: 20, color: secondaryText),
+            prefixIcon: Icon(
+              Icons.search,
+              size: 20,
+              color: secondaryText,
+            ),
 
             suffixIcon: Icon(
               Icons.arrow_forward_ios_rounded,
@@ -563,7 +765,10 @@ class _BerandaPageState extends State<BerandaPage> {
                   return Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFF0B65B5), Color(0xFF55A6C8)],
+                        colors: [
+                          Color(0xFF0B65B5),
+                          Color(0xFF55A6C8),
+                        ],
                       ),
                     ),
 
@@ -621,7 +826,10 @@ class _BerandaPageState extends State<BerandaPage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
 
-                      style: TextStyle(color: Colors.white, fontSize: 10),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
                     ),
 
                     const SizedBox(height: 8),
@@ -637,7 +845,9 @@ class _BerandaPageState extends State<BerandaPage> {
                           foregroundColor: primaryBlue,
                           elevation: 0,
 
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                          ),
 
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
@@ -693,7 +903,10 @@ class _BerandaPageState extends State<BerandaPage> {
 
             child: Row(
               children: categories.map((category) {
-                return _categoryButton(category, _getCategoryIcon(category));
+                return _categoryButton(
+                  category,
+                  _getCategoryIcon(category),
+                );
               }).toList(),
             ),
           ),
@@ -744,7 +957,10 @@ class _BerandaPageState extends State<BerandaPage> {
 
         margin: const EdgeInsets.only(right: 8),
 
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 9,
+        ),
 
         decoration: BoxDecoration(
           color: isSelected ? primaryBlue : Colors.white,
@@ -752,7 +968,9 @@ class _BerandaPageState extends State<BerandaPage> {
           borderRadius: BorderRadius.circular(22),
 
           border: Border.all(
-            color: isSelected ? primaryBlue : const Color(0xFFE5E9F1),
+            color: isSelected
+                ? primaryBlue
+                : const Color(0xFFE5E9F1),
           ),
         ),
 
@@ -792,11 +1010,16 @@ class _BerandaPageState extends State<BerandaPage> {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 35),
 
-        child: Center(child: CircularProgressIndicator(color: primaryBlue)),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: primaryBlue,
+          ),
+        ),
       );
     }
 
-    if (_destinasiController.errorMessage != null && destinations.isEmpty) {
+    if (_destinasiController.errorMessage != null &&
+        destinations.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(20),
 
@@ -814,7 +1037,10 @@ class _BerandaPageState extends State<BerandaPage> {
               const Text(
                 'Destinasi belum dapat dimuat.',
 
-                style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
 
               const SizedBox(height: 6),
@@ -824,7 +1050,10 @@ class _BerandaPageState extends State<BerandaPage> {
 
                 textAlign: TextAlign.center,
 
-                style: const TextStyle(color: secondaryText, fontSize: 11),
+                style: const TextStyle(
+                  color: secondaryText,
+                  fontSize: 11,
+                ),
               ),
 
               const SizedBox(height: 10),
@@ -886,19 +1115,28 @@ class _BerandaPageState extends State<BerandaPage> {
           child: Text(
             'Temukan tempat menarik untuk dikunjungi.',
 
-            style: TextStyle(fontSize: 11, color: secondaryText),
+            style: TextStyle(
+              fontSize: 11,
+              color: secondaryText,
+            ),
           ),
         ),
 
         if (results.isEmpty)
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+            padding: EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 28,
+            ),
 
             child: Center(
               child: Text(
                 'Belum ada destinasi untuk kategori ini.',
 
-                style: TextStyle(fontSize: 12, color: secondaryText),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: secondaryText,
+                ),
               ),
             ),
           )
@@ -935,6 +1173,9 @@ class _BerandaPageState extends State<BerandaPage> {
     final imageUrl = (item['image'] ?? '').toString();
 
     final isFavorite = favorites.contains(id);
+
+    final isFavoriteProcessing =
+        _isLoadingFavorites || _favoriteProcessingIds.contains(id);
 
     Color tagBackground;
     Color tagText;
@@ -1012,21 +1253,34 @@ class _BerandaPageState extends State<BerandaPage> {
                       child: InkWell(
                         customBorder: const CircleBorder(),
 
-                        onTap: () {
-                          toggleFavorite(id);
-                        },
+                        onTap: isFavoriteProcessing
+                            ? null
+                            : () {
+                                toggleFavorite(id);
+                              },
 
                         child: CircleAvatar(
                           radius: 14,
                           backgroundColor: Colors.white,
 
-                          child: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
-
-                            size: 16,
-
-                            color: isFavorite ? Colors.red : secondaryText,
-                          ),
+                          child: isFavoriteProcessing
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: primaryBlue,
+                                  ),
+                                )
+                              : Icon(
+                                  isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  size: 16,
+                                  color: isFavorite
+                                      ? Colors.red
+                                      : secondaryText,
+                                ),
                         ),
                       ),
                     ),
@@ -1159,61 +1413,136 @@ class _BerandaPageState extends State<BerandaPage> {
         ),
 
         Expanded(
-          child: favoriteItems.isEmpty
+          child: _isLoadingFavorites
               ? const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-
-                    children: [
-                      Icon(
-                        Icons.favorite_border,
-                        size: 55,
-                        color: secondaryText,
-                      ),
-
-                      SizedBox(height: 12),
-
-                      Text(
-                        'Belum ada destinasi favorit',
-
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                      ),
-
-                      SizedBox(height: 5),
-
-                      Text(
-                        'Klik ikon hati pada destinasi yang kamu sukai.',
-
-                        textAlign: TextAlign.center,
-
-                        style: TextStyle(fontSize: 11, color: secondaryText),
-                      ),
-                    ],
+                  child: CircularProgressIndicator(
+                    color: primaryBlue,
                   ),
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 5,
-                  ),
+              : _favoriteLoadError != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.cloud_off_outlined,
+                              size: 45,
+                              color: secondaryText,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Daftar favorit belum dapat dimuat.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: textColor,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _favoriteLoadError!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: secondaryText,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _loadFavorites,
+                              child: const Text('Coba Lagi'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : _supabase.auth.currentUser == null
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.lock_outline,
+                                  size: 48,
+                                  color: secondaryText,
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  'Silakan login untuk melihat destinasi favorit.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : favoriteItems.isEmpty
+                          ? const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.favorite_border,
+                                    size: 55,
+                                    color: secondaryText,
+                                  ),
 
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.78,
-                  ),
+                                  SizedBox(height: 12),
 
-                  itemCount: favoriteItems.length,
+                                  Text(
+                                    'Belum ada destinasi favorit',
 
-                  itemBuilder: (context, index) {
-                    return _destinationCard(favoriteItems[index]);
-                  },
-                ),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: textColor,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 5),
+
+                                  Text(
+                                    'Klik ikon hati pada destinasi yang kamu sukai.',
+
+                                    textAlign: TextAlign.center,
+
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: secondaryText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : GridView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 5,
+                              ),
+
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 0.78,
+                              ),
+
+                              itemCount: favoriteItems.length,
+
+                              itemBuilder: (context, index) {
+                                return _destinationCard(
+                                  favoriteItems[index],
+                                );
+                              },
+                            ),
         ),
       ],
     );
@@ -1235,7 +1564,9 @@ class _BerandaPageState extends State<BerandaPage> {
       decoration: const BoxDecoration(
         color: Colors.white,
 
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+        border: Border(
+          top: BorderSide(color: Color(0xFFEEEEEE)),
+        ),
       ),
 
       child: SafeArea(
@@ -1257,18 +1588,10 @@ class _BerandaPageState extends State<BerandaPage> {
               return Expanded(
                 child: InkWell(
                   onTap: () {
-                    // =================================
-                    // PROFIL
-                    // =================================
-
                     if (index == 3) {
                       openProfile();
                       return;
                     }
-
-                    // =================================
-                    // TAB LAIN
-                    // =================================
 
                     setState(() {
                       selectedBottomIndex = index;
@@ -1362,21 +1685,27 @@ class PencarianDestinasiPage extends StatefulWidget {
 
   final Set<int> favorites;
 
-  final void Function(int id) onToggleFavorite;
+  final Set<int> processingFavoriteIds;
+
+  final Future<void> Function(int id) onToggleFavorite;
 
   const PencarianDestinasiPage({
     super.key,
     required this.controller,
     required this.favorites,
+    required this.processingFavoriteIds,
     required this.onToggleFavorite,
   });
 
   @override
-  State<PencarianDestinasiPage> createState() => _PencarianDestinasiPageState();
+  State<PencarianDestinasiPage> createState() =>
+      _PencarianDestinasiPageState();
 }
 
 class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
   final TextEditingController _searchController = TextEditingController();
+
+  final Set<int> _localFavoriteProcessingIds = {};
 
   String _selectedCategory = 'Semua';
 
@@ -1523,7 +1852,8 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
           });
 
       final matchesCategory =
-          _selectedCategory == 'Semua' || item['category'] == _selectedCategory;
+          _selectedCategory == 'Semua' ||
+          item['category'] == _selectedCategory;
 
       return matchesSearch && matchesCategory;
     }).toList();
@@ -1569,7 +1899,10 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
 
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 9,
+        ),
 
         decoration: BoxDecoration(
           color: isSelected ? primaryBlue : Colors.white,
@@ -1577,7 +1910,9 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
           borderRadius: BorderRadius.circular(22),
 
           border: Border.all(
-            color: isSelected ? primaryBlue : const Color(0xFFE5E9F1),
+            color: isSelected
+                ? primaryBlue
+                : const Color(0xFFE5E9F1),
           ),
         ),
 
@@ -1648,6 +1983,10 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
 
     final isFavorite = widget.favorites.contains(id);
 
+    final isFavoriteProcessing =
+        widget.processingFavoriteIds.contains(id) ||
+        _localFavoriteProcessingIds.contains(id);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
 
@@ -1656,7 +1995,9 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
 
         borderRadius: BorderRadius.circular(14),
 
-        border: Border.all(color: const Color(0xFFEDF0F5)),
+        border: Border.all(
+          color: const Color(0xFFEDF0F5),
+        ),
 
         boxShadow: [
           BoxShadow(
@@ -1763,19 +2104,40 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
               IconButton(
                 tooltip: 'Favorit',
 
-                onPressed: () {
-                  widget.onToggleFavorite(id);
+                onPressed: isFavoriteProcessing
+                    ? null
+                    : () async {
+                        setState(() {
+                          _localFavoriteProcessingIds.add(id);
+                        });
 
-                  setState(() {});
-                },
+                        try {
+                          await widget.onToggleFavorite(id);
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _localFavoriteProcessingIds.remove(id);
+                            });
+                          }
+                        }
+                      },
 
-                icon: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_border,
-
-                  color: isFavorite ? Colors.red : secondaryText,
-
-                  size: 21,
-                ),
+                icon: isFavoriteProcessing
+                    ? const SizedBox(
+                        width: 19,
+                        height: 19,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: primaryBlue,
+                        ),
+                      )
+                    : Icon(
+                        isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: isFavorite ? Colors.red : secondaryText,
+                        size: 21,
+                      ),
               ),
             ],
           ),
@@ -1836,7 +2198,11 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
   Widget _buildResults() {
     if (widget.controller.isLoading &&
         widget.controller.listDestinasi.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: primaryBlue));
+      return const Center(
+        child: CircularProgressIndicator(
+          color: primaryBlue,
+        ),
+      );
     }
 
     if (widget.controller.errorMessage != null &&
@@ -1860,7 +2226,10 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
               const Text(
                 'Destinasi belum dapat dimuat.',
 
-                style: TextStyle(fontWeight: FontWeight.w600, color: textColor),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
               ),
 
               const SizedBox(height: 10),
@@ -1870,7 +2239,10 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
 
                 textAlign: TextAlign.center,
 
-                style: const TextStyle(fontSize: 11, color: secondaryText),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: secondaryText,
+                ),
               ),
 
               const SizedBox(height: 12),
@@ -1912,7 +2284,10 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
               Text(
                 '${results.length} destinasi ditemukan',
 
-                style: const TextStyle(fontSize: 11, color: secondaryText),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: secondaryText,
+                ),
               ),
             ],
           ),
@@ -1949,7 +2324,10 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
                       const Text(
                         'Coba kata kunci atau kategori lainnya.',
 
-                        style: TextStyle(fontSize: 11, color: secondaryText),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: secondaryText,
+                        ),
                       ),
                     ],
                   ),
@@ -2036,7 +2414,10 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
                             setState(() {});
                           },
 
-                          icon: const Icon(Icons.close, size: 18),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 18,
+                          ),
                         )
                       : null,
 
@@ -2044,24 +2425,32 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
 
                   fillColor: Colors.white,
 
-                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 13,
+                  ),
 
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(25),
 
-                    borderSide: const BorderSide(color: Color(0xFFE5E9F1)),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE5E9F1),
+                    ),
                   ),
 
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(25),
 
-                    borderSide: const BorderSide(color: Color(0xFFE5E9F1)),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE5E9F1),
+                    ),
                   ),
 
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(25),
 
-                    borderSide: const BorderSide(color: primaryBlue),
+                    borderSide: const BorderSide(
+                      color: primaryBlue,
+                    ),
                   ),
                 ),
               ),
@@ -2087,7 +2476,9 @@ class _PencarianDestinasiPageState extends State<PencarianDestinasiPage> {
               ),
             ),
 
-            Expanded(child: _buildResults()),
+            Expanded(
+              child: _buildResults(),
+            ),
           ],
         ),
       ),

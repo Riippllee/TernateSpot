@@ -539,7 +539,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
   // =========================================================
   //
   // 0 = Beranda
-  // 1 = Peta
+  // 1 = Lokasi
   // 2 = Favorit
   // 3 = Profil
   //
@@ -1039,7 +1039,7 @@ class _ProfileUserPageState extends State<ProfileUserPage> {
         BottomNavigationBarItem(
           icon: Icon(Icons.location_on_outlined),
           activeIcon: Icon(Icons.location_on),
-          label: 'Peta',
+          label: 'Lokasi',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.favorite_border),

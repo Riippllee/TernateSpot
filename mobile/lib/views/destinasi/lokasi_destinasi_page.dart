@@ -240,7 +240,7 @@ class _LokasiDestinasiPageState extends State<LokasiDestinasiPage> {
   }
 
   // ==========================================
-  // MEMILIH DESTINASI PADA PETA
+  // MEMILIH DESTINASI PADA LOKASI
   // ==========================================
 
   void _selectDestination(DestinasiUserModel item) {

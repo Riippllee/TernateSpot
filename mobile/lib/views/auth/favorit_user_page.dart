@@ -777,7 +777,7 @@ class _FavoritUserPageState extends State<FavoritUserPage> {
 
     final List<String> nama = [
       'Beranda',
-      'Peta',
+      'Lokasi',
       'Favorit',
       'Profil',
     ];

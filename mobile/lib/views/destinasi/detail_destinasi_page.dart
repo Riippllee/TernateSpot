@@ -180,7 +180,7 @@ class _DetailDestinasiPageState extends State<DetailDestinasiPage> {
         _showMessage('Tidak dapat membuka Google Maps.');
       }
     } catch (_) {
-      _showMessage('Terjadi kesalahan saat membuka peta.');
+      _showMessage('Terjadi kesalahan saat membuka lokasi.');
     }
   }
 
