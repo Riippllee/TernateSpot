@@ -1,11 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ternatespot/views/auth/splash_page.dart';
+import 'views/auth/auth_wrapper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Koneksi Flutter dengan Supabase
+  // Inisialisasi Supabase.
   await Supabase.initialize(
     url: 'https://ciarqtbkgdmupfiuuvab.supabase.co',
     publishableKey: 'sb_publishable_xh9OxC4GQLHuhv46L8MjQQ_5TeP1IG_',
@@ -19,9 +20,10 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashPage(), // Menampilkan LoginPage di emulator
+      title: 'TernateSpot',
+      home: AuthWrapper(),
     );
   }
 }
